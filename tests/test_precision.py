@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Test precision mode specifically
+Precision and accuracy tests for Monte Carlo simulations
 """
 
-from poker_solver import solve_poker_hand
+import sys
+import os
+# Add parent directory to path to allow importing poker_knight
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from poker_knight import solve_poker_hand
 import time
 
 def test_precision_mode():

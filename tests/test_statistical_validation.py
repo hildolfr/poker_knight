@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 """
-Statistical Validation Tests for Poker Knight
-Comprehensive statistical testing to validate Monte Carlo simulation accuracy
-against known poker probabilities and statistical principles.
+Comprehensive Statistical Validation Tests for Poker Knight
+
+This module provides rigorous statistical validation of the Monte Carlo poker solver,
+ensuring accuracy, reliability, and consistency across various poker scenarios.
+
+Features:
+- Distribution validation for known poker scenarios
+- Confidence interval verification  
+- Variance and convergence analysis
+- Cross-validation with analytical results
+- Performance consistency checks
 """
 
 import unittest
-import statistics
 import math
+import statistics
 from collections import Counter
 from typing import List, Dict, Tuple
-from poker_solver import solve_poker_hand, MonteCarloSolver
+from poker_knight import solve_poker_hand, MonteCarloSolver
 
 
 class TestStatisticalValidation(unittest.TestCase):

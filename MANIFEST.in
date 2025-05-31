@@ -1,12 +1,15 @@
 include VERSION
 include README.md
-include CHANGELOG.md
 include LICENSE
-include config.json
-include poker_knight_logo.png
-include *.py
-include *.md
-include *.json
+include docs/CHANGELOG.md
+include docs/IMPLEMENTATION_SUMMARY.md
+include docs/RELEASE_NOTES_v1.1.0.md
+include docs/RELEASE_NOTES_v1.2.0.md
+include docs/assets/poker_knight_logo.png
+include poker_knight/config.json
+include examples/example_usage.py
+recursive-include poker_knight *.py
+recursive-include tests *.py
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 recursive-exclude * .DS_Store 

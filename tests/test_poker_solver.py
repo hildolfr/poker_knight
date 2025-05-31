@@ -5,7 +5,7 @@ Comprehensive tests for the Poker Knight Monte Carlo poker solver.
 """
 
 import unittest
-from poker_solver import (
+from poker_knight import (
     Card, HandEvaluator, Deck, MonteCarloSolver, 
     solve_poker_hand, SimulationResult
 )

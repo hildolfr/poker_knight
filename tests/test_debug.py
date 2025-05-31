@@ -3,7 +3,12 @@
 Debug test to understand precision mode timeout issue
 """
 
-from poker_solver import MonteCarloSolver
+import sys
+import os
+# Add parent directory to path to allow importing poker_knight
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from poker_knight import MonteCarloSolver
 import time
 
 def debug_precision_mode():

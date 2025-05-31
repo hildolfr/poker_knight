@@ -27,7 +27,7 @@ setup(
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/poker-knight",
-    py_modules=["poker_solver"],
+    packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -57,11 +57,12 @@ setup(
     },
     include_package_data=True,
     package_data={
-        "": ["config.json", "VERSION", "README.md", "CHANGELOG.md", "LICENSE"],
+        "poker_knight": ["config.json"],
+        "": ["VERSION", "README.md", "LICENSE"],
     },
     entry_points={
         "console_scripts": [
-            "poker-knight=poker_solver:solve_poker_hand",
+            "poker-knight=poker_knight:solve_poker_hand",
         ],
     },
     keywords="poker texas-holdem monte-carlo simulation ai game-theory probability",
@@ -69,6 +70,6 @@ setup(
         "Bug Reports": "https://github.com/yourusername/poker-knight/issues",
         "Source": "https://github.com/yourusername/poker-knight",
         "Documentation": "https://github.com/yourusername/poker-knight/blob/main/README.md",
-        "Changelog": "https://github.com/yourusername/poker-knight/blob/main/CHANGELOG.md",
+        "Changelog": "https://github.com/yourusername/poker-knight/blob/main/docs/CHANGELOG.md",
     },
 ) 

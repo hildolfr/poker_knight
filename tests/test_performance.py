@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """
-Performance test to measure hand evaluation optimizations.
+Performance benchmarks and optimization tests for Poker Knight
 """
 
+import sys
+import os
+# Add parent directory to path to allow importing poker_knight
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import unittest
 import time
-from poker_solver import solve_poker_hand, MonteCarloSolver
+from poker_knight import solve_poker_hand, MonteCarloSolver
 from collections import defaultdict
 
 def run_performance_test():
@@ -96,7 +102,7 @@ def run_performance_test():
     print("\n🔬 Hand Evaluation Performance Test")
     print("=" * 40)
     
-    from poker_solver import HandEvaluator, Card
+    from poker_knight import HandEvaluator, Card
     
     # Create test hands for different types
     test_hands = {

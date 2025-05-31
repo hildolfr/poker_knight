@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-Performance Regression Tests for Poker Knight
-Validates that performance optimizations maintain accuracy and meet performance targets.
+Performance regression tests for Poker Knight
+
+Ensures that performance improvements and optimizations don't introduce
+accuracy regressions or break existing functionality.
 """
 
 import unittest
 import time
 import statistics
-from poker_solver import solve_poker_hand, MonteCarloSolver
+from poker_knight import solve_poker_hand, MonteCarloSolver
 
 class TestPerformanceRegression(unittest.TestCase):
     """Test suite for performance regression validation."""
@@ -238,7 +240,7 @@ class TestPerformanceBenchmarks(unittest.TestCase):
     
     def test_hand_evaluation_speed(self):
         """Benchmark hand evaluation speed."""
-        from poker_solver import HandEvaluator, Card
+        from poker_knight import HandEvaluator, Card
         
         evaluator = HandEvaluator()
         

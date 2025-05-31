@@ -7,7 +7,7 @@
 
   [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Version: 1.2.1](https://img.shields.io/badge/version-1.2.1-green.svg)](CHANGELOG.md)
+  [![Version: 1.3.0](https://img.shields.io/badge/version-1.3.0-green.svg)](docs/CHANGELOG.md)
 </div>
 
 ## ✨ Features
@@ -172,16 +172,23 @@ result = solve_poker_hand(['K♠️', 'K♥️'], 3, simulation_mode="precision"
 
 ## 🧪 Testing
 
-Run the test suite:
+Run the comprehensive test suite:
 
 ```bash
-python test_poker_solver.py
-```
+# Use the convenient test runner
+python run_tests.py
 
-Run examples:
+# Run specific test categories
+python run_tests.py --unit          # Unit tests only
+python run_tests.py --statistical   # Statistical validation
+python run_tests.py --performance   # Performance benchmarks
+python run_tests.py --quick         # Quick validation tests
 
-```bash
-python example_usage.py
+# Or use pytest directly
+python -m pytest tests/             # All tests
+python -m pytest tests/test_poker_solver.py  # Specific test file
+python -m pytest tests/ -v          # Verbose output
+python -m pytest -m unit            # Tests marked as 'unit'
 ```
 
 ## 🎮 Integration Example
@@ -209,11 +216,11 @@ class PokerAI:
 
 ## 📊 Statistical Validation
 
-Poker Knight v1.2.1 includes comprehensive statistical validation to ensure Monte Carlo simulation accuracy and reliability.
+Poker Knight v1.3.0 includes comprehensive statistical validation to ensure Monte Carlo simulation accuracy and reliability.
 
 ### Validation Test Suite
 
-The statistical validation suite (`test_statistical_validation.py`) performs rigorous testing against established poker mathematics and statistical principles:
+The statistical validation suite (`tests/test_statistical_validation.py`) performs rigorous testing against established poker mathematics and statistical principles:
 
 #### 🧮 **Chi-Square Goodness-of-Fit Testing**
 - Tests hand category distributions against expected poker probabilities
@@ -334,4 +341,52 @@ This project is provided as-is for educational and development purposes.
 
 ---
 
-**Poker Knight v1.2.1** - Empowering AI poker players with precise, fast hand analysis. 
+**Poker Knight v1.3.0** - Empowering AI poker players with precise, fast hand analysis.
+
+## 📁 Project Structure
+
+```
+poker_knight/
+├── poker_knight/                    # Main package
+│   ├── __init__.py                 # Package initialization and exports
+│   ├── solver.py                   # Core Monte Carlo solver implementation
+│   └── config.json                 # Default configuration settings
+├── tests/                          # Comprehensive test suite
+│   ├── __init__.py                 # Test package initialization
+│   ├── test_poker_solver.py        # Core functionality tests
+│   ├── test_statistical_validation.py  # Statistical accuracy tests
+│   ├── test_performance_regression.py  # Performance regression tests
+│   ├── test_performance.py         # Performance benchmarks
+│   ├── test_parallel.py           # Parallel processing tests
+│   ├── test_precision.py          # Precision mode tests
+│   ├── test_validation.py         # Input validation tests
+│   ├── test_fix.py                # Bug fix verification tests
+│   └── test_debug.py              # Debug and troubleshooting tests
+├── examples/                       # Usage examples and demos
+│   └── example_usage.py           # Comprehensive usage examples
+├── docs/                          # Documentation
+│   ├── CHANGELOG.md               # Version history and changes
+│   ├── IMPLEMENTATION_SUMMARY.md  # Technical implementation details
+│   ├── RELEASE_NOTES_v1.1.0.md   # Release notes for v1.1.0
+│   ├── RELEASE_NOTES_v1.2.0.md   # Release notes for v1.2.0
+│   └── assets/                    # Documentation assets
+│       └── poker_knight_logo.png  # Project logo
+├── .specstory/                    # Development history (optional)
+├── README.md                      # This file
+├── setup.py                       # Package installation configuration
+├── pytest.ini                     # Test configuration
+├── run_tests.py                   # Convenient test runner script
+├── MANIFEST.in                    # Package distribution manifest
+├── VERSION                        # Version number
+├── TODO.md                        # Development tasks (completed)
+├── LICENSE                        # MIT license
+└── .gitignore                     # Git ignore patterns
+```
+
+## 📖 Examples
+
+See the example usage:
+
+```bash
+python examples/example_usage.py
+``` 

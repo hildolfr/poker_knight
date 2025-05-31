@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Quick test script to verify the simulation timeout fix
+Test fix for issues
 """
 
-from poker_solver import solve_poker_hand
+import sys
+import os
+# Add parent directory to path to allow importing poker_knight
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from poker_knight import solve_poker_hand
 
 def test_simulation_modes():
     print("Testing simulation timeout fix...")

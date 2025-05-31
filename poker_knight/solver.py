@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Poker Knight v1.2.1 - Monte Carlo Texas Hold'em Poker Solver
+Poker Knight v1.3.0 - Monte Carlo Texas Hold'em Poker Solver
 
 A high-performance Monte Carlo poker simulation engine that calculates win probabilities
 for Texas Hold'em scenarios with accurate card removal effects and statistical confidence intervals.
@@ -8,11 +8,12 @@ for Texas Hold'em scenarios with accurate card removal effects and statistical c
 Optimized for AI poker systems requiring fast, reliable hand strength analysis.
 
 Author: Assistant
-Version: 1.2.1
+Version: 1.3.0
 License: MIT
 """
 
 import json
+import os
 import random
 import time
 from typing import List, Tuple, Optional, Dict, Any
@@ -23,7 +24,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
 
 # Module metadata
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 __author__ = "Assistant"
 __license__ = "MIT"
 __all__ = [
@@ -276,7 +277,11 @@ class SimulationResult:
 class MonteCarloSolver:
     """Monte Carlo poker solver for Texas Hold'em."""
     
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: Optional[str] = None):
+        if config_path is None:
+            # Use package-relative path
+            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        
         with open(config_path, 'r') as f:
             self.config = json.load(f)
         
