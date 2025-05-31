@@ -371,7 +371,6 @@ poker_knight/
 │   ├── RELEASE_NOTES_v1.2.0.md   # Release notes for v1.2.0
 │   └── assets/                    # Documentation assets
 │       └── poker_knight_logo.png  # Project logo
-├── .specstory/                    # Development history (optional)
 ├── README.md                      # This file
 ├── setup.py                       # Package installation configuration
 ├── pytest.ini                     # Test configuration
