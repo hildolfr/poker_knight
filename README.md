@@ -23,7 +23,7 @@
 ## 🚀 Quick Start
 
 ```python
-from poker_solver import solve_poker_hand
+from poker_knight import solve_poker_hand
 
 # Analyze pocket aces pre-flop against 2 opponents
 result = solve_poker_hand(['A♠️', 'A♥️'], 2)
@@ -45,9 +45,27 @@ print(f"Win probability: {result.win_probability:.1%}")
 
 ## 🔧 Installation
 
-Simply copy the files to your project directory:
-- `poker_solver.py` - Main Poker Knight implementation
-- `config.json` - Configuration settings
+### Package Installation
+
+Install the Poker Knight package by copying the `poker_knight/` directory to your project:
+
+```
+your_project/
+├── poker_knight/          # Copy this entire directory
+│   ├── __init__.py
+│   ├── solver.py
+│   └── config.json
+└── your_code.py
+```
+
+### Usage
+
+```python
+from poker_knight import solve_poker_hand
+
+# Now you can use Poker Knight
+result = solve_poker_hand(['A♠️', 'A♥️'], 2)
+```
 
 ## 📖 API Reference
 
@@ -72,7 +90,9 @@ Convenience function for quick analysis.
 Main Poker Knight solver class for advanced usage.
 
 ```python
-solver = MonteCarloSolver("config.json")
+from poker_knight import MonteCarloSolver
+
+solver = MonteCarloSolver()
 result = solver.analyze_hand(['A♠️', 'A♥️'], 2)
 ```
 
@@ -107,18 +127,21 @@ Cards use Unicode emoji suits with standard ranks:
 
 ## ⚙️ Configuration
 
-Edit `config.json` to customize Poker Knight's behavior:
+Edit `poker_knight/config.json` to customize Poker Knight's behavior:
 
 ```json
 {
   "simulation_settings": {
     "default_simulations": 100000,
     "fast_mode_simulations": 10000,
-    "precision_mode_simulations": 500000
+    "precision_mode_simulations": 500000,
+    "parallel_processing": true,
+    "random_seed": null
   },
   "performance_settings": {
     "max_simulation_time_ms": 5000,
-    "early_convergence_threshold": 0.001
+    "early_convergence_threshold": 0.001,
+    "min_simulations_for_convergence": 1000
   },
   "output_settings": {
     "include_confidence_interval": true,
@@ -194,6 +217,8 @@ python -m pytest -m unit            # Tests marked as 'unit'
 ## 🎮 Integration Example
 
 ```python
+from poker_knight import MonteCarloSolver
+
 class PokerAI:
     def __init__(self):
         self.solver = MonteCarloSolver()
