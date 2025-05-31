@@ -196,9 +196,14 @@ Thumbs.db
 # Uncomment if you want to ignore local config modifications
 # config.json
 
+# SpecStory generated files
+.specstory/
+
 # Keep the logo file
 !poker_knight_logo.png
 
 # Test output files
 test_results/
 benchmark_results/ 
+.specstory/history/2025-05-31_08-22-create-action-list-for-codebase.md
+.specstory/history/2025-05-31_08-22-create-action-list-for-codebase.md
