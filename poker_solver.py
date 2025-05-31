@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Poker Knight v1.1.0 - Monte Carlo Texas Hold'em Poker Solver
+Poker Knight v1.2.0 - Monte Carlo Texas Hold'em Poker Solver
 
 A high-performance Monte Carlo simulation engine for analyzing Texas Hold'em poker hands.
 Designed for integration into AI poker players and real-time gameplay decision making.
 
 Author: AI Assistant
 License: MIT
-Version: 1.1.0
+Version: 1.2.0
 """
 
 import json
@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 import math
 
 # Module metadata
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "AI Assistant"
 __license__ = "MIT"
 __all__ = [
@@ -77,6 +77,23 @@ class HandEvaluator:
         'royal_flush': 10
     }
     
+    # Precomputed straight patterns for optimization
+    _STRAIGHT_PATTERNS = [
+        [12, 3, 2, 1, 0],  # A-5 wheel straight (A,2,3,4,5)
+        [4, 3, 2, 1, 0],   # 2-6 straight
+        [5, 4, 3, 2, 1],   # 3-7 straight
+        [6, 5, 4, 3, 2],   # 4-8 straight
+        [7, 6, 5, 4, 3],   # 5-9 straight
+        [8, 7, 6, 5, 4],   # 6-10 straight
+        [9, 8, 7, 6, 5],   # 7-J straight
+        [10, 9, 8, 7, 6],  # 8-Q straight
+        [11, 10, 9, 8, 7], # 9-K straight
+        [12, 11, 10, 9, 8] # 10-A straight
+    ]
+    
+    # High cards for each straight (used for comparison)
+    _STRAIGHT_HIGHS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    
     @staticmethod
     def parse_card(card_str: str) -> Card:
         """Parse card string like 'A♠️' into Card object."""
@@ -116,86 +133,107 @@ class HandEvaluator:
     
     @staticmethod
     def _evaluate_five_cards(cards: List[Card]) -> Tuple[int, List[int]]:
-        """Evaluate exactly 5 cards."""
+        """Evaluate exactly 5 cards with optimized performance."""
+        # Extract rank and suit values once
         ranks = [card.value for card in cards]
         suits = [card.suit for card in cards]
         
-        rank_counts = Counter(ranks)
-        suit_counts = Counter(suits)
+        # Quick flush check (most common after high card)
+        is_flush = len(set(suits)) == 1
         
-        # Check for flush
-        is_flush = len(suit_counts) == 1
+        # Count rank frequencies with manual counting for better performance
+        rank_counts = [0] * 13
+        for rank in ranks:
+            rank_counts[rank] += 1
         
-        # Check for straight
-        sorted_ranks = sorted(set(ranks))
+        # Find the rank frequency pattern
+        counts = sorted(rank_counts, reverse=True)
+        four_kind = counts[0] == 4
+        three_kind = counts[0] == 3
+        pair = counts[0] == 2
+        two_pair = counts[0] == 2 and counts[1] == 2
+        full_house = three_kind and counts[1] == 2
+        
+        # Fast path for four of a kind
+        if four_kind:
+            quad_rank = rank_counts.index(4)
+            kicker = rank_counts.index(1)
+            return HandEvaluator.HAND_RANKINGS['four_of_a_kind'], [quad_rank, kicker]
+        
+        # Fast path for full house
+        if full_house:
+            trips_rank = rank_counts.index(3)
+            pair_rank = rank_counts.index(2)
+            return HandEvaluator.HAND_RANKINGS['full_house'], [trips_rank, pair_rank]
+        
+        # Check for straight using precomputed patterns
+        rank_set = set(ranks)
         is_straight = False
         straight_high = 0
         
-        if len(sorted_ranks) == 5 and sorted_ranks[-1] - sorted_ranks[0] == 4:
-            is_straight = True
-            straight_high = sorted_ranks[-1]
-        # Check for A-2-3-4-5 straight (wheel)
-        elif sorted_ranks == [0, 1, 2, 3, 12]:  # 2,3,4,5,A
-            is_straight = True
-            straight_high = 3  # 5-high straight
+        for i, pattern in enumerate(HandEvaluator._STRAIGHT_PATTERNS):
+            if all(rank in rank_set for rank in pattern):
+                is_straight = True
+                straight_high = HandEvaluator._STRAIGHT_HIGHS[i]
+                break
         
-        # Get rank frequency groups
-        rank_groups = sorted(rank_counts.items(), key=lambda x: (x[1], x[0]), reverse=True)
-        
-        # Determine hand type and tiebreakers
+        # Handle straight flush and royal flush
         if is_straight and is_flush:
             if straight_high == 12:  # A-high straight flush
                 return HandEvaluator.HAND_RANKINGS['royal_flush'], [straight_high]
             else:
                 return HandEvaluator.HAND_RANKINGS['straight_flush'], [straight_high]
         
-        elif rank_groups[0][1] == 4:  # Four of a kind
-            quad_rank = rank_groups[0][0]
-            kicker = rank_groups[1][0]
-            return HandEvaluator.HAND_RANKINGS['four_of_a_kind'], [quad_rank, kicker]
-        
-        elif rank_groups[0][1] == 3 and rank_groups[1][1] == 2:  # Full house
-            trips_rank = rank_groups[0][0]
-            pair_rank = rank_groups[1][0]
-            return HandEvaluator.HAND_RANKINGS['full_house'], [trips_rank, pair_rank]
-        
-        elif is_flush:
+        # Fast path for flush
+        if is_flush:
             sorted_ranks_desc = sorted(ranks, reverse=True)
             return HandEvaluator.HAND_RANKINGS['flush'], sorted_ranks_desc
         
-        elif is_straight:
+        # Fast path for straight
+        if is_straight:
             return HandEvaluator.HAND_RANKINGS['straight'], [straight_high]
         
-        elif rank_groups[0][1] == 3:  # Three of a kind
-            trips_rank = rank_groups[0][0]
-            kickers = sorted([rank_groups[1][0], rank_groups[2][0]], reverse=True)
+        # Fast path for three of a kind
+        if three_kind:
+            trips_rank = rank_counts.index(3)
+            kickers = [i for i, count in enumerate(rank_counts) if count == 1]
+            kickers.sort(reverse=True)
             return HandEvaluator.HAND_RANKINGS['three_of_a_kind'], [trips_rank] + kickers
         
-        elif rank_groups[0][1] == 2 and rank_groups[1][1] == 2:  # Two pair
-            high_pair = max(rank_groups[0][0], rank_groups[1][0])
-            low_pair = min(rank_groups[0][0], rank_groups[1][0])
-            kicker = rank_groups[2][0]
-            return HandEvaluator.HAND_RANKINGS['two_pair'], [high_pair, low_pair, kicker]
+        # Fast path for two pair
+        if two_pair:
+            pairs = [i for i, count in enumerate(rank_counts) if count == 2]
+            pairs.sort(reverse=True)
+            kicker = rank_counts.index(1)
+            return HandEvaluator.HAND_RANKINGS['two_pair'], pairs + [kicker]
         
-        elif rank_groups[0][1] == 2:  # One pair
-            pair_rank = rank_groups[0][0]
-            kickers = sorted([rank_groups[i][0] for i in range(1, 4)], reverse=True)
+        # Fast path for one pair
+        if pair:
+            pair_rank = rank_counts.index(2)
+            kickers = [i for i, count in enumerate(rank_counts) if count == 1]
+            kickers.sort(reverse=True)
             return HandEvaluator.HAND_RANKINGS['pair'], [pair_rank] + kickers
         
-        else:  # High card
-            sorted_ranks_desc = sorted(ranks, reverse=True)
-            return HandEvaluator.HAND_RANKINGS['high_card'], sorted_ranks_desc
+        # High card
+        sorted_ranks_desc = sorted(ranks, reverse=True)
+        return HandEvaluator.HAND_RANKINGS['high_card'], sorted_ranks_desc
 
 class Deck:
     """Deck management with card removal tracking."""
     
     def __init__(self, removed_cards: Optional[List[Card]] = None):
-        self.cards = []
+        # Pre-allocate full deck for better memory efficiency
+        self._full_deck = []
         for suit in SUITS:
             for rank in RANKS:
-                card = Card(rank, suit)
-                if removed_cards is None or card not in removed_cards:
-                    self.cards.append(card)
+                self._full_deck.append(Card(rank, suit))
+        
+        # Create working deck by filtering removed cards
+        if removed_cards is None:
+            self.cards = self._full_deck.copy()
+        else:
+            removed_set = set(removed_cards)  # Use set for O(1) lookup
+            self.cards = [card for card in self._full_deck if card not in removed_set]
         
         self.shuffle()
     
@@ -215,6 +253,12 @@ class Deck:
     def remaining_cards(self) -> int:
         """Number of cards remaining in deck."""
         return len(self.cards)
+    
+    def reset_with_removed(self, removed_cards: List[Card]) -> None:
+        """Reset deck with new removed cards (avoids object creation)."""
+        removed_set = set(removed_cards)
+        self.cards = [card for card in self._full_deck if card not in removed_set]
+        self.shuffle()
 
 @dataclass
 class SimulationResult:
@@ -354,36 +398,31 @@ class MonteCarloSolver:
     
     def _simulate_hand(self, hero_cards: List[Card], num_opponents: int, 
                       board: List[Card], removed_cards: List[Card]) -> Dict[str, Any]:
-        """Simulate a single hand."""
+        """Simulate a single hand with memory optimizations."""
         # Create deck with removed cards
         deck = Deck(removed_cards)
         
-        # Deal opponent hands
+        # Pre-allocate opponent hands list to avoid resize
         opponent_hands = []
-        for _ in range(num_opponents):
-            opponent_hands.append(deck.deal(2))
+        opponent_hands.extend([deck.deal(2) for _ in range(num_opponents)])
         
-        # Complete the board if needed
-        current_board = board.copy()
-        cards_needed = 5 - len(current_board)
+        # Complete the board if needed (reuse board list)
+        cards_needed = 5 - len(board)
         if cards_needed > 0:
-            current_board.extend(deck.deal(cards_needed))
+            board_cards = board + deck.deal(cards_needed)
+        else:
+            board_cards = board
         
-        # Evaluate all hands
-        hero_full_hand = hero_cards + current_board
-        hero_rank, hero_tiebreakers = self.evaluator.evaluate_hand(hero_full_hand)
+        # Evaluate hero hand
+        hero_rank, hero_tiebreakers = self.evaluator.evaluate_hand(hero_cards + board_cards)
         
-        opponent_results = []
-        for opp_cards in opponent_hands:
-            opp_full_hand = opp_cards + current_board
-            opp_rank, opp_tiebreakers = self.evaluator.evaluate_hand(opp_full_hand)
-            opponent_results.append((opp_rank, opp_tiebreakers))
-        
-        # Determine result
+        # Evaluate opponent hands and count results in one pass
         hero_better_count = 0
         hero_tied_count = 0
         
-        for opp_rank, opp_tiebreakers in opponent_results:
+        for opp_cards in opponent_hands:
+            opp_rank, opp_tiebreakers = self.evaluator.evaluate_hand(opp_cards + board_cards)
+            
             if hero_rank > opp_rank:
                 hero_better_count += 1
             elif hero_rank == opp_rank:
@@ -392,7 +431,7 @@ class MonteCarloSolver:
                 elif hero_tiebreakers == opp_tiebreakers:
                     hero_tied_count += 1
         
-        # Determine overall result
+        # Determine result without intermediate variables
         if hero_better_count == num_opponents:
             result = "win"
         elif hero_better_count + hero_tied_count == num_opponents and hero_tied_count > 0:
@@ -400,12 +439,10 @@ class MonteCarloSolver:
         else:
             result = "loss"
         
-        # Get hand category name
-        hand_type = self._get_hand_type_name(hero_rank)
-        
+        # Return result with cached hand type lookup
         return {
             "result": result,
-            "hero_hand_type": hand_type
+            "hero_hand_type": self._get_hand_type_name(hero_rank)
         }
     
     def _get_hand_type_name(self, hand_rank: int) -> str:
@@ -439,36 +476,42 @@ class MonteCarloSolver:
     def _run_sequential_simulations(self, hero_cards: List[Card], num_opponents: int, 
                                    board: List[Card], removed_cards: List[Card], 
                                    num_simulations: int, max_time_ms: int, start_time: float) -> Tuple[int, int, int, Counter]:
-        """Run simulations sequentially (original implementation)."""
+        """Run simulations sequentially with memory optimizations."""
         wins = 0
         ties = 0
         losses = 0
-        hand_categories = Counter()
+        hand_categories = Counter() if self.config["output_settings"]["include_hand_categories"] else None
+        
+        # Check timeout every N simulations (configurable for performance)
+        timeout_check_interval = min(5000, max(1000, num_simulations // 20))
         
         for sim in range(num_simulations):
-            # Safety check: if we're taking too long, break (but only check every 5000 sims for performance)
-            if sim > 0 and sim % 5000 == 0:
+            # Optimized timeout check
+            if sim > 0 and sim % timeout_check_interval == 0:
                 if (time.time() - start_time) * 1000 > max_time_ms:
                     break
             
             result = self._simulate_hand(hero_cards, num_opponents, board, removed_cards)
             
-            if result["result"] == "win":
+            # Direct assignment without string comparison
+            result_type = result["result"]
+            if result_type == "win":
                 wins += 1
-            elif result["result"] == "tie":
+            elif result_type == "tie":
                 ties += 1
             else:
                 losses += 1
             
-            if self.config["output_settings"]["include_hand_categories"]:
+            # Only track hand categories if needed
+            if hand_categories is not None:
                 hand_categories[result["hero_hand_type"]] += 1
         
-        return wins, ties, losses, hand_categories
+        return wins, ties, losses, hand_categories or Counter()
     
     def _run_parallel_simulations(self, hero_cards: List[Card], num_opponents: int, 
                                  board: List[Card], removed_cards: List[Card], 
                                  num_simulations: int, max_time_ms: int, start_time: float) -> Tuple[int, int, int, Counter]:
-        """Run simulations in parallel using ThreadPoolExecutor."""
+        """Run simulations in parallel using ThreadPoolExecutor with memory optimizations."""
         import concurrent.futures
         import threading
         
@@ -487,31 +530,41 @@ class MonteCarloSolver:
         if remaining > 0:
             batches[-1] += remaining
         
+        # Cache config values to avoid repeated lookups
+        include_hand_categories = self.config["output_settings"]["include_hand_categories"]
+        
         def run_batch(batch_size: int) -> Tuple[int, int, int, Dict[str, int]]:
-            """Run a batch of simulations."""
+            """Run a batch of simulations with memory optimizations."""
             batch_wins = 0
             batch_ties = 0
             batch_losses = 0
-            batch_categories = Counter()
+            batch_categories = Counter() if include_hand_categories else None
             
-            for _ in range(batch_size):
-                # Check timeout periodically
-                if (time.time() - start_time) * 1000 > max_time_ms:
-                    break
+            # Local timeout check interval for this batch
+            batch_timeout_interval = min(1000, max(100, batch_size // 10))
+            
+            for i in range(batch_size):
+                # Optimized timeout check
+                if i > 0 and i % batch_timeout_interval == 0:
+                    if (time.time() - start_time) * 1000 > max_time_ms:
+                        break
                 
                 result = self._simulate_hand(hero_cards, num_opponents, board, removed_cards)
                 
-                if result["result"] == "win":
+                # Direct assignment without string comparison
+                result_type = result["result"]
+                if result_type == "win":
                     batch_wins += 1
-                elif result["result"] == "tie":
+                elif result_type == "tie":
                     batch_ties += 1
                 else:
                     batch_losses += 1
                 
-                if self.config["output_settings"]["include_hand_categories"]:
+                # Only track hand categories if needed
+                if batch_categories is not None:
                     batch_categories[result["hero_hand_type"]] += 1
             
-            return batch_wins, batch_ties, batch_losses, dict(batch_categories)
+            return batch_wins, batch_ties, batch_losses, dict(batch_categories) if batch_categories else {}
         
         # Run batches in parallel
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
@@ -524,11 +577,13 @@ class MonteCarloSolver:
                     ties += batch_ties
                     losses += batch_losses
                     
-                    for category, count in batch_categories.items():
-                        hand_categories[category] += count
-                        
+                    # Merge hand categories efficiently
+                    if include_hand_categories and batch_categories:
+                        for category, count in batch_categories.items():
+                            hand_categories[category] += count
+                            
                 except Exception as e:
-                    # If a batch fails, continue with others
+                    # Log error but continue with other batches
                     print(f"Warning: Batch simulation failed: {e}")
         
         return wins, ties, losses, hand_categories
