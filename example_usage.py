@@ -30,7 +30,7 @@ def print_result(description, result):
 
 def main():
     """Run example scenarios."""
-    print("♞ Poker Knight v1.1.0 - Example Usage")
+    print("♞ Poker Knight v1.2.1 - Example Usage")
     print("=" * 50)
     
     # Example 1: Premium hand pre-flop
@@ -150,7 +150,7 @@ def main():
     print("• Card removal effects for accurate probability calculation")
     print("• Clean API for integration into larger poker AI systems")
     
-    print("\n♞ Poker Knight v1.1.0 - Empowering AI poker players with precise, fast hand analysis.")
+    print("\n♞ Poker Knight v1.2.1 - Empowering AI poker players with precise, fast hand analysis.")
 
 if __name__ == "__main__":
     main() 

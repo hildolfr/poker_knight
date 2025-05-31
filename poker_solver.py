@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-Poker Knight v1.2.0 - Monte Carlo Texas Hold'em Poker Solver
+Poker Knight v1.2.1 - Monte Carlo Texas Hold'em Poker Solver
 
-A high-performance Monte Carlo simulation engine for analyzing Texas Hold'em poker hands.
-Designed for integration into AI poker players and real-time gameplay decision making.
+A high-performance Monte Carlo poker simulation engine that calculates win probabilities
+for Texas Hold'em scenarios with accurate card removal effects and statistical confidence intervals.
 
-Author: AI Assistant
+Optimized for AI poker systems requiring fast, reliable hand strength analysis.
+
+Author: Assistant
+Version: 1.2.1
 License: MIT
-Version: 1.2.0
 """
 
 import json
@@ -17,12 +19,12 @@ from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
 from collections import Counter
 import itertools
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
 
 # Module metadata
-__version__ = "1.2.0"
-__author__ = "AI Assistant"
+__version__ = "1.2.1"
+__author__ = "Assistant"
 __license__ = "MIT"
 __all__ = [
     "Card", "HandEvaluator", "Deck", "SimulationResult", 
