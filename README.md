@@ -222,6 +222,7 @@ class PokerAI:
 - Randomized opponent hand generation
 - Complete board simulation for incomplete boards
 - Statistical convergence monitoring
+- Parallel processing support for improved performance
 
 ### Performance Optimizations
 
@@ -229,16 +230,13 @@ class PokerAI:
 - Minimal object allocation during simulation
 - Fast card comparison and evaluation
 - Time-bounded execution with early termination
+- Configurable simulation depth based on use case
 
-## 📈 Performance Benchmarks
+### Simulation Modes
 
-Typical performance on modern hardware:
-
-| Mode | Simulations | Time | Accuracy |
-|------|-------------|------|----------|
-| Fast | 10,000 | ~50ms | ±2% |
-| Default | 100,000 | ~500ms | ±0.5% |
-| Precision | 500,000 | ~2.5s | ±0.2% |
+- **Fast Mode**: Lower simulation count for real-time decision making
+- **Default Mode**: Balanced accuracy and speed for general analysis
+- **Precision Mode**: Higher simulation count for critical decisions requiring maximum accuracy
 
 ## 🤝 Contributing
 
