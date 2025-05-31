@@ -7,7 +7,7 @@ for Texas Hold'em scenarios with accurate card removal effects and statistical c
 
 Optimized for AI poker systems requiring fast, reliable hand strength analysis.
 
-Author: Assistant
+Author: hildolfr
 Version: 1.3.0
 License: MIT
 """
@@ -25,7 +25,7 @@ import math
 
 # Module metadata
 __version__ = "1.3.0"
-__author__ = "Assistant"
+__author__ = "hildolfr"
 __license__ = "MIT"
 __all__ = [
     "Card", "HandEvaluator", "Deck", "SimulationResult", 

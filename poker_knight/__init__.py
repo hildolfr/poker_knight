@@ -13,7 +13,7 @@ from .solver import (
 )
 
 __version__ = "1.3.0"
-__author__ = "Assistant"
+__author__ = "hildolfr"
 __license__ = "MIT"
 __all__ = [
     "Card", "HandEvaluator", "Deck", "SimulationResult", 

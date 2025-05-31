@@ -21,12 +21,12 @@ def get_long_description():
 setup(
     name="poker-knight",
     version=get_version(),
-    author="AI Assistant",
+    author="hildolfr",
     author_email="",
     description="A high-performance Monte Carlo Texas Hold'em poker solver for AI poker players",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/poker-knight",
+    url="https://github.com/hildolfr/poker_knight",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -67,9 +67,9 @@ setup(
     },
     keywords="poker texas-holdem monte-carlo simulation ai game-theory probability",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/poker-knight/issues",
-        "Source": "https://github.com/yourusername/poker-knight",
-        "Documentation": "https://github.com/yourusername/poker-knight/blob/main/README.md",
-        "Changelog": "https://github.com/yourusername/poker-knight/blob/main/docs/CHANGELOG.md",
+        "Bug Reports": "https://github.com/hildolfr/poker_knight/issues",
+        "Source": "https://github.com/hildolfr/poker_knight",
+        "Documentation": "https://github.com/hildolfr/poker_knight/blob/main/README.md",
+        "Changelog": "https://github.com/hildolfr/poker_knight/blob/main/docs/CHANGELOG.md",
     },
 ) 

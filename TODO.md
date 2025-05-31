@@ -2,11 +2,11 @@
 
 **Priority-ordered action items with specific line references for incremental updates**
 
-**Current Version:** v1.2.1
+**Current Version:** v1.3.0
 
 ---
 
-## 🎉 **COMPLETED IN v1.2.0**
+## 🎉 **COMPLETED IN v1.2.0 & v1.3.0**
 
 ### ✅ **PRIORITY 1: Critical Issues** - **100% COMPLETE**
 
@@ -17,6 +17,10 @@
 #### ✅ 1.2 Configuration Loading Validation **COMPLETED**
 **Status:** ✅ **VERIFIED IN v1.1.0**  
 **Impact:** Configuration system working correctly across all modes
+
+#### ✅ 1.3 Version Inconsistency **COMPLETED**
+**Status:** ✅ **FIXED IN v1.3.0**  
+**Impact:** All version references now consistently show v1.3.0, author updated to 'hildolfr', GitHub URLs corrected
 
 ### ✅ **PRIORITY 2: Code Quality & Robustness** - **100% COMPLETE**
 
@@ -75,7 +79,7 @@
 **Impact:** Comprehensive edge case test coverage
 
 #### ✅ 4.3 Statistical Validation Tests **COMPLETED**
-**Status:** ✅ **IMPLEMENTED IN v1.2.1**  
+**Status:** ✅ **IMPLEMENTED IN v1.3.0**  
 **File:** `test_statistical_validation.py`  
 **Impact:** Rigorous statistical testing to validate Monte Carlo simulation accuracy
 
@@ -100,20 +104,133 @@
 
 ---
 
-## 🏆 **PROJECT STATUS: 100% COMPLETE**
+## 🚨 **NEW PRIORITY ITEMS FOR v1.4.0**
 
-**All Priority Items Completed Successfully!**
+### **🔴 HIGH PRIORITY - Performance & Architecture**
 
-✅ **Priority 1**: Critical Issues (100% Complete)  
-✅ **Priority 2**: Code Quality & Robustness (100% Complete)  
-✅ **Priority 3**: Performance Optimizations (100% Complete)  
-✅ **Priority 4**: Testing & Validation (100% Complete)  
+#### 🔴 5.1 Hand Evaluation Performance Optimization
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:137-220` (`_evaluate_five_cards()`)  
+**Problem:** Inefficient manual rank counting with index lookups instead of optimized collections.Counter  
+**Impact:** Unnecessary performance overhead in critical evaluation path (each simulation runs thousands of evaluations)  
+**Solution:** Replace manual counting with `collections.Counter` optimized in C  
 
-**Poker Knight v1.2.1** is now a fully mature, production-ready Monte Carlo poker solver with:
-- **🚀 High Performance**: 67-69% faster hand evaluation, 25% memory reduction
-- **🧪 Comprehensive Testing**: 40+ automated tests with statistical validation
+#### 🔴 5.2 Memory Allocation in Hot Paths
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:200-220`  
+**Problem:** Multiple list comprehensions create temporary objects during every hand evaluation  
+```python
+pairs = [i for i, count in enumerate(rank_counts) if count == 2]
+kickers = [i for i, count in enumerate(rank_counts) if count == 1]
+```
+**Impact:** Memory churn during simulation loops  
+**Solution:** Pre-allocate arrays and reuse objects  
+
+#### 🔴 5.3 Parallel Processing Thread Pool Reuse
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:518-580`  
+**Problem:** Thread pool created/destroyed for each analysis call  
+**Impact:** Thread creation overhead reduces parallel efficiency  
+**Solution:** Maintain persistent thread pool in MonteCarloSolver instance  
+
+### **🟡 MEDIUM PRIORITY - Code Quality & Robustness**
+
+#### 🟡 6.1 Enhanced Error Handling
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:280-290` (config loading)  
+**Problem:** Configuration file errors not properly handled - malformed JSON crashes with unclear error  
+**Impact:** Poor user experience and debugging difficulty  
+**Solution:** Add try-catch with descriptive error messages for config issues  
+
+#### 🟡 6.2 Configuration Magic Numbers
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:330-340`  
+**Problem:** Timeout calculations have hard-coded magic numbers scattered throughout  
+```python
+max_time_ms = 3000  # 3 seconds for 10K sims
+max_time_ms = 120000  # 120 seconds for 500K sims
+```
+**Impact:** Hard to maintain and configure  
+**Solution:** Move all timing constants to config.json  
+
+#### 🟡 6.3 Type Safety Improvements
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:455-470`  
+**Problem:** Several methods missing return type hints  
+**Impact:** Reduced IDE support and fewer compile-time bug catches  
+**Solution:** Add complete type annotations throughout  
+
+### **🟢 LOW PRIORITY - Statistical & Testing**
+
+#### 🟢 7.1 Confidence Interval Algorithm Enhancement
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:462-480`  
+**Problem:** Only normal approximation for confidence intervals, inaccurate for extreme probabilities (>95% or <5%)  
+**Impact:** Misleading confidence intervals in edge cases  
+**Solution:** Implement Clopper-Pearson exact binomial confidence intervals  
+
+#### 🟢 7.2 Random Seed Management
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py` (global)  
+**Problem:** No proper random state management between runs  
+**Impact:** Difficult to reproduce specific simulation results for debugging  
+**Solution:** Add seed parameter and proper random state isolation  
+
+#### 🟢 7.3 Extended Test Coverage
+**Status:** 🆕 **NEW ISSUE**  
+**Files:** Missing test files  
+**Problem:** Gaps in test coverage:
+- Configuration validation edge cases
+- Memory leak tests for long-running simulations  
+- Thread safety tests for parallel processing
+- Property-based testing for hand evaluation
+**Impact:** Potential bugs in untested code paths  
+**Solution:** Add comprehensive test coverage for identified gaps  
+
+#### 🟢 7.4 Code Duplication Refactoring
+**Status:** 🆕 **NEW ISSUE**  
+**File:** `poker_knight/solver.py:483-580`  
+**Problem:** Similar simulation logic duplicated in parallel and sequential modes  
+**Impact:** Bug fixes need to be applied in multiple places  
+**Solution:** Extract common simulation logic into shared methods  
+
+### **📈 OPTIMIZATION OPPORTUNITIES**
+
+#### 💡 8.1 Hand Evaluation Memoization
+**Status:** 🆕 **OPTIMIZATION OPPORTUNITY**  
+**File:** `poker_knight/solver.py:113-150`  
+**Opportunity:** Cache hand evaluation results for identical 5-card combinations  
+**Impact:** Significant speedup for repeated evaluations (common in Monte Carlo)  
+**Implementation:** Add LRU cache with configurable size  
+
+#### 💡 8.2 Vectorization Potential
+**Status:** 🆕 **OPTIMIZATION OPPORTUNITY**  
+**File:** `poker_knight/solver.py:137-220`  
+**Opportunity:** Some computations could be vectorized with NumPy  
+**Impact:** Potential 2-3x performance improvement  
+**Implementation:** Optional NumPy dependency for advanced users  
+
+---
+
+## 🏆 **PROJECT STATUS: v1.3.0 STABLE, v1.4.0 PLANNED**
+
+**Completed Successfully:**
+✅ **Priority 1-4**: All original critical issues, code quality, performance, and testing (v1.0-v1.3.0)  
+
+**Newly Identified for v1.4.0:**
+🔴 **3 High Priority Items**: Performance and architecture improvements  
+🟡 **3 Medium Priority Items**: Code quality and robustness enhancements  
+🟢 **4 Low Priority Items**: Statistical improvements and extended testing  
+💡 **2 Optimization Opportunities**: Advanced performance enhancements  
+
+**Poker Knight v1.3.0** is production-ready with:
+- **🚀 High Performance**: Optimized Monte Carlo engine
+- **🧪 Comprehensive Testing**: 60+ automated tests with statistical validation  
 - **🛡️ Robust Validation**: Complete input validation and error handling
 - **📊 Statistical Rigor**: Chi-square tests, confidence intervals, and convergence validation
 - **⚡ Optimized Architecture**: Parallel processing, memory efficiency, and fast evaluation paths
+- **✅ Consistent Versioning**: All components properly versioned and authored
 
 **Ready for production deployment and AI poker system integration!**
+
+**Next milestone: v1.4.0** focusing on advanced performance optimizations and code quality improvements.
