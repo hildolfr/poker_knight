@@ -1,7 +1,7 @@
 # ♞ Poker Knight
 
 <div align="center">
-  <img src="poker_knight_logo.png" alt="Poker Knight Logo" width="400">
+  <img src="docs/assets/poker_knight_logo.png" alt="Poker Knight Logo" width="400">
   
   **A high-performance Monte Carlo Texas Hold'em poker solver designed for AI poker players and real-time gameplay decision making.**
 
