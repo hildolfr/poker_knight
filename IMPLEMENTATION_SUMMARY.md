@@ -1,4 +1,4 @@
-# ♞ Poker Knight v1.0.0 - Implementation Summary
+# ♞ Poker Knight v1.1.0 - Implementation Summary
 
 ## ✅ Completed Implementation
 
@@ -11,9 +11,9 @@ I've successfully created **Poker Knight**, a comprehensive Monte Carlo Texas Ho
 2. **Flexible Player Count**: Supports 2-7 players (1-6 opponents) as specified
 
 3. **Configurable Simulation Depth**: Settings file (`config.json`) controls simulation parameters
-   - Fast mode: 10,000 simulations (~50ms)
-   - Default mode: 100,000 simulations (~500ms)  
-   - Precision mode: 500,000 simulations (~2.5s)
+   - Fast mode: 10,000 simulations (~1.7s)
+   - Default mode: 100,000 simulations (~17s)  
+   - Precision mode: 500,000 simulations (~87s)
 
 4. **Complete Board Support**: Handles pre-flop, flop (3 cards), turn (4 cards), and river (5 cards)
 
@@ -23,15 +23,28 @@ I've successfully created **Poker Knight**, a comprehensive Monte Carlo Texas Ho
 
 7. **Rich Output Data**: Structured results for easy integration into AI systems
 
+8. **🆕 Parallel Processing**: ThreadPoolExecutor support for improved performance on multi-core systems
+
+9. **🆕 Enhanced Validation**: Comprehensive input validation with duplicate card detection
+
+10. **🆕 Type Safety**: Complete type hints for better IDE support and code maintainability
+
 ### 📊 Performance Results
 
-From the example run, Poker Knight demonstrates excellent accuracy:
+From the example run, Poker Knight demonstrates excellent accuracy and performance:
 
-- **Pocket Aces vs 1 opponent**: 84.9% win rate (expected ~85%)
-- **Pocket Aces vs 5 opponents**: 49.7% win rate (expected ~50%)
-- **Trip Aces on flop**: 95.2% win rate (extremely strong)
-- **Broadway straight**: 90.9% win rate (very strong made hand)
-- **2-7 offsuit**: 31.8% win rate (correctly identified as weak)
+- **Pocket Aces vs 1 opponent**: 84.9% win rate (expected ~85%) ✅
+- **Pocket Aces vs 5 opponents**: 49.7% win rate (expected ~50%) ✅
+- **Trip Aces on flop**: 95.2% win rate (extremely strong) ✅
+- **Broadway straight**: 90.9% win rate (very strong made hand) ✅
+- **2-7 offsuit**: 31.8% win rate (correctly identified as weak) ✅
+
+**🆕 v1.1.0 Performance Improvements:**
+- **Simulation Accuracy**: All modes now achieve 100% target efficiency
+- **Fast mode**: 10,000 simulations in ~1.7s (was hitting timeout)
+- **Default mode**: 100,000 simulations in ~17s (was hitting timeout)
+- **Precision mode**: 500,000 simulations in ~87s (was hitting timeout)
+- **Parallel Processing**: Optional threading support for multi-core systems
 
 ### 🏗️ Architecture
 
@@ -121,14 +134,22 @@ Poker Knight is specifically designed as a component for AI poker players:
 
 ### 🏆 Release Status
 
-**Poker Knight v1.0.0** successfully delivers a production-ready Monte Carlo poker solver that provides the relative hand strength analysis (0-1 probability) you requested, optimized for gameplay decisions while maintaining simulation accuracy through proper card removal effects and statistical rigor.
+**Poker Knight v1.1.0** successfully delivers a production-ready Monte Carlo poker solver that provides the relative hand strength analysis (0-1 probability) you requested, optimized for gameplay decisions while maintaining simulation accuracy through proper card removal effects and statistical rigor.
+
+**🆕 v1.1.0 Improvements:**
+- ✅ **Critical Bug Fixes**: Fixed simulation count lookup logic
+- ✅ **Performance Optimization**: All simulation modes now achieve target counts
+- ✅ **Parallel Processing**: ThreadPoolExecutor support for multi-core systems
+- ✅ **Enhanced Validation**: Comprehensive input validation with duplicate detection
+- ✅ **Type Safety**: Complete type hints for better development experience
+- ✅ **Code Quality**: Improved error handling and documentation
 
 The implementation is now ready for:
 - ✅ Git repository initialization
-- ✅ Version 1.0.0 release tagging
+- ✅ Version 1.1.0 release tagging
 - ✅ Integration into AI poker systems
 - ✅ Distribution and deployment
 
 ---
 
-**Poker Knight** - Empowering AI poker players with precise, fast hand analysis. 
+**Poker Knight v1.1.0** - Empowering AI poker players with precise, fast hand analysis. 

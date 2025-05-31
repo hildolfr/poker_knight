@@ -7,7 +7,7 @@
 
   [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Version: 1.0.0](https://img.shields.io/badge/version-1.0.0-green.svg)](CHANGELOG.md)
+  [![Version: 1.1.0](https://img.shields.io/badge/version-1.1.0-green.svg)](CHANGELOG.md)
 </div>
 
 ## ✨ Features
@@ -262,4 +262,4 @@ This project is provided as-is for educational and development purposes.
 
 ---
 
-**Poker Knight v1.0.0** - Empowering AI poker players with precise, fast hand analysis. 
+**Poker Knight v1.1.0** - Empowering AI poker players with precise, fast hand analysis. 

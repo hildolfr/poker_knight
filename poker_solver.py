@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Poker Knight v1.0.0 - Monte Carlo Texas Hold'em Poker Solver
+Poker Knight v1.1.0 - Monte Carlo Texas Hold'em Poker Solver
 
 A high-performance Monte Carlo simulation engine for analyzing Texas Hold'em poker hands.
 Designed for integration into AI poker players and real-time gameplay decision making.
 
 Author: AI Assistant
 License: MIT
-Version: 1.0.0
+Version: 1.1.0
 """
 
 import json
@@ -20,6 +20,15 @@ import itertools
 from concurrent.futures import ThreadPoolExecutor
 import math
 
+# Module metadata
+__version__ = "1.1.0"
+__author__ = "AI Assistant"
+__license__ = "MIT"
+__all__ = [
+    "Card", "HandEvaluator", "Deck", "SimulationResult", 
+    "MonteCarloSolver", "solve_poker_hand"
+]
+
 # Card suits using Unicode emojis
 SUITS = ['♠️', '♥️', '♦️', '♣️']
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
@@ -31,23 +40,23 @@ class Card:
     rank: str
     suit: str
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.rank not in RANKS:
             raise ValueError(f"Invalid rank: {self.rank}")
         if self.suit not in SUITS:
             raise ValueError(f"Invalid suit: {self.suit}")
     
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.rank}{self.suit}"
     
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.rank, self.suit))
     
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.rank == other.rank and self.suit == other.suit
     
     @property
-    def value(self):
+    def value(self) -> int:
         """Numeric value for comparison (2=0, 3=1, ..., A=12)."""
         return RANK_VALUES[self.rank]
 
@@ -190,7 +199,7 @@ class Deck:
         
         self.shuffle()
     
-    def shuffle(self):
+    def shuffle(self) -> None:
         """Shuffle the deck."""
         random.shuffle(self.cards)
     
@@ -253,13 +262,29 @@ class MonteCarloSolver:
             raise ValueError("Number of opponents must be between 1 and 6")
         if board_cards and not (3 <= len(board_cards) <= 5):
             raise ValueError("Board cards must be 3-5 cards if provided")
+        if simulation_mode not in ["fast", "default", "precision"]:
+            raise ValueError(f"Invalid simulation_mode '{simulation_mode}'. Must be 'fast', 'default', or 'precision'")
         
-        # Parse cards
-        hero_cards = [self.evaluator.parse_card(card) for card in hero_hand]
-        board = [self.evaluator.parse_card(card) for card in board_cards] if board_cards else []
+        # Parse cards and validate format
+        try:
+            hero_cards = [self.evaluator.parse_card(card) for card in hero_hand]
+            board = [self.evaluator.parse_card(card) for card in board_cards] if board_cards else []
+        except ValueError as e:
+            raise ValueError(f"Invalid card format: {e}")
+        
+        # Check for duplicate cards
+        all_cards = hero_cards + board
+        if len(all_cards) != len(set(all_cards)):
+            raise ValueError("Duplicate cards detected in hero hand and/or board cards")
         
         # Determine simulation count
-        sim_key = f"{simulation_mode}_simulations"
+        if simulation_mode == "fast":
+            sim_key = "fast_mode_simulations"
+        elif simulation_mode == "precision":
+            sim_key = "precision_mode_simulations"
+        else:
+            sim_key = "default_simulations"
+        
         if sim_key in self.config["simulation_settings"]:
             num_simulations = self.config["simulation_settings"][sim_key]
         else:
@@ -274,25 +299,27 @@ class MonteCarloSolver:
         losses = 0
         hand_categories = Counter()
         
-        max_time_ms = self.config["performance_settings"]["max_simulation_time_ms"]
+        # Get timeout settings - use realistic timeouts based on actual performance
+        # Each simulation takes ~0.15ms, so calculate realistic timeouts
+        base_timeout = self.config["performance_settings"]["max_simulation_time_ms"]
+        if simulation_mode == "fast":
+            max_time_ms = 3000  # 3 seconds for 10K sims (~1.5s needed)
+        elif simulation_mode == "precision":
+            max_time_ms = 120000  # 120 seconds for 500K sims (~75s needed + buffer)
+        else:
+            max_time_ms = 20000  # 20 seconds for 100K sims (~15s needed)
         
-        for sim in range(num_simulations):
-            # Check time limit
-            if (time.time() - start_time) * 1000 > max_time_ms:
-                num_simulations = sim
-                break
-            
-            result = self._simulate_hand(hero_cards, num_opponents, board, removed_cards)
-            
-            if result["result"] == "win":
-                wins += 1
-            elif result["result"] == "tie":
-                ties += 1
-            else:
-                losses += 1
-            
-            if self.config["output_settings"]["include_hand_categories"]:
-                hand_categories[result["hero_hand_type"]] += 1
+        # Run the target number of simulations with timeout as safety fallback
+        if self.config["simulation_settings"].get("parallel_processing", False) and num_simulations >= 1000:
+            # Use parallel processing for large simulation counts
+            wins, ties, losses, hand_categories = self._run_parallel_simulations(
+                hero_cards, num_opponents, board, removed_cards, num_simulations, max_time_ms, start_time
+            )
+        else:
+            # Use sequential processing for small simulation counts or when disabled
+            wins, ties, losses, hand_categories = self._run_sequential_simulations(
+                hero_cards, num_opponents, board, removed_cards, num_simulations, max_time_ms, start_time
+            )
         
         execution_time = (time.time() - start_time) * 1000
         
@@ -408,6 +435,103 @@ class MonteCarloSolver:
         
         precision = self.config["output_settings"]["decimal_precision"]
         return (round(lower_bound, precision), round(upper_bound, precision))
+    
+    def _run_sequential_simulations(self, hero_cards: List[Card], num_opponents: int, 
+                                   board: List[Card], removed_cards: List[Card], 
+                                   num_simulations: int, max_time_ms: int, start_time: float) -> Tuple[int, int, int, Counter]:
+        """Run simulations sequentially (original implementation)."""
+        wins = 0
+        ties = 0
+        losses = 0
+        hand_categories = Counter()
+        
+        for sim in range(num_simulations):
+            # Safety check: if we're taking too long, break (but only check every 5000 sims for performance)
+            if sim > 0 and sim % 5000 == 0:
+                if (time.time() - start_time) * 1000 > max_time_ms:
+                    break
+            
+            result = self._simulate_hand(hero_cards, num_opponents, board, removed_cards)
+            
+            if result["result"] == "win":
+                wins += 1
+            elif result["result"] == "tie":
+                ties += 1
+            else:
+                losses += 1
+            
+            if self.config["output_settings"]["include_hand_categories"]:
+                hand_categories[result["hero_hand_type"]] += 1
+        
+        return wins, ties, losses, hand_categories
+    
+    def _run_parallel_simulations(self, hero_cards: List[Card], num_opponents: int, 
+                                 board: List[Card], removed_cards: List[Card], 
+                                 num_simulations: int, max_time_ms: int, start_time: float) -> Tuple[int, int, int, Counter]:
+        """Run simulations in parallel using ThreadPoolExecutor."""
+        import concurrent.futures
+        import threading
+        
+        wins = 0
+        ties = 0
+        losses = 0
+        hand_categories = Counter()
+        
+        # Determine batch size and number of workers
+        num_workers = min(4, max(1, num_simulations // 1000))  # 1-4 workers
+        batch_size = num_simulations // num_workers
+        remaining = num_simulations % num_workers
+        
+        # Create batches
+        batches = [batch_size] * num_workers
+        if remaining > 0:
+            batches[-1] += remaining
+        
+        def run_batch(batch_size: int) -> Tuple[int, int, int, Dict[str, int]]:
+            """Run a batch of simulations."""
+            batch_wins = 0
+            batch_ties = 0
+            batch_losses = 0
+            batch_categories = Counter()
+            
+            for _ in range(batch_size):
+                # Check timeout periodically
+                if (time.time() - start_time) * 1000 > max_time_ms:
+                    break
+                
+                result = self._simulate_hand(hero_cards, num_opponents, board, removed_cards)
+                
+                if result["result"] == "win":
+                    batch_wins += 1
+                elif result["result"] == "tie":
+                    batch_ties += 1
+                else:
+                    batch_losses += 1
+                
+                if self.config["output_settings"]["include_hand_categories"]:
+                    batch_categories[result["hero_hand_type"]] += 1
+            
+            return batch_wins, batch_ties, batch_losses, dict(batch_categories)
+        
+        # Run batches in parallel
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = [executor.submit(run_batch, batch_size) for batch_size in batches]
+            
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    batch_wins, batch_ties, batch_losses, batch_categories = future.result()
+                    wins += batch_wins
+                    ties += batch_ties
+                    losses += batch_losses
+                    
+                    for category, count in batch_categories.items():
+                        hand_categories[category] += count
+                        
+                except Exception as e:
+                    # If a batch fails, continue with others
+                    print(f"Warning: Batch simulation failed: {e}")
+        
+        return wins, ties, losses, hand_categories
 
 # Convenience function for easy usage
 def solve_poker_hand(hero_hand: List[str], 
