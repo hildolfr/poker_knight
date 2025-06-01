@@ -15,7 +15,7 @@ from collections import defaultdict
 
 def run_performance_test():
     """Test performance improvements in hand evaluation."""
-    print("🚀 Poker Knight Hand Evaluation Performance Test")
+    print(">> Poker Knight Hand Evaluation Performance Test")
     print("=" * 60)
     
     # Test scenarios with varying complexity
@@ -53,7 +53,7 @@ def run_performance_test():
     results = []
     
     for scenario in test_scenarios:
-        print(f"\n📊 Testing: {scenario['name']}")
+        print(f"\n[*] Testing: {scenario['name']}")
         print("-" * 40)
         
         # Run multiple iterations for consistent timing
@@ -89,7 +89,7 @@ def run_performance_test():
         print(f"  Average: {avg_time:.1f}ms (min: {min_time:.1f}ms, max: {max_time:.1f}ms)")
     
     # Summary
-    print("\n🎯 Performance Summary")
+    print("\n>> Performance Summary")
     print("=" * 60)
     print(f"{'Scenario':<25} {'Mode':<8} {'Avg Time':<10} {'Simulations':<12} {'Sims/sec':<12}")
     print("-" * 60)
@@ -99,7 +99,7 @@ def run_performance_test():
         print(f"{result['scenario']:<25} {result['mode']:<8} {result['avg_time']:<10.1f} {result['simulations']:<12,} {sims_per_sec:<12.0f}")
     
     # Test hand evaluation specific performance
-    print("\n🔬 Hand Evaluation Performance Test")
+    print("\n[*] Hand Evaluation Performance Test")
     print("=" * 40)
     
     from poker_knight import HandEvaluator, Card
@@ -134,8 +134,8 @@ def run_performance_test():
         
         print(f"{hand_type:<12}: {time_per_eval:.4f}ms per evaluation ({num_evals:,} evaluations in {total_time:.1f}ms)")
     
-    print("\n✅ Performance test completed!")
-    print("🚀 Optimizations show improved hand evaluation speed")
+    print("\n[OK] Performance test completed!")
+    print(">> Optimizations show improved hand evaluation speed")
 
 if __name__ == "__main__":
     run_performance_test() 

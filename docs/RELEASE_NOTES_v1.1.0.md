@@ -162,7 +162,7 @@ print(f"Simulations: {result.simulations_run}")  # Should show 10,000
 
 ### **Planned for Future Versions**
 - **v1.2.0**: Complete performance optimizations (hand evaluation, memory usage)
-- **v1.3.0**: Enhanced testing suite and API improvements
+- **v1.4.0**: Enhanced testing suite and API improvements
 - **v2.0.0**: Advanced features (opponent modeling, tournament support)
 
 ---
@@ -182,3 +182,8 @@ This release addresses critical issues identified through comprehensive testing 
 ---
 
 **Poker Knight v1.1.0** - Now with 100% simulation accuracy and enhanced reliability! 🎯 
+
+**Poker Knight Development Roadmap:**
+- **v1.1.0**: Core optimization and parallel processing foundation ✅
+- **v1.2.0**: Advanced performance optimizations and comprehensive testing ✅
+- **v1.4.0**: Enhanced testing suite and API improvements 

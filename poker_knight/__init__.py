@@ -1,10 +1,15 @@
 """
-Poker Knight - Monte Carlo Texas Hold'em Poker Solver
+♞ Poker Knight - Monte Carlo Texas Hold'em Poker Solver
 
-A high-performance Monte Carlo poker simulation engine that calculates win probabilities
-for Texas Hold'em scenarios with accurate card removal effects and statistical confidence intervals.
+A high-performance, statistically validated Monte Carlo poker analysis library
+optimized for AI applications and poker strategy research.
 
-Optimized for AI poker systems requiring fast, reliable hand strength analysis.
+Key Features:
+- Monte Carlo simulation engine for precise hand analysis
+- Configurable simulation modes (fast/default/precision)
+- Parallel processing with intelligent thread management
+- Comprehensive statistical validation and confidence intervals
+- Memory-optimized algorithms for high-throughput analysis
 """
 
 from .solver import (
@@ -12,7 +17,7 @@ from .solver import (
     solve_poker_hand, SimulationResult
 )
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 __author__ = "hildolfr"
 __license__ = "MIT"
 __all__ = [

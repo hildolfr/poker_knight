@@ -1,16 +1,38 @@
 #!/usr/bin/env python3
 """
-Poker Knight - Example Usage
-Demonstrates various scenarios and features of the Poker Knight Monte Carlo solver.
+♞ Poker Knight v1.4.0 - Example Usage
+
+Comprehensive examples demonstrating the capabilities of the Poker Knight
+Monte Carlo poker solver for various Texas Hold'em scenarios.
+
+This example file showcases:
+- Basic hand analysis
+- Multi-opponent scenarios
+- Board texture analysis
+- Confidence interval interpretation
+- Performance optimization tips
+- Statistical validation features
+
+Author: hildolfr
+License: MIT
 """
 
 import sys
 import os
+import time
+import statistics
+from typing import List, Tuple
 # Add parent directory to path to allow importing poker_knight
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from poker_knight import solve_poker_hand, MonteCarloSolver
-import time
+try:
+    from poker_knight import solve_poker_hand, MonteCarloSolver
+    print("♞ Poker Knight v1.4.0 - Example Usage")
+    print("="*50)
+except ImportError as e:
+    print(f"Error importing poker_knight: {e}")
+    print("Make sure you're running this from the examples/ directory")
+    sys.exit(1)
 
 def print_result(description, result):
     """Pretty print a simulation result."""
@@ -35,7 +57,7 @@ def print_result(description, result):
 
 def main():
     """Run example scenarios."""
-    print("♞ Poker Knight v1.3.0 - Example Usage")
+    print("♞ Poker Knight v1.4.0 - Example Usage")
     print("=" * 50)
     
     # Example 1: Premium hand pre-flop
@@ -155,7 +177,8 @@ def main():
     print("• Card removal effects for accurate probability calculation")
     print("• Clean API for integration into larger poker AI systems")
     
-    print("\n♞ Poker Knight v1.3.0 - Empowering AI poker players with precise, fast hand analysis.")
+    print("\n♞ Poker Knight v1.4.0 - Empowering AI poker players with precise, fast hand analysis.")
 
 if __name__ == "__main__":
-    main() 
+    main()
+    print("\n♞ Poker Knight v1.4.0 - Empowering AI poker players with precise, fast hand analysis.") 

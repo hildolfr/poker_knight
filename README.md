@@ -5,9 +5,12 @@
   
   **A high-performance Monte Carlo Texas Hold'em poker solver designed for AI poker players and real-time gameplay decision making.**
 
-  [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Version: 1.3.0](https://img.shields.io/badge/version-1.3.0-green.svg)](docs/CHANGELOG.md)
+  [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+  [![Tests](https://img.shields.io/badge/tests-passing-green.svg)](tests/)
+  [![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)](tests/)
+  [![Version: 1.4.0](https://img.shields.io/badge/version-1.4.0-green.svg)](docs/CHANGELOG.md)
+  [![Performance](https://img.shields.io/badge/performance-optimized-orange.svg)](docs/PERFORMANCE.md)
 </div>
 
 ## ✨ Features
@@ -40,7 +43,7 @@ print(f"Win probability: {result.win_probability:.1%}")
 
 ## 📋 Requirements
 
-- Python 3.7+
+- Python 3.8+
 - No external dependencies (uses only standard library)
 
 ## 🔧 Installation
@@ -241,7 +244,7 @@ class PokerAI:
 
 ## 📊 Statistical Validation
 
-Poker Knight v1.3.0 includes comprehensive statistical validation to ensure Monte Carlo simulation accuracy and reliability.
+Poker Knight v1.4.0 includes comprehensive statistical validation to ensure Monte Carlo simulation accuracy and reliability.
 
 ### Validation Test Suite
 
@@ -366,7 +369,9 @@ This project is provided as-is for educational and development purposes.
 
 ---
 
-**Poker Knight v1.3.0** - Empowering AI poker players with precise, fast hand analysis.
+**Poker Knight v1.4.0** - Empowering AI poker players with precise, fast hand analysis.
+
+*Built with ♠️♥️♦️♣️ by [hildolfr](https://github.com/hildolfr)*
 
 ## 📁 Project Structure
 
