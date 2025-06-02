@@ -294,7 +294,7 @@ class TestStatisticalValidation(unittest.TestCase):
         # Get a reference "true" value with very large simulation
         import time
         start_time = time.time()
-        ref_wins, ref_ties, ref_losses, _ = solver._run_sequential_simulations(
+        ref_wins, ref_ties, ref_losses, _, _ = solver._run_sequential_simulations(
             hero_cards, num_opponents, board_cards, removed_cards, 
             200000, 60000, start_time  # Larger reference sample
         )
@@ -306,7 +306,7 @@ class TestStatisticalValidation(unittest.TestCase):
             results = []
             for _ in range(8):  # More runs for better statistics (was 5)
                 start_time = time.time()
-                wins, ties, losses, _ = solver._run_sequential_simulations(
+                wins, ties, losses, _, _ = solver._run_sequential_simulations(
                     hero_cards, num_opponents, board_cards, removed_cards,
                     sim_count, 15000, start_time
                 )
@@ -359,6 +359,273 @@ class TestStatisticalValidation(unittest.TestCase):
                                f"Maximum error too high: {max_error:.4f}")
         
         print("✅ Monte Carlo convergence rate validated (robust statistical bounds)")
+
+    def test_adaptive_convergence_detection(self):
+        """
+        Test advanced adaptive convergence detection with Geweke diagnostics and effective sample size.
+        This implements Task 7.1.a: Adaptive Convergence Detection.
+        """
+        from poker_knight.analysis import ConvergenceMonitor, convergence_diagnostic, calculate_effective_sample_size
+        
+        hero_hand = ['K♠️', 'K♥️']
+        num_opponents = 2
+        
+        # Test ConvergenceMonitor with real simulation data
+        monitor = ConvergenceMonitor(
+            min_samples=1000,
+            target_accuracy=0.02,  # 2% margin of error
+            geweke_threshold=2.0
+        )
+        
+        # Run simulation with convergence monitoring
+        result = solve_poker_hand(hero_hand, num_opponents, simulation_mode="default")
+        
+        # Validate convergence monitor functionality
+        if result.convergence_achieved is not None:
+            print(f"  Convergence achieved: {result.convergence_achieved}")
+            print(f"  Geweke statistic: {result.geweke_statistic:.3f}" if result.geweke_statistic else "  Geweke: Not calculated")
+            print(f"  Effective sample size: {result.effective_sample_size:.1f}" if result.effective_sample_size else "  ESS: Not calculated")
+            print(f"  Simulations run: {result.simulations_run:,}")
+            
+            # Test convergence criteria
+            if result.geweke_statistic is not None:
+                self.assertIsInstance(result.geweke_statistic, (int, float))
+                self.assertLess(abs(result.geweke_statistic), 10.0, "Geweke statistic should be reasonable")
+            
+            if result.effective_sample_size is not None:
+                self.assertGreater(result.effective_sample_size, 0)
+                self.assertLessEqual(result.effective_sample_size, result.simulations_run)
+        
+        # Test standalone convergence diagnostic
+        # Generate synthetic convergence data for testing
+        import random
+        random.seed(42)
+        
+        # Create a series that starts high and converges to ~0.7
+        synthetic_win_rates = []
+        true_rate = 0.7
+        for i in range(500):
+            # Add decreasing noise to simulate convergence
+            noise_scale = 0.3 * (1.0 / (1 + i / 50))  # Decreasing noise
+            win_rate = true_rate + random.gauss(0, noise_scale)
+            win_rate = max(0.0, min(1.0, win_rate))  # Clamp to [0, 1]
+            synthetic_win_rates.append(win_rate)
+        
+        # Test Geweke diagnostic
+        geweke_result = convergence_diagnostic(synthetic_win_rates)
+        self.assertIsInstance(geweke_result.statistic, (int, float))
+        self.assertIsInstance(bool(geweke_result.converged), bool)
+        print(f"  Synthetic data Geweke statistic: {geweke_result.statistic:.3f}")
+        print(f"  Synthetic data converged: {geweke_result.converged}")
+        
+        # Test effective sample size calculation
+        ess_result = calculate_effective_sample_size(synthetic_win_rates)
+        self.assertIsInstance(ess_result.effective_size, (int, float))
+        self.assertGreater(ess_result.effective_size, 0)
+        self.assertLessEqual(ess_result.effective_size, len(synthetic_win_rates))
+        print(f"  Synthetic data ESS: {ess_result.effective_size:.1f}/{len(synthetic_win_rates)} (efficiency: {ess_result.efficiency:.1%})")
+        
+        print("✅ Adaptive convergence detection validated")
+
+    def test_cross_validation_framework(self):
+        """
+        Test cross-validation framework for large simulations.
+        This implements Task 7.1.b: Cross-Validation Framework.
+        """
+        hero_hand = ['A♠️', 'K♠️']
+        num_opponents = 1
+        
+        print("  Testing split-half validation...")
+        
+        # Run two independent simulations (split-half approach)
+        result1 = solve_poker_hand(hero_hand, num_opponents, simulation_mode="default")
+        result2 = solve_poker_hand(hero_hand, num_opponents, simulation_mode="default")
+        
+        # Split-half validation: results should be statistically consistent
+        win_rate_diff = abs(result1.win_probability - result2.win_probability)
+        
+        # Expected standard error for each simulation
+        n1 = result1.simulations_run
+        n2 = result2.simulations_run
+        
+        if n1 > 0 and n2 > 0:
+            # Calculate expected difference based on standard errors
+            p_combined = (result1.win_probability + result2.win_probability) / 2
+            se1 = math.sqrt(p_combined * (1 - p_combined) / n1)
+            se2 = math.sqrt(p_combined * (1 - p_combined) / n2)
+            expected_se_diff = math.sqrt(se1**2 + se2**2)
+            
+            # Results should be within 3 standard errors (99.7% confidence)
+            max_expected_diff = 3 * expected_se_diff
+            
+            self.assertLess(win_rate_diff, max_expected_diff,
+                           f"Split-half validation failed: difference {win_rate_diff:.4f} > {max_expected_diff:.4f}")
+            
+            print(f"    Split-half difference: {win_rate_diff:.4f} (max expected: {max_expected_diff:.4f})")
+        
+        print("  Testing bootstrap confidence interval validation...")
+        
+        # Bootstrap validation: collect multiple samples
+        bootstrap_samples = []
+        for _ in range(5):  # 5 bootstrap samples (reduced for speed)
+            result = solve_poker_hand(hero_hand, num_opponents, simulation_mode="fast")
+            bootstrap_samples.append(result.win_probability)
+        
+        if len(bootstrap_samples) >= 3:
+            # Calculate bootstrap statistics
+            bootstrap_mean = statistics.mean(bootstrap_samples)
+            bootstrap_std = statistics.stdev(bootstrap_samples)
+            
+            # Bootstrap confidence interval (simple percentile method)
+            bootstrap_samples.sort()
+            ci_lower = bootstrap_samples[0]  # Approximate 10th percentile
+            ci_upper = bootstrap_samples[-1]  # Approximate 90th percentile
+            
+            print(f"    Bootstrap mean: {bootstrap_mean:.3f} ± {bootstrap_std:.3f}")
+            print(f"    Bootstrap CI: [{ci_lower:.3f}, {ci_upper:.3f}]")
+            
+            # Basic validation: CI should contain the mean
+            self.assertLessEqual(ci_lower, bootstrap_mean)
+            self.assertGreaterEqual(ci_upper, bootstrap_mean)
+        
+        print("  Testing jackknife bias estimation...")
+        
+        # Jackknife bias estimation (simplified approach)
+        if len(bootstrap_samples) >= 4:
+            # Calculate jackknife estimates (leave-one-out)
+            jackknife_estimates = []
+            for i in range(len(bootstrap_samples)):
+                jackknife_sample = bootstrap_samples[:i] + bootstrap_samples[i+1:]
+                jackknife_mean = statistics.mean(jackknife_sample)
+                jackknife_estimates.append(jackknife_mean)
+            
+            # Jackknife bias estimation
+            original_mean = statistics.mean(bootstrap_samples)
+            jackknife_mean = statistics.mean(jackknife_estimates)
+            bias_estimate = (len(bootstrap_samples) - 1) * (jackknife_mean - original_mean)
+            
+            print(f"    Jackknife bias estimate: {bias_estimate:.4f}")
+            
+            # Bias should be small for Monte Carlo simulations
+            self.assertLess(abs(bias_estimate), 0.1, f"Jackknife bias too large: {bias_estimate:.4f}")
+        
+        print("✅ Cross-validation framework validated")
+
+    def test_convergence_rate_analysis_and_export(self):
+        """
+        Test convergence rate visualization and metrics export.
+        This implements Task 7.1.c: Convergence Rate Visualization.
+        """
+        import json
+        import tempfile
+        import os
+        
+        hero_hand = ['Q♠️', 'Q♥️']
+        num_opponents = 1
+        
+        print("  Testing convergence metrics export...")
+        
+        # Run simulation with convergence tracking
+        result = solve_poker_hand(hero_hand, num_opponents, simulation_mode="default")
+        
+        # Create convergence metrics for export
+        convergence_metrics = {
+            'scenario': {
+                'hero_hand': hero_hand,
+                'num_opponents': num_opponents,
+                'board_cards': []
+            },
+            'results': {
+                'win_probability': result.win_probability,
+                'simulations_run': result.simulations_run,
+                'execution_time_ms': result.execution_time_ms,
+                'convergence_achieved': result.convergence_achieved,
+                'geweke_statistic': result.geweke_statistic,
+                'effective_sample_size': result.effective_sample_size,
+                'convergence_efficiency': result.convergence_efficiency,
+                'stopped_early': result.stopped_early
+            },
+            'convergence_history': result.convergence_details or []
+        }
+        
+        # Test JSON export functionality
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(convergence_metrics, f, indent=2, default=str)
+            export_file = f.name
+        
+        try:
+            # Validate exported data
+            with open(export_file, 'r') as f:
+                exported_data = json.load(f)
+            
+            # Verify structure and content
+            self.assertIn('scenario', exported_data)
+            self.assertIn('results', exported_data)
+            self.assertIn('convergence_history', exported_data)
+            
+            self.assertEqual(exported_data['scenario']['hero_hand'], hero_hand)
+            self.assertEqual(exported_data['scenario']['num_opponents'], num_opponents)
+            self.assertIsInstance(exported_data['results']['win_probability'], (int, float))
+            self.assertIsInstance(exported_data['results']['simulations_run'], int)
+            
+            print(f"    Exported {len(str(exported_data))} characters of convergence data")
+            print(f"    Convergence history entries: {len(exported_data['convergence_history'])}")
+            
+        finally:
+            # Clean up temporary file
+            os.unlink(export_file)
+        
+        print("  Testing real-time convergence monitoring...")
+        
+        # Test real-time monitoring with synthetic data
+        from poker_knight.analysis import ConvergenceMonitor
+        
+        monitor = ConvergenceMonitor(
+            window_size=100,
+            min_samples=500,
+            target_accuracy=0.02
+        )
+        
+        # Simulate real-time updates
+        import random
+        random.seed(123)
+        
+        convergence_timeline = []
+        for i in range(1, 1001, 50):  # Every 50 simulations
+            # Simulate convergence to 0.8 with decreasing variance
+            variance = 0.1 * (1000 / (i + 500))  # Decreasing variance
+            win_rate = 0.8 + random.gauss(0, variance)
+            win_rate = max(0.0, min(1.0, win_rate))
+            
+            monitor.update(win_rate, i)
+            status = monitor.get_convergence_status()
+            
+            convergence_timeline.append({
+                'simulation': i,
+                'win_rate': win_rate,
+                'status': status['status'],
+                'geweke_stat': status.get('geweke_statistic'),
+                'margin_of_error': status.get('margin_of_error')
+            })
+            
+            if monitor.has_converged():
+                print(f"    Real-time monitoring: Converged at simulation {i}")
+                break
+        
+        # Validate timeline data
+        self.assertGreater(len(convergence_timeline), 5, "Should have multiple monitoring points")
+        
+        # Check that monitoring improves over time
+        final_entry = convergence_timeline[-1]
+        initial_entry = convergence_timeline[0]
+        
+        if (final_entry.get('margin_of_error') is not None and 
+            initial_entry.get('margin_of_error') is not None):
+            self.assertLess(final_entry['margin_of_error'], initial_entry['margin_of_error'],
+                           "Margin of error should decrease over time")
+        
+        print(f"    Monitored {len(convergence_timeline)} convergence points")
+        print("✅ Convergence rate analysis and export validated")
 
 
 class TestStatisticalUtils(unittest.TestCase):

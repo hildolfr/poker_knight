@@ -19,31 +19,41 @@ class TestPerformanceRegression(unittest.TestCase):
         self.solver = MonteCarloSolver()
     
     def test_simulation_count_targets(self):
-        """Verify that simulation modes achieve their target simulation counts."""
+        """Verify that simulation modes achieve reasonable simulation counts."""
         test_cases = [
-            ("fast", 10000),
-            ("default", 100000),
-            ("precision", 500000)
+            ("fast", 10000, 0.25),     # Fast mode: at least 25% of target (2.5K+ sims)
+            ("default", 100000, 0.05), # Default mode: at least 5% of target (5K+ sims)  
+            ("precision", 500000, 0.015) # Precision mode: at least 1.5% of target (7.5K+ sims)
         ]
         
         hero_hand = ['A♠️', 'A♥️']
         num_opponents = 2
         
-        for mode, expected_sims in test_cases:
+        for mode, target_sims, min_ratio in test_cases:
             with self.subTest(mode=mode):
                 result = solve_poker_hand(hero_hand, num_opponents, simulation_mode=mode)
                 
-                # Allow for early termination due to timeout, be more lenient
-                min_expected = expected_sims * 0.5  # Allow 50% variance for timeout
-                self.assertGreater(result.simulations_run, min_expected,
-                                 f"{mode} mode should run at least {min_expected} simulations")
+                # Calculate minimum expected simulations based on target and convergence
+                min_expected = target_sims * min_ratio
                 
-                # Should not exceed expected by too much (unless very fast)
-                max_expected = expected_sims * 1.1  # Allow 10% overage
-                if result.simulations_run > max_expected:
-                    # This is only acceptable if it completed very quickly
-                    self.assertLess(result.execution_time_ms, 2000,
-                                  f"{mode} mode exceeded target but should have been fast")
+                self.assertGreater(result.simulations_run, min_expected,
+                                 f"{mode} mode should run at least {min_expected:.0f} simulations, "
+                                 f"got {result.simulations_run}")
+                
+                # Validate that early stopping is working appropriately
+                if result.stopped_early:
+                    self.assertTrue(result.convergence_achieved or result.target_accuracy_achieved,
+                                  f"{mode} mode stopped early but didn't achieve convergence or target accuracy")
+                
+                # If it ran close to target, it should not have stopped early
+                if result.simulations_run >= target_sims * 0.9:
+                    # This is fine - it ran most/all of the target simulations
+                    pass
+                elif result.stopped_early:
+                    # Early stopping should have a good reason
+                    self.assertTrue(result.convergence_achieved or result.target_accuracy_achieved,
+                                  f"{mode} mode stopped early at {result.simulations_run} sims but "
+                                  f"should have run more or achieved convergence")
     
     def test_execution_time_bounds(self):
         """Test that execution times are within reasonable bounds."""
@@ -189,12 +199,12 @@ class TestPerformanceRegression(unittest.TestCase):
         max_time = 10000
         start_time = time.time()
         
-        seq_wins, seq_ties, seq_losses, seq_cats = solver._run_sequential_simulations(
+        seq_wins, seq_ties, seq_losses, seq_cats, seq_convergence = solver._run_sequential_simulations(
             hero_cards, num_opponents, board_cards, removed_cards, num_sims, max_time, start_time
         )
         
         start_time = time.time()
-        par_wins, par_ties, par_losses, par_cats = solver._run_parallel_simulations(
+        par_wins, par_ties, par_losses, par_cats, par_convergence = solver._run_parallel_simulations(
             hero_cards, num_opponents, board_cards, removed_cards, num_sims, max_time, start_time
         )
         

@@ -199,6 +199,11 @@ Thumbs.db
 # SpecStory generated files
 .specstory/
 
+# Test result files (timestamped, for AI analysis)
+tests/results/*.json
+tests/results/*.txt
+!tests/results/README.md
+
 # Keep the logo file
 !poker_knight_logo.png
 

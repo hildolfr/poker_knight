@@ -16,6 +16,24 @@
     "timeout_precision_mode_ms": 120000,
     "parallel_processing_threshold": 1000
   },
+  "convergence_settings": {
+    "window_size": 1000,
+    "geweke_threshold": 2.0,
+    "min_samples": 1000,
+    "target_accuracy": 0.01,
+    "confidence_level": 0.95,
+    "enable_early_stopping": true,
+    "convergence_check_interval": 1000
+  },
+  "sampling_strategy": {
+    "stratified_sampling": false,
+    "importance_sampling": false,
+    "control_variates": false,
+    "adaptive_strategy_selection": true,
+    "stratification_threshold": 10000,
+    "importance_threshold": 0.1,
+    "variance_reduction_target": 0.15
+  },
   "output_settings": {
     "include_confidence_interval": true,
     "include_hand_categories": true,
