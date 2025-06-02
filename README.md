@@ -99,11 +99,35 @@ your_project/
 ```python
 from poker_knight import solve_poker_hand
 
+# Simplest usage - just your hand (assumes 1 opponent, pre-flop)
+result = solve_poker_hand(['A♠️', 'A♥️'])
+print(f"Win probability: {result.win_probability:.1%}")
+
 # Analyze pocket aces pre-flop against 2 opponents
 result = solve_poker_hand(['A♠️', 'A♥️'], 2)
 print(f"Win probability: {result.win_probability:.1%}")
+```
 
-# Advanced tournament analysis with ICM
+**Complete API Reference:**
+The `solve_poker_hand` function accepts the following arguments:
+
+```python
+solve_poker_hand(
+    hero_hand,              # Required: List of 2 cards (e.g., ['A♠️', 'K♥️'])
+    num_opponents=1,        # Optional: Number of opponents (1-6, default: 1)
+    board_cards=None,       # Optional: List of 3-5 board cards (default: None for pre-flop)
+    simulation_mode="default",  # Optional: "fast", "default", or "precision"
+    hero_position=None,     # Optional: "early", "middle", "late", "button", "sb", "bb"
+    stack_sizes=None,       # Optional: List [hero_stack, opp1, opp2, ...] for ICM
+    pot_size=None,          # Optional: Current pot size for SPR calculations
+    tournament_context=None # Optional: Dict with tournament settings (e.g., {'bubble_factor': 1.3})
+)
+```
+
+**Note:** You can provide as few arguments as just your hand - `solve_poker_hand(['A♠️', 'A♥️'])` - which will analyze your hand pre-flop against one opponent using default settings.
+
+**Advanced tournament analysis with ICM:**
+```python
 result = solve_poker_hand(
     ['K♠️', 'Q♠️'],                    # Hero hand
     3,                                 # Number of opponents  
@@ -116,6 +140,30 @@ result = solve_poker_hand(
 print(f"Win probability: {result.win_probability:.1%}")
 print(f"ICM equity: {result.icm_equity:.1%}")
 print(f"Position advantage: {result.position_aware_equity['position_advantage']:.3f}")
+```
+
+**Advanced Usage with MonteCarloSolver Class:**
+For access to additional optimization features, use the solver class directly:
+
+```python
+from poker_knight import MonteCarloSolver
+
+solver = MonteCarloSolver()
+result = solver.analyze_hand(
+    ['A♠️', 'A♥️'],                    # Hero hand
+    2,                                 # Number of opponents
+    ['K♠️', 'Q♠️', 'J♠️'],             # Board cards
+    simulation_mode="precision",        # Simulation mode
+    intelligent_optimization=True,      # Enable auto-optimization
+    stack_depth=45.0                   # Stack depth in big blinds for analysis
+)
+
+# Access optimization data
+if result.optimization_data:
+    print(f"Complexity level: {result.optimization_data['complexity_level']}")
+    print(f"Optimized simulations: {result.optimization_data['recommended_simulations']}")
+    
+solver.close()  # Clean up resources
 ```
 
 ## 🧪 Quick Test {#quick-test}
