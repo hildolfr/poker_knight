@@ -84,6 +84,8 @@ class TestCacheIntegration(unittest.TestCase):
         solver_enabled = MonteCarloSolver(enable_caching=True)
         try:
             self.assertTrue(solver_enabled._caching_enabled)
+            # Force cache initialization
+            solver_enabled._initialize_cache_if_needed()
             self.assertIsNotNone(solver_enabled._hand_cache)
             self.assertIsNotNone(solver_enabled._preflop_cache)
             self.assertIsNotNone(solver_enabled._board_cache)

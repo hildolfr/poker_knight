@@ -63,7 +63,7 @@ setup(
             "prometheus_client>=0.11.0",
         ],
         "performance": [
-            "cupy>=9.0.0",
+            "cupy-cuda12x>=9.0.0",
             "pyopencl>=2021.1.0",
             "psutil>=5.8.0",
         ],
@@ -75,7 +75,7 @@ setup(
             "alembic>=1.7.0",
             "pydantic>=1.8.0",
             "prometheus_client>=0.11.0",
-            "cupy>=9.0.0",
+            "cupy-cuda12x>=9.0.0",
             "pyopencl>=2021.1.0",
             "psutil>=5.8.0",
             "pytest>=6.0",

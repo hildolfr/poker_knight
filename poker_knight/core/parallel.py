@@ -30,6 +30,13 @@ import psutil
 import threading
 import multiprocessing as mp
 from multiprocessing import shared_memory
+
+# Set multiprocessing start method for safety
+try:
+    mp.set_start_method('spawn', force=True)
+except RuntimeError:
+    # Already set, ignore
+    pass
 from typing import Dict, List, Any, Optional, Tuple, Union, Callable
 from dataclasses import dataclass, asdict
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed

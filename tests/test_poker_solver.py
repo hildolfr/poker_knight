@@ -18,8 +18,8 @@ class TestCard(unittest.TestCase):
         """Test card creation and validation."""
         card = Card('A', 'S')
         self.assertEqual(card.rank, 'A')
-        self.assertEqual(card.suit, 'S')
-        self.assertEqual(str(card), 'AS')
+        self.assertEqual(card.suit, '♠')  # Suits are normalized to unicode
+        self.assertEqual(str(card), 'A♠')
         
     def test_card_value(self):
         """Test card value property."""
@@ -44,12 +44,12 @@ class TestHandEvaluator(unittest.TestCase):
         """Test card parsing from string."""
         card = self.evaluator.parse_card('AS')
         self.assertEqual(card.rank, 'A')
-        self.assertEqual(card.suit, 'S')
+        self.assertEqual(card.suit, '♠')  # Normalized to unicode
         
         # Test 10 parsing
         card = self.evaluator.parse_card('10H')
         self.assertEqual(card.rank, '10')
-        self.assertEqual(card.suit, 'H')
+        self.assertEqual(card.suit, '♥')  # Normalized to unicode
     
     def test_royal_flush(self):
         """Test royal flush evaluation."""

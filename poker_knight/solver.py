@@ -56,9 +56,11 @@ try:
         create_parallel_engine, ProcessingConfig, ParallelSimulationEngine,
         ParallelStats, WorkerStats
     )
+    from .core.parallel_workers import _parallel_simulation_worker
     ADVANCED_PARALLEL_AVAILABLE = True
 except ImportError:
     ADVANCED_PARALLEL_AVAILABLE = False
+    _parallel_simulation_worker = None
 
 # Import caching system (Task 1.4)
 try:
@@ -90,7 +92,7 @@ except ImportError:
     CACHE_PREPOPULATION_AVAILABLE = False
 
 # Module metadata
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 __author__ = "hildolfr"
 __license__ = "MIT"
 __all__ = [
@@ -99,7 +101,14 @@ __all__ = [
 ]
 
 # Card suits using Unicode emojis
-SUITS = ['♠️', '♥️', '♦️', '♣️']
+SUITS = ['♠', '♥', '♦', '♣']
+# Suit mapping for backward compatibility
+SUIT_MAPPING = {
+    'S': '♠', 's': '♠', '♠': '♠', '♠️': '♠',
+    'H': '♥', 'h': '♥', '♥': '♥', '♥️': '♥',
+    'D': '♦', 'd': '♦', '♦': '♦', '♦️': '♦',
+    'C': '♣', 'c': '♣', '♣': '♣', '♣️': '♣'
+}
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 RANK_VALUES = {rank: i for i, rank in enumerate(RANKS)}
 
@@ -114,7 +123,11 @@ class Card:
     def __post_init__(self) -> None:
         if self.rank not in RANKS:
             raise ValueError(f"Invalid rank: {self.rank}")
-        if self.suit not in SUITS:
+        
+        # Normalize suit format for backward compatibility
+        if self.suit in SUIT_MAPPING:
+            self.suit = SUIT_MAPPING[self.suit]
+        elif self.suit not in SUITS:
             raise ValueError(f"Invalid suit: {self.suit}")
     
     def __str__(self) -> str:
@@ -173,7 +186,7 @@ class HandEvaluator:
     
     @staticmethod
     def parse_card(card_str: str) -> Card:
-        """Parse card string like 'A♠️' into Card object."""
+        """Parse card string like 'A♠' or 'AS' into Card object."""
         # Handle 10 specially since it's two characters
         if card_str.startswith('10'):
             rank = '10'
@@ -182,6 +195,7 @@ class HandEvaluator:
             rank = card_str[0]
             suit = card_str[1:]
         
+        # The Card class will normalize the suit in __post_init__
         return Card(rank, suit)
     
     @staticmethod
@@ -317,122 +331,7 @@ class Deck:
         self.available_cards = [card for card in self.all_cards if card not in self.removed_cards]
         self.shuffle()
 
-# Worker functions for advanced parallel processing (Task 1.1)
-# These need to be at module level to be serializable for multiprocessing
-
-def _parallel_simulation_worker(batch_size: int, worker_id: str, solver_data: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-    """
-    Worker function for parallel simulation batches.
-    This function is at module level to be serializable for multiprocessing.
-    """
-    # Extract solver data
-    hero_cards_data = solver_data['hero_cards']
-    num_opponents = solver_data['num_opponents']
-    board_data = solver_data['board']
-    removed_cards_data = solver_data['removed_cards']
-    include_hand_categories = solver_data['include_hand_categories']
-    
-    # Recreate Card objects from serialized data
-    hero_cards = [Card(rank=card['rank'], suit=card['suit']) for card in hero_cards_data]
-    board = [Card(rank=card['rank'], suit=card['suit']) for card in board_data]
-    removed_cards = [Card(rank=card['rank'], suit=card['suit']) for card in removed_cards_data]
-    
-    # Create evaluator for this worker
-    evaluator = HandEvaluator()
-    
-    batch_wins = 0
-    batch_ties = 0
-    batch_losses = 0
-    batch_categories = Counter() if include_hand_categories else {}
-    
-    for _ in range(batch_size):
-        # Simulate one hand
-        result = _simulate_single_hand(hero_cards, num_opponents, board, removed_cards, evaluator)
-        
-        if result["result"] == "win":
-            batch_wins += 1
-        elif result["result"] == "tie":
-            batch_ties += 1
-        else:
-            batch_losses += 1
-        
-        if isinstance(batch_categories, Counter):
-            batch_categories[result["hero_hand_type"]] += 1
-    
-    return {
-        'wins': batch_wins,
-        'ties': batch_ties,
-        'losses': batch_losses,
-        'hand_categories': dict(batch_categories),
-        'simulations': batch_size
-    }
-
-
-def _simulate_single_hand(hero_cards: List[Card], num_opponents: int, 
-                         board: List[Card], removed_cards: List[Card],
-                         evaluator: HandEvaluator) -> Dict[str, Any]:
-    """Simulate a single hand - module level for multiprocessing."""
-    # Create deck with removed cards
-    deck = Deck(removed_cards)
-    
-    # Deal opponent hands
-    opponent_hands = [deck.deal(2) for _ in range(num_opponents)]
-    
-    # Complete the board if needed
-    cards_needed = 5 - len(board)
-    if cards_needed > 0:
-        board_cards = board + deck.deal(cards_needed)
-    else:
-        board_cards = board
-    
-    # Evaluate hero hand
-    hero_rank, hero_tiebreakers = evaluator.evaluate_hand(hero_cards + board_cards)
-    
-    # Evaluate opponent hands and count results
-    hero_better_count = 0
-    hero_tied_count = 0
-    
-    for opp_cards in opponent_hands:
-        opp_rank, opp_tiebreakers = evaluator.evaluate_hand(opp_cards + board_cards)
-        
-        if hero_rank > opp_rank:
-            hero_better_count += 1
-        elif hero_rank == opp_rank:
-            if hero_tiebreakers > opp_tiebreakers:
-                hero_better_count += 1
-            elif hero_tiebreakers == opp_tiebreakers:
-                hero_tied_count += 1
-    
-    # Determine result
-    if hero_better_count == num_opponents:
-        result = "win"
-    elif hero_better_count + hero_tied_count == num_opponents and hero_tied_count > 0:
-        result = "tie"
-    else:
-        result = "loss"
-    
-    return {
-        "result": result,
-        "hero_hand_type": _get_hand_type_name_static(hero_rank),
-        "hero_hand_rank": hero_rank
-    }
-
-
-def _get_hand_type_name_static(hand_rank: int) -> str:
-    """Convert hand rank to readable name - static version for multiprocessing."""
-    hand_rankings = {
-        1: 'high_card',
-        2: 'pair',
-        3: 'two_pair',
-        4: 'three_of_a_kind',
-        5: 'straight',
-        6: 'flush',
-        7: 'full_house',
-        8: 'four_of_a_kind',
-        9: 'straight_flush',
-        10: 'royal_flush'
-    }
-    return hand_rankings.get(hand_rank, "unknown")
+# Worker functions moved to parallel_workers.py to avoid circular imports
 
 
 @dataclass
@@ -514,57 +413,18 @@ class MonteCarloSolver:
                 print(f"Warning: Advanced parallel processing unavailable ({e}). Using standard threading.")
                 self._parallel_engine = None
         
-        # Initialize caching system (Task 1.4)
+        # Initialize caching system (Task 1.4) - Lazy initialization to prevent deadlocks
         self._caching_enabled = enable_caching
-        if enable_caching and CACHING_AVAILABLE:
-            try:
-                # Initialize cache configuration
-                cache_settings = self.config.get("cache_settings", {})
-                self._cache_config = CacheConfig(
-                    max_memory_mb=cache_settings.get("max_memory_mb", 512),
-                    hand_cache_size=cache_settings.get("hand_cache_size", 10000),
-                    preflop_cache_enabled=cache_settings.get("preflop_cache_enabled", True),
-                    enable_persistence=cache_settings.get("enable_persistence", False)
-                )
-                
-                # Get cache instances
-                self._hand_cache, self._board_cache, self._preflop_cache = get_cache_manager(self._cache_config)
-                self._create_cache_key = create_cache_key
-                
-                # Initialize cache pre-population system (Task 1.2 - Improved)
-                self._population_stats = None
-                if CACHE_PREPOPULATION_AVAILABLE and self._cache_config.enable_persistence:
-                    try:
-                        # Create population configuration
-                        population_config = PopulationConfig(
-                            enable_persistence=self._cache_config.enable_persistence,
-                            skip_cache_warming=skip_cache_warming,
-                            force_cache_regeneration=force_cache_regeneration,
-                            cache_population_threshold=cache_settings.get("cache_population_threshold", 0.95),
-                            max_population_time_minutes=cache_settings.get("max_population_time_minutes", 5)
-                        )
-                        
-                        # Ensure cache is populated (one-time check and population)
-                        print("Checking cache coverage...")
-                        self._population_stats = ensure_cache_populated(
-                            cache_config=self._cache_config,
-                            population_config=population_config
-                        )
-                        
-                        if self._population_stats.populated_scenarios > 0:
-                            print(f"Cache populated with {self._population_stats.populated_scenarios} scenarios")
-                            print(f"Cache coverage: {self._population_stats.coverage_after:.1%}")
-                            print("Future queries will be significantly faster!")
-                        
-                    except Exception as e:
-                        print(f"Warning: Cache pre-population failed ({e}). Caching will work without pre-population.")
-                        self._population_stats = None
-                
-            except ImportError as e:
-                print(f"Warning: Caching system not available ({e}). Running without cache.")
-                self._caching_enabled = False
-        else:
-            self._caching_enabled = False
+        self._cache_config = None
+        self._hand_cache = None
+        self._board_cache = None
+        self._preflop_cache = None
+        self._create_cache_key = None
+        self._population_stats = None
+        self._skip_cache_warming = skip_cache_warming
+        self._force_cache_regeneration = force_cache_regeneration
+        
+        # Cache will be initialized on first use to prevent deadlocks during module import
         
         # Smart sampling configuration (Task 3.3)
         self._sampling_strategy = self.config.get("sampling_strategy", {})
@@ -596,12 +456,13 @@ class MonteCarloSolver:
                 self._thread_pool.shutdown(wait=True)
                 self._thread_pool = None
     
-    def enable_caching(self, enable: bool = True) -> None:
-        """Enable or disable caching for this solver instance."""
-        if enable and not self._caching_enabled:
-            # Try to initialize caching if not already done
+    def _initialize_cache_if_needed(self) -> bool:
+        """Initialize cache on first use to prevent deadlocks during module import."""
+        if not self._caching_enabled or self._hand_cache is not None:
+            return self._caching_enabled
+        
+        if CACHING_AVAILABLE:
             try:
-                from .storage import CacheConfig, get_cache_manager, create_cache_key
                 # Initialize cache configuration
                 cache_settings = self.config.get("cache_settings", {})
                 self._cache_config = CacheConfig(
@@ -614,17 +475,53 @@ class MonteCarloSolver:
                 # Get cache instances
                 self._hand_cache, self._board_cache, self._preflop_cache = get_cache_manager(self._cache_config)
                 self._create_cache_key = create_cache_key
-                self._caching_enabled = True
                 
-            except ImportError:
-                print("Warning: Caching system not available. Cannot enable caching.")
+                # Initialize cache pre-population system (Task 1.2 - Improved)
+                if CACHE_PREPOPULATION_AVAILABLE and self._cache_config.enable_persistence and not self._skip_cache_warming:
+                    try:
+                        # Create population configuration
+                        population_config = PopulationConfig(
+                            enable_persistence=self._cache_config.enable_persistence,
+                            skip_cache_warming=self._skip_cache_warming,
+                            force_cache_regeneration=self._force_cache_regeneration,
+                            cache_population_threshold=cache_settings.get("cache_population_threshold", 0.95),
+                            max_population_time_minutes=cache_settings.get("max_population_time_minutes", 5)
+                        )
+                        
+                        # Ensure cache is populated (one-time check and population)
+                        print("Checking cache coverage...")
+                        self._population_stats = ensure_cache_populated(
+                            cache_config=self._cache_config,
+                            population_config=population_config
+                        )
+                        
+                        if self._population_stats.populated_scenarios > 0:
+                            print(f"Cache populated with {self._population_stats.populated_scenarios} scenarios")
+                            print(f"Cache coverage: {self._population_stats.coverage_after:.1%}")
+                            print("Future queries will be significantly faster!")
+                        
+                    except Exception as e:
+                        print(f"Warning: Cache pre-population failed ({e}). Caching will work without pre-population.")
+                        self._population_stats = None
+                
+                return True
+                
+            except ImportError as e:
+                print(f"Warning: Caching system not available ({e}). Running without cache.")
                 self._caching_enabled = False
+                return False
         else:
-            self._caching_enabled = enable
+            self._caching_enabled = False
+            return False
+    
+    def enable_caching(self, enable: bool = True) -> None:
+        """Enable or disable caching for this solver instance."""
+        self._caching_enabled = enable
+        # Actual initialization happens lazily on first use
     
     def get_cache_stats(self) -> Optional[Dict[str, Any]]:
         """Get cache statistics for monitoring and debugging."""
-        if not self._caching_enabled:
+        if not self._caching_enabled or not self._initialize_cache_if_needed():
             return None
         
         try:
@@ -720,7 +617,7 @@ class MonteCarloSolver:
         cached_result = None
         was_cached = False
         
-        if self._caching_enabled:
+        if self._caching_enabled and self._initialize_cache_if_needed():
             # Create cache key for this scenario
             cache_key = self._create_cache_key(
                 hero_hand=hero_hand,
