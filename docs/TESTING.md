@@ -5,14 +5,22 @@ Comprehensive guide to running tests and validating Poker Knight's accuracy, per
 ## Quick Start Testing
 
 ```bash
-# Run comprehensive test suite
-python tests/run_tests.py
+# Run comprehensive test suite (all categories)
+python tests/run_tests.py --all          # Complete test suite (~8min)
+python tests/run_tests.py                # Same as --all (default behavior)
 
 # Run specific test categories for faster feedback
 python tests/run_tests.py --quick        # Essential functionality validation (~30s)
+python tests/run_tests.py --unit         # Core unit tests only (~45s)
 python tests/run_tests.py --statistical  # Monte Carlo accuracy validation (~3min)
 python tests/run_tests.py --performance  # Speed and efficiency benchmarks (~1min)
-python tests/run_tests.py --icm          # ICM and tournament feature testing (~45s)
+python tests/run_tests.py --stress       # Stress and load testing (~3min)
+
+# Run only tests that failed in the last run
+python tests/run_tests.py --failed       # Re-run failed tests only
+
+# Run with coverage analysis
+python tests/run_tests.py --all --with-coverage  # Complete suite with coverage
 ```
 
 ## Test Architecture
@@ -26,9 +34,11 @@ python tests/run_tests.py --icm          # ICM and tournament feature testing (~
 | `test_performance.py` | Speed and efficiency benchmarks | ~1min | Execution time, memory usage |
 | `test_performance_regression.py` | Performance regression detection | ~2min | Performance stability over time |
 | `test_edge_cases_extended.py` | Edge case and error handling | ~45s | Robustness, boundary conditions |
-| `test_multi_way_scenarios.py` | Multi-opponent analysis testing | ~1min | Complex scenarios, ICM integration |
+| `test_multi_way_scenarios.py` | Multi-opponent analysis testing | ~1min | Complex scenarios, multi-way pots |
 | `test_stress_scenarios.py` | High-load and stability testing | ~3min | Memory leaks, thread safety |
-| `test_icm_tournament.py` | ICM and tournament features | ~45s | Tournament equity, bubble factors |
+| `test_smart_sampling.py` | Advanced sampling techniques | ~45s | Variance reduction, sampling efficiency |
+| `test_enhanced_convergence.py` | Convergence detection algorithms | ~1min | Early termination, convergence analysis |
+| `test_parallel.py` | Parallel processing validation | ~30s | Thread safety, parallel execution |
 
 ### Advanced Testing with pytest
 
@@ -43,7 +53,12 @@ python -m pytest tests/test_poker_solver.py -v
 python -m pytest -m "unit" -v          # Unit tests only
 python -m pytest -m "statistical" -v   # Statistical validation only
 python -m pytest -m "performance" -v   # Performance tests only
-python -m pytest -m "icm" -v           # ICM and tournament tests
+python -m pytest -m "regression" -v    # Performance regression tests
+python -m pytest -m "stress" -v        # Stress and load tests
+python -m pytest -m "quick" -v         # Quick validation tests
+python -m pytest -m "edge_cases" -v    # Edge case tests
+python -m pytest -m "integration" -v   # Integration tests
+python -m pytest -m "parallel" -v      # Parallel processing tests
 
 # Run tests with coverage analysis
 python -m pytest tests/ --cov=poker_knight --cov-report=html --cov-report=term
@@ -369,12 +384,24 @@ def test_performance_regression():
             f"Performance regression in {test_name}: {execution_time:.1f}ms vs baseline {baseline}ms"
 ```
 
-## ICM and Tournament Feature Testing
+## Multi-Way and ICM Feature Testing
+
+### ICM Integration Validation
+
+ICM (Independent Chip Model) testing is integrated into the multi-way scenarios test suite rather than being a separate test category.
+
+```bash
+# Run multi-way scenarios including ICM testing
+python -m pytest tests/test_multi_way_scenarios.py -v
+
+# Run all integration tests (includes ICM features)  
+python -m pytest -m "integration" -v
+```
 
 ### ICM Calculation Validation
 
 ```python
-@pytest.mark.icm
+@pytest.mark.integration
 def test_icm_equity_calculations():
     """Test ICM equity calculations for tournament scenarios"""
     # Bubble scenario with known ICM values
@@ -396,7 +423,7 @@ def test_icm_equity_calculations():
     # Test position advantage for button
     assert result.position_aware_equity['position_advantage'] > 0
 
-@pytest.mark.icm  
+@pytest.mark.integration  
 def test_multi_way_coordination_effects():
     """Test multi-way pot coordination modeling"""
     result = solve_poker_hand(
@@ -636,7 +663,7 @@ def generate_test_report():
             'unit_tests': {'passed': 45, 'failed': 0, 'execution_time': '28.5s'},
             'statistical_tests': {'passed': 12, 'failed': 0, 'execution_time': '2m 45s'},
             'performance_tests': {'passed': 8, 'failed': 0, 'execution_time': '1m 12s'},
-            'icm_tests': {'passed': 6, 'failed': 0, 'execution_time': '42s'},
+            'integration_tests': {'passed': 6, 'failed': 0, 'execution_time': '42s'},
             'edge_case_tests': {'passed': 23, 'failed': 0, 'execution_time': '38s'},
             'stress_tests': {'passed': 4, 'failed': 0, 'execution_time': '3m 15s'}
         },
@@ -709,7 +736,7 @@ class TestCustomFeature:
         assert execution_time < 150  # Performance standard
         assert result.simulations_run >= 8000  # Quality standard
     
-    @pytest.mark.icm
+    @pytest.mark.integration
     def test_icm_integration(self):
         """Test ICM feature integration"""
         result = solve_poker_hand(
@@ -721,7 +748,6 @@ class TestCustomFeature:
         assert result.icm_equity is not None
         assert result.bubble_factor == 1.2
         assert result.icm_equity <= result.win_probability  # ICM typically reduces equity
-```
 
 ### Test Configuration
 
@@ -731,11 +757,18 @@ import pytest
 
 def pytest_configure(config):
     """Configure pytest markers"""
-    config.addinivalue_line("markers", "unit: Basic functionality tests")
-    config.addinivalue_line("markers", "statistical: Statistical accuracy tests") 
-    config.addinivalue_line("markers", "performance: Performance benchmark tests")
-    config.addinivalue_line("markers", "icm: ICM and tournament feature tests")
-    config.addinivalue_line("markers", "stress: High-load and stability tests")
+    config.addinivalue_line("markers", "unit: Unit tests for core functionality")
+    config.addinivalue_line("markers", "statistical: Statistical validation tests") 
+    config.addinivalue_line("markers", "performance: Performance and benchmark tests")
+    config.addinivalue_line("markers", "regression: Performance regression tests")
+    config.addinivalue_line("markers", "integration: Integration tests")
+    config.addinivalue_line("markers", "slow: Tests that take a long time to run")
+    config.addinivalue_line("markers", "stress: Stress and load testing")
+    config.addinivalue_line("markers", "quick: Fast tests for quick validation")
+    config.addinivalue_line("markers", "edge_cases: Edge case and boundary testing")
+    config.addinivalue_line("markers", "validation: Input validation tests")
+    config.addinivalue_line("markers", "precision: Precision mode tests")
+    config.addinivalue_line("markers", "parallel: Parallel processing tests")
 
 @pytest.fixture(scope="session")
 def solver():
@@ -745,4 +778,4 @@ def solver():
     solver.close()
 ```
 
-This comprehensive testing framework ensures Poker Knight maintains the highest standards of accuracy, performance, and reliability across all features and use cases. 
+This comprehensive testing framework ensures Poker Knight maintains the highest standards of accuracy, performance, and reliability across all features and use cases.

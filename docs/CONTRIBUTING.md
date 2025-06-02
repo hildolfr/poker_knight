@@ -345,7 +345,10 @@ python tests/run_tests.py
 python tests/run_tests.py --unit          # Basic functionality
 python tests/run_tests.py --statistical   # Algorithm accuracy  
 python tests/run_tests.py --performance   # Speed and efficiency
-python tests/run_tests.py --icm           # ICM and tournament features
+python tests/run_tests.py --stress        # Stress and load tests
+
+# Run integration tests (includes ICM features)
+python -m pytest -m "integration" -v      # Multi-way and ICM features
 
 # Run tests with coverage analysis
 python -m pytest tests/ --cov=poker_knight --cov-report=html --cov-report=term
