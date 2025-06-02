@@ -35,7 +35,7 @@ import json
 import os
 import random
 import time
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Optional, Dict, Any, Union
 from dataclasses import dataclass
 from collections import Counter
 import itertools
@@ -50,6 +50,45 @@ try:
 except ImportError:
     CONVERGENCE_ANALYSIS_AVAILABLE = False
 
+# Import advanced parallel processing (Task 1.1)
+try:
+    from .core.parallel import (
+        create_parallel_engine, ProcessingConfig, ParallelSimulationEngine,
+        ParallelStats, WorkerStats
+    )
+    ADVANCED_PARALLEL_AVAILABLE = True
+except ImportError:
+    ADVANCED_PARALLEL_AVAILABLE = False
+
+# Import caching system (Task 1.4)
+try:
+    from .storage.cache import (
+        get_cache_manager, CacheConfig, create_cache_key,
+        HandCache, BoardTextureCache, PreflopRangeCache
+    )
+    CACHING_AVAILABLE = True
+except ImportError:
+    CACHING_AVAILABLE = False
+
+# Import cache warming system (Task 1.2)
+try:
+    from .storage.cache_warming import (
+        create_cache_warmer, WarmingConfig, NumaAwareCacheWarmer,
+        start_background_warming
+    )
+    CACHE_WARMING_AVAILABLE = True
+except ImportError:
+    CACHE_WARMING_AVAILABLE = False
+
+# Import cache pre-population system (Task 1.2)
+try:
+    from .storage.cache_prepopulation import (
+        ensure_cache_populated, PopulationConfig, PopulationStats
+    )
+    CACHE_PREPOPULATION_AVAILABLE = True
+except ImportError:
+    CACHE_PREPOPULATION_AVAILABLE = False
+
 # Module metadata
 __version__ = "1.5.0"
 __author__ = "hildolfr"
@@ -63,6 +102,8 @@ __all__ = [
 SUITS = ['♠️', '♥️', '♦️', '♣️']
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 RANK_VALUES = {rank: i for i, rank in enumerate(RANKS)}
+
+# Define classes before worker functions to avoid NameError
 
 @dataclass
 class Card:
@@ -89,6 +130,7 @@ class Card:
     def value(self) -> int:
         """Numeric value for comparison (2=0, 3=1, ..., A=12)."""
         return RANK_VALUES[self.rank]
+
 
 class HandEvaluator:
     """Fast Texas Hold'em hand evaluation."""
@@ -193,114 +235,205 @@ class HandEvaluator:
                 pair_rank = rank_counts[1][0]
                 return HandEvaluator.HAND_RANKINGS['full_house'], [trips_rank, pair_rank]
         
-        # Check for straight using precomputed patterns
-        rank_set = set(ranks)
-        is_straight = False
-        straight_high = 0
-        
-        for i, pattern in enumerate(HandEvaluator._STRAIGHT_PATTERNS):
-            if all(rank in rank_set for rank in pattern):
-                is_straight = True
-                straight_high = HandEvaluator._STRAIGHT_HIGHS[i]
-                break
-        
-        # Handle straight flush and royal flush
-        if is_straight and is_flush:
-            if straight_high == 12:  # A-high straight flush
-                return HandEvaluator.HAND_RANKINGS['royal_flush'], [straight_high]
-            else:
-                return HandEvaluator.HAND_RANKINGS['straight_flush'], [straight_high]
-        
-        # Fast path for flush
-        if is_flush:
-            # Use pre-allocated array to avoid new allocation
-            sorted_ranks = HandEvaluator._temp_sorted_ranks[:5]
-            sorted_ranks[:] = sorted(ranks, reverse=True)
-            return HandEvaluator.HAND_RANKINGS['flush'], sorted_ranks[:]
-        
-        # Fast path for straight
-        if is_straight:
-            return HandEvaluator.HAND_RANKINGS['straight'], [straight_high]
-        
-        # Handle remaining patterns based on distinct rank count
-        if len(rank_counts) == 3:  # Three of a kind or two pair
+        elif len(rank_counts) == 3:  # Two pair or three of a kind
             if rank_counts[0][1] == 3:
                 # Three of a kind
                 trips_rank = rank_counts[0][0]
-                # Pre-allocate kickers array and fill efficiently
-                kicker_idx = 0
-                kickers = HandEvaluator._temp_kickers[:2]
-                for rank, count in rank_counts[1:]:
-                    kickers[kicker_idx] = rank
-                    kicker_idx += 1
-                kickers[:kicker_idx] = sorted(kickers[:kicker_idx], reverse=True)
-                return HandEvaluator.HAND_RANKINGS['three_of_a_kind'], [trips_rank] + kickers[:kicker_idx]
+                kickers = sorted([rank_counts[1][0], rank_counts[2][0]], reverse=True)
+                return HandEvaluator.HAND_RANKINGS['three_of_a_kind'], [trips_rank] + kickers
             else:
                 # Two pair
-                pairs = HandEvaluator._temp_pairs[:2]
-                pairs[0] = rank_counts[0][0]
-                pairs[1] = rank_counts[1][0]
-                pairs[:] = sorted(pairs, reverse=True)
+                pair1 = max(rank_counts[0][0], rank_counts[1][0])
+                pair2 = min(rank_counts[0][0], rank_counts[1][0])
                 kicker = rank_counts[2][0]
-                return HandEvaluator.HAND_RANKINGS['two_pair'], [pairs[0], pairs[1], kicker]
+                return HandEvaluator.HAND_RANKINGS['two_pair'], [pair1, pair2, kicker]
         
         elif len(rank_counts) == 4:  # One pair
             pair_rank = rank_counts[0][0]
-            # Pre-allocate kickers array and fill efficiently
-            kicker_idx = 0
-            kickers = HandEvaluator._temp_kickers[:3]
-            for rank, count in rank_counts[1:]:
-                kickers[kicker_idx] = rank
-                kicker_idx += 1
-            kickers[:kicker_idx] = sorted(kickers[:kicker_idx], reverse=True)
-            return HandEvaluator.HAND_RANKINGS['pair'], [pair_rank] + kickers[:kicker_idx]
+            kickers = sorted([rank_counts[1][0], rank_counts[2][0], rank_counts[3][0]], reverse=True)
+            return HandEvaluator.HAND_RANKINGS['pair'], [pair_rank] + kickers
         
-        # High card
-        sorted_ranks = HandEvaluator._temp_sorted_ranks[:5]
-        sorted_ranks[:] = sorted(ranks, reverse=True)
-        return HandEvaluator.HAND_RANKINGS['high_card'], sorted_ranks[:]
+        else:  # High card, straight, flush, or straight flush
+            sorted_ranks = sorted(ranks, reverse=True)
+            
+            # Check for straight
+            is_straight = False
+            straight_high = 0
+            
+            # Check each straight pattern
+            for i, pattern in enumerate(HandEvaluator._STRAIGHT_PATTERNS):
+                if all(rank in ranks for rank in pattern):
+                    is_straight = True
+                    straight_high = HandEvaluator._STRAIGHT_HIGHS[i]
+                    break
+            
+            if is_straight and is_flush:
+                if straight_high == 12:  # A-high straight flush = royal flush
+                    return HandEvaluator.HAND_RANKINGS['royal_flush'], [straight_high]
+                else:
+                    return HandEvaluator.HAND_RANKINGS['straight_flush'], [straight_high]
+            elif is_flush:
+                return HandEvaluator.HAND_RANKINGS['flush'], sorted_ranks
+            elif is_straight:
+                return HandEvaluator.HAND_RANKINGS['straight'], [straight_high]
+            else:
+                return HandEvaluator.HAND_RANKINGS['high_card'], sorted_ranks
+
 
 class Deck:
-    """Deck management with card removal tracking."""
+    """Efficient deck of cards with optimized dealing and shuffling."""
     
     def __init__(self, removed_cards: Optional[List[Card]] = None) -> None:
         # Pre-allocate full deck for better memory efficiency
-        self._full_deck = []
-        for suit in SUITS:
-            for rank in RANKS:
-                self._full_deck.append(Card(rank, suit))
+        self.all_cards = [Card(rank, suit) for suit in SUITS for rank in RANKS]
+        self.removed_cards = set(removed_cards) if removed_cards else set()
+        self.available_cards = [card for card in self.all_cards if card not in self.removed_cards]
+        self.current_index = 0
         
-        # Create working deck by filtering removed cards
-        if removed_cards is None:
-            self.cards = self._full_deck.copy()
-        else:
-            removed_set = set(removed_cards)  # Use set for O(1) lookup
-            self.cards = [card for card in self._full_deck if card not in removed_set]
-        
+        # Shuffle on initialization
         self.shuffle()
     
     def shuffle(self) -> None:
-        """Shuffle the deck."""
-        random.shuffle(self.cards)
+        """Shuffle the deck using Fisher-Yates algorithm."""
+        random.shuffle(self.available_cards)
+        self.current_index = 0
     
     def deal(self, num_cards: int) -> List[Card]:
         """Deal specified number of cards."""
-        if num_cards > len(self.cards):
-            raise ValueError(f"Cannot deal {num_cards} cards, only {len(self.cards)} remaining")
+        if self.current_index + num_cards > len(self.available_cards):
+            raise ValueError("Not enough cards remaining in deck")
         
-        dealt = self.cards[:num_cards]
-        self.cards = self.cards[num_cards:]
-        return dealt
+        cards = self.available_cards[self.current_index:self.current_index + num_cards]
+        self.current_index += num_cards
+        return cards
     
     def remaining_cards(self) -> int:
-        """Number of cards remaining in deck."""
-        return len(self.cards)
+        """Get number of cards remaining in deck."""
+        return len(self.available_cards) - self.current_index
     
     def reset_with_removed(self, removed_cards: List[Card]) -> None:
-        """Reset deck with new removed cards (avoids object creation)."""
-        removed_set = set(removed_cards)
-        self.cards = [card for card in self._full_deck if card not in removed_set]
+        """Reset deck with new set of removed cards."""
+        self.removed_cards = set(removed_cards)
+        self.available_cards = [card for card in self.all_cards if card not in self.removed_cards]
         self.shuffle()
+
+# Worker functions for advanced parallel processing (Task 1.1)
+# These need to be at module level to be serializable for multiprocessing
+
+def _parallel_simulation_worker(batch_size: int, worker_id: str, solver_data: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    """
+    Worker function for parallel simulation batches.
+    This function is at module level to be serializable for multiprocessing.
+    """
+    # Extract solver data
+    hero_cards_data = solver_data['hero_cards']
+    num_opponents = solver_data['num_opponents']
+    board_data = solver_data['board']
+    removed_cards_data = solver_data['removed_cards']
+    include_hand_categories = solver_data['include_hand_categories']
+    
+    # Recreate Card objects from serialized data
+    hero_cards = [Card(rank=card['rank'], suit=card['suit']) for card in hero_cards_data]
+    board = [Card(rank=card['rank'], suit=card['suit']) for card in board_data]
+    removed_cards = [Card(rank=card['rank'], suit=card['suit']) for card in removed_cards_data]
+    
+    # Create evaluator for this worker
+    evaluator = HandEvaluator()
+    
+    batch_wins = 0
+    batch_ties = 0
+    batch_losses = 0
+    batch_categories = Counter() if include_hand_categories else {}
+    
+    for _ in range(batch_size):
+        # Simulate one hand
+        result = _simulate_single_hand(hero_cards, num_opponents, board, removed_cards, evaluator)
+        
+        if result["result"] == "win":
+            batch_wins += 1
+        elif result["result"] == "tie":
+            batch_ties += 1
+        else:
+            batch_losses += 1
+        
+        if isinstance(batch_categories, Counter):
+            batch_categories[result["hero_hand_type"]] += 1
+    
+    return {
+        'wins': batch_wins,
+        'ties': batch_ties,
+        'losses': batch_losses,
+        'hand_categories': dict(batch_categories),
+        'simulations': batch_size
+    }
+
+
+def _simulate_single_hand(hero_cards: List[Card], num_opponents: int, 
+                         board: List[Card], removed_cards: List[Card],
+                         evaluator: HandEvaluator) -> Dict[str, Any]:
+    """Simulate a single hand - module level for multiprocessing."""
+    # Create deck with removed cards
+    deck = Deck(removed_cards)
+    
+    # Deal opponent hands
+    opponent_hands = [deck.deal(2) for _ in range(num_opponents)]
+    
+    # Complete the board if needed
+    cards_needed = 5 - len(board)
+    if cards_needed > 0:
+        board_cards = board + deck.deal(cards_needed)
+    else:
+        board_cards = board
+    
+    # Evaluate hero hand
+    hero_rank, hero_tiebreakers = evaluator.evaluate_hand(hero_cards + board_cards)
+    
+    # Evaluate opponent hands and count results
+    hero_better_count = 0
+    hero_tied_count = 0
+    
+    for opp_cards in opponent_hands:
+        opp_rank, opp_tiebreakers = evaluator.evaluate_hand(opp_cards + board_cards)
+        
+        if hero_rank > opp_rank:
+            hero_better_count += 1
+        elif hero_rank == opp_rank:
+            if hero_tiebreakers > opp_tiebreakers:
+                hero_better_count += 1
+            elif hero_tiebreakers == opp_tiebreakers:
+                hero_tied_count += 1
+    
+    # Determine result
+    if hero_better_count == num_opponents:
+        result = "win"
+    elif hero_better_count + hero_tied_count == num_opponents and hero_tied_count > 0:
+        result = "tie"
+    else:
+        result = "loss"
+    
+    return {
+        "result": result,
+        "hero_hand_type": _get_hand_type_name_static(hero_rank),
+        "hero_hand_rank": hero_rank
+    }
+
+
+def _get_hand_type_name_static(hand_rank: int) -> str:
+    """Convert hand rank to readable name - static version for multiprocessing."""
+    hand_rankings = {
+        1: 'high_card',
+        2: 'pair',
+        3: 'two_pair',
+        4: 'three_of_a_kind',
+        5: 'straight',
+        6: 'flush',
+        7: 'full_house',
+        8: 'four_of_a_kind',
+        9: 'straight_flush',
+        10: 'royal_flush'
+    }
+    return hand_rankings.get(hand_rank, "unknown")
+
 
 @dataclass
 class SimulationResult:
@@ -350,13 +483,88 @@ class SimulationResult:
 class MonteCarloSolver:
     """Monte Carlo poker solver for Texas Hold'em."""
     
-    def __init__(self, config_path: Optional[str] = None) -> None:
+    def __init__(self, config_path: Optional[str] = None, enable_caching: bool = True,
+                 skip_cache_warming: bool = False, force_cache_regeneration: bool = False) -> None:
         """Initialize the solver with configuration settings."""
         self.config = self._load_config(config_path)
         self.evaluator = HandEvaluator()
         self._thread_pool = None
         self._max_workers = self.config["simulation_settings"].get("max_workers", 4)  # Default to 4 workers
         self._lock = threading.Lock()
+        
+        # Initialize advanced parallel processing engine (Task 1.1)
+        self._parallel_engine = None
+        if ADVANCED_PARALLEL_AVAILABLE:
+            try:
+                # Create parallel processing configuration
+                parallel_settings = self.config.get("parallel_settings", {})
+                parallel_config = ProcessingConfig(
+                    max_threads=parallel_settings.get("max_threads", 0),  # 0 = auto-detect
+                    max_processes=parallel_settings.get("max_processes", 0),  # 0 = auto-detect
+                    numa_aware=parallel_settings.get("numa_aware", False),
+                    complexity_threshold=parallel_settings.get("complexity_threshold", 5.0),
+                    minimum_simulations_for_mp=parallel_settings.get("minimum_simulations_for_mp", 5000),
+                    shared_memory_size_mb=parallel_settings.get("shared_memory_size_mb", 128),
+                    fallback_to_threading=parallel_settings.get("fallback_to_threading", True)
+                )
+                
+                self._parallel_engine = create_parallel_engine(parallel_config)
+                
+            except Exception as e:
+                print(f"Warning: Advanced parallel processing unavailable ({e}). Using standard threading.")
+                self._parallel_engine = None
+        
+        # Initialize caching system (Task 1.4)
+        self._caching_enabled = enable_caching
+        if enable_caching and CACHING_AVAILABLE:
+            try:
+                # Initialize cache configuration
+                cache_settings = self.config.get("cache_settings", {})
+                self._cache_config = CacheConfig(
+                    max_memory_mb=cache_settings.get("max_memory_mb", 512),
+                    hand_cache_size=cache_settings.get("hand_cache_size", 10000),
+                    preflop_cache_enabled=cache_settings.get("preflop_cache_enabled", True),
+                    enable_persistence=cache_settings.get("enable_persistence", False)
+                )
+                
+                # Get cache instances
+                self._hand_cache, self._board_cache, self._preflop_cache = get_cache_manager(self._cache_config)
+                self._create_cache_key = create_cache_key
+                
+                # Initialize cache pre-population system (Task 1.2 - Improved)
+                self._population_stats = None
+                if CACHE_PREPOPULATION_AVAILABLE and self._cache_config.enable_persistence:
+                    try:
+                        # Create population configuration
+                        population_config = PopulationConfig(
+                            enable_persistence=self._cache_config.enable_persistence,
+                            skip_cache_warming=skip_cache_warming,
+                            force_cache_regeneration=force_cache_regeneration,
+                            cache_population_threshold=cache_settings.get("cache_population_threshold", 0.95),
+                            max_population_time_minutes=cache_settings.get("max_population_time_minutes", 5)
+                        )
+                        
+                        # Ensure cache is populated (one-time check and population)
+                        print("Checking cache coverage...")
+                        self._population_stats = ensure_cache_populated(
+                            cache_config=self._cache_config,
+                            population_config=population_config
+                        )
+                        
+                        if self._population_stats.populated_scenarios > 0:
+                            print(f"Cache populated with {self._population_stats.populated_scenarios} scenarios")
+                            print(f"Cache coverage: {self._population_stats.coverage_after:.1%}")
+                            print("Future queries will be significantly faster!")
+                        
+                    except Exception as e:
+                        print(f"Warning: Cache pre-population failed ({e}). Caching will work without pre-population.")
+                        self._population_stats = None
+                
+            except ImportError as e:
+                print(f"Warning: Caching system not available ({e}). Running without cache.")
+                self._caching_enabled = False
+        else:
+            self._caching_enabled = False
         
         # Smart sampling configuration (Task 3.3)
         self._sampling_strategy = self.config.get("sampling_strategy", {})
@@ -387,6 +595,62 @@ class MonteCarloSolver:
             if self._thread_pool is not None:
                 self._thread_pool.shutdown(wait=True)
                 self._thread_pool = None
+    
+    def enable_caching(self, enable: bool = True) -> None:
+        """Enable or disable caching for this solver instance."""
+        if enable and not self._caching_enabled:
+            # Try to initialize caching if not already done
+            try:
+                from .storage import CacheConfig, get_cache_manager, create_cache_key
+                # Initialize cache configuration
+                cache_settings = self.config.get("cache_settings", {})
+                self._cache_config = CacheConfig(
+                    max_memory_mb=cache_settings.get("max_memory_mb", 512),
+                    hand_cache_size=cache_settings.get("hand_cache_size", 10000),
+                    preflop_cache_enabled=cache_settings.get("preflop_cache_enabled", True),
+                    enable_persistence=cache_settings.get("enable_persistence", False)
+                )
+                
+                # Get cache instances
+                self._hand_cache, self._board_cache, self._preflop_cache = get_cache_manager(self._cache_config)
+                self._create_cache_key = create_cache_key
+                self._caching_enabled = True
+                
+            except ImportError:
+                print("Warning: Caching system not available. Cannot enable caching.")
+                self._caching_enabled = False
+        else:
+            self._caching_enabled = enable
+    
+    def get_cache_stats(self) -> Optional[Dict[str, Any]]:
+        """Get cache statistics for monitoring and debugging."""
+        if not self._caching_enabled:
+            return None
+        
+        try:
+            hand_stats = self._hand_cache.get_stats()
+            preflop_stats = self._preflop_cache.get_stats()
+            preflop_coverage = self._preflop_cache.get_cache_coverage()
+            
+            return {
+                'caching_enabled': True,
+                'hand_cache': {
+                    'total_requests': hand_stats.total_requests,
+                    'cache_hits': hand_stats.cache_hits,
+                    'cache_misses': hand_stats.cache_misses,
+                    'hit_rate': hand_stats.hit_rate,
+                    'memory_usage_mb': hand_stats.memory_usage_mb,
+                    'evictions': hand_stats.evictions
+                },
+                'preflop_cache': {
+                    'total_requests': preflop_stats.get('total_requests', 0),
+                    'cache_hits': preflop_stats.get('cache_hits', 0),
+                    'cached_combinations': preflop_coverage.get('cached_combinations', 0),
+                    'coverage_percentage': preflop_coverage.get('coverage_percentage', 0.0)
+                }
+            }
+        except Exception as e:
+            return {'error': f"Failed to get cache stats: {e}"}
     
     def _get_thread_pool(self) -> ThreadPoolExecutor:
         """Get or create the persistent thread pool with thread-safe access."""
@@ -451,6 +715,74 @@ class MonteCarloSolver:
         if len(all_cards) != len(set(all_cards)):
             raise ValueError("Duplicate cards detected in hero hand and/or board cards")
         
+        # Cache lookup (Task 1.3) - Check cache before running expensive simulations
+        cache_key = None
+        cached_result = None
+        was_cached = False
+        
+        if self._caching_enabled:
+            # Create cache key for this scenario
+            cache_key = self._create_cache_key(
+                hero_hand=hero_hand,
+                num_opponents=num_opponents,
+                board_cards=board_cards,
+                simulation_mode=simulation_mode,
+                hero_position=hero_position,
+                stack_depth=stack_depth,
+                config=self._cache_config
+            )
+            
+            # Try preflop cache first for preflop scenarios
+            if not board_cards and self._cache_config.preflop_cache_enabled:
+                cached_result = self._preflop_cache.get_preflop_result(
+                    hero_hand, num_opponents, hero_position
+                )
+                if cached_result:
+                    was_cached = True
+            
+            # Try general hand cache if not found in preflop cache
+            if not cached_result:
+                cached_result = self._hand_cache.get_result(cache_key)
+                if cached_result:
+                    was_cached = True
+        
+        # If we have a cached result, return it immediately (with updated execution time)
+        if cached_result and was_cached:
+            cache_execution_time = (time.time() - start_time) * 1000
+            
+            # Create result from cached data
+            return SimulationResult(
+                win_probability=cached_result['win_probability'],
+                tie_probability=cached_result.get('tie_probability', 0.0),
+                loss_probability=cached_result.get('loss_probability', 0.0),
+                simulations_run=cached_result.get('simulations_run', 0),
+                execution_time_ms=cache_execution_time,
+                confidence_interval=cached_result.get('confidence_interval'),
+                hand_category_frequencies=cached_result.get('hand_category_frequencies'),
+                convergence_achieved=cached_result.get('convergence_achieved'),
+                geweke_statistic=cached_result.get('geweke_statistic'),
+                effective_sample_size=cached_result.get('effective_sample_size'),
+                convergence_efficiency=cached_result.get('convergence_efficiency'),
+                stopped_early=cached_result.get('stopped_early'),
+                convergence_details=cached_result.get('convergence_details'),
+                adaptive_timeout_used=cached_result.get('adaptive_timeout_used'),
+                final_timeout_ms=cached_result.get('final_timeout_ms'),
+                target_accuracy_achieved=cached_result.get('target_accuracy_achieved'),
+                final_margin_of_error=cached_result.get('final_margin_of_error'),
+                position_aware_equity=cached_result.get('position_aware_equity'),
+                multi_way_statistics=cached_result.get('multi_way_statistics'),
+                fold_equity_estimates=cached_result.get('fold_equity_estimates'),
+                coordination_effects=cached_result.get('coordination_effects'),
+                icm_equity=cached_result.get('icm_equity'),
+                bubble_factor=cached_result.get('bubble_factor'),
+                stack_to_pot_ratio=cached_result.get('stack_to_pot_ratio'),
+                tournament_pressure=cached_result.get('tournament_pressure'),
+                defense_frequencies=cached_result.get('defense_frequencies'),
+                bluff_catching_frequency=cached_result.get('bluff_catching_frequency'),
+                range_coordination_score=cached_result.get('range_coordination_score'),
+                optimization_data=cached_result.get('optimization_data')
+            )
+        
         # Task 8.1: Intelligent Simulation Optimization
         optimization_data = None
         if intelligent_optimization:
@@ -507,6 +839,23 @@ class MonteCarloSolver:
             else:
                 max_time_ms = perf_settings.get("timeout_default_mode_ms", 20000)
         
+        # Default complexity score when not using intelligent optimization
+        if optimization_data is None:
+            # Simple heuristic based on simulation mode and scenario
+            base_complexity = {
+                "fast": 2.0,
+                "default": 5.0,
+                "precision": 8.0
+            }.get(simulation_mode, 5.0)
+            
+            # Adjust based on opponents and board
+            opponent_factor = min(2.0, num_opponents * 0.5)
+            board_factor = len(board) * 0.3 if board else 0.0
+            
+            complexity_score = base_complexity + opponent_factor + board_factor
+        else:
+            complexity_score = optimization_data['complexity_score']
+        
         # Track removed cards for accurate simulation
         removed_cards = hero_cards + board
         
@@ -514,11 +863,86 @@ class MonteCarloSolver:
         perf_settings = self.config["performance_settings"]
         parallel_threshold = perf_settings.get("parallel_processing_threshold", 1000)
         use_parallel = (self.config["simulation_settings"].get("parallel_processing", False) 
-                       and num_simulations >= parallel_threshold
-                       and not CONVERGENCE_ANALYSIS_AVAILABLE)  # Disable parallel when convergence analysis is available
+                       and num_simulations >= parallel_threshold)
         
-        if use_parallel:
-            # Use persistent thread pool for parallel processing
+        # Advanced parallel processing decision (Task 1.1)
+        use_advanced_parallel = (
+            self._parallel_engine is not None and 
+            use_parallel and 
+            num_simulations >= 5000 and  # Advanced parallel requires larger batch sizes
+            complexity_score >= 3.0      # Only use for moderately complex scenarios
+        )
+        
+        # Standard parallel processing (disable when convergence analysis is available)
+        use_standard_parallel = (
+            use_parallel and 
+            not use_advanced_parallel and
+            not CONVERGENCE_ANALYSIS_AVAILABLE  # Only disable standard parallel for convergence analysis
+        )
+        
+        if use_advanced_parallel:
+            # Use advanced parallel processing engine with multiprocessing
+            try:
+                # Prepare solver data for serialization to worker processes
+                def serialize_card(card: Card) -> Dict[str, str]:
+                    return {'rank': card.rank, 'suit': card.suit}
+                
+                solver_data = {
+                    'hero_cards': [serialize_card(card) for card in hero_cards],
+                    'num_opponents': num_opponents,
+                    'board': [serialize_card(card) for card in board],
+                    'removed_cards': [serialize_card(card) for card in removed_cards],
+                    'include_hand_categories': self.config["output_settings"]["include_hand_categories"]
+                }
+                
+                # Scenario metadata for optimization
+                scenario_metadata = {
+                    'complexity_score': complexity_score,
+                    'hero_hand': hero_hand,
+                    'num_opponents': num_opponents,
+                    'board_cards': board_cards,
+                    'simulation_mode': simulation_mode,
+                    'solver_data': solver_data
+                }
+                
+                # Execute with advanced parallel engine using module-level worker
+                results, parallel_stats = self._parallel_engine.execute_simulation_batch(
+                    _parallel_simulation_worker, num_simulations, scenario_metadata, 
+                    solver_data=solver_data
+                )
+                
+                # Extract results
+                wins = results.get('wins', 0)
+                ties = results.get('ties', 0) 
+                losses = results.get('losses', 0)
+                hand_categories = Counter(results.get('hand_categories', {}))
+                
+                # Add parallel execution stats to optimization data
+                if optimization_data is None:
+                    optimization_data = {}
+                optimization_data['parallel_execution'] = {
+                    'engine_type': 'advanced_multiprocessing',
+                    'total_workers': parallel_stats.worker_count,
+                    'multiprocessing_workers': parallel_stats.multiprocessing_workers,
+                    'threading_workers': parallel_stats.threading_workers,
+                    'speedup_factor': parallel_stats.speedup_factor,
+                    'efficiency_percentage': parallel_stats.efficiency_percentage,
+                    'cpu_utilization': parallel_stats.cpu_utilization,
+                    'numa_distribution': parallel_stats.numa_distribution,
+                    'load_balance_score': parallel_stats.load_balance_score
+                }
+                
+                convergence_data = None  # Advanced parallel doesn't use convergence analysis yet
+                
+            except Exception as e:
+                print(f"Warning: Advanced parallel processing failed ({e}). Falling back to standard parallel.")
+                # Fall back to standard parallel processing
+                wins, ties, losses, hand_categories, convergence_data = self._run_parallel_simulations(
+                    hero_cards, num_opponents, board, removed_cards, num_simulations, max_time_ms, start_time
+                )
+        
+        elif use_standard_parallel:
+            # Use standard thread pool for parallel processing
             wins, ties, losses, hand_categories, convergence_data = self._run_parallel_simulations(
                 hero_cards, num_opponents, board, removed_cards, num_simulations, max_time_ms, start_time
             )
@@ -612,6 +1036,53 @@ class MonteCarloSolver:
             defense_frequencies = multi_way_analysis.get('defense_frequencies')
             bluff_catching_frequency = multi_way_analysis.get('bluff_catching_frequency')
             range_coordination_score = multi_way_analysis.get('range_coordination_score')
+        
+        # Cache the result for future queries (Task 1.3)
+        if self._caching_enabled:
+            cache_result_data = {
+                'win_probability': win_prob,
+                'tie_probability': tie_prob,
+                'loss_probability': loss_prob,
+                'simulations_run': total_sims,
+                'execution_time_ms': execution_time,
+                'confidence_interval': confidence_interval,
+                'hand_category_frequencies': hand_category_frequencies,
+                'convergence_achieved': convergence_achieved,
+                'geweke_statistic': geweke_statistic,
+                'effective_sample_size': effective_sample_size,
+                'convergence_efficiency': convergence_efficiency,
+                'stopped_early': stopped_early,
+                'convergence_details': convergence_details,
+                'adaptive_timeout_used': adaptive_timeout_used,
+                'final_timeout_ms': final_timeout_ms,
+                'target_accuracy_achieved': target_accuracy_achieved,
+                'final_margin_of_error': final_margin_of_error,
+                'position_aware_equity': position_aware_equity,
+                'multi_way_statistics': multi_way_statistics,
+                'fold_equity_estimates': fold_equity_estimates,
+                'coordination_effects': coordination_effects,
+                'icm_equity': icm_equity,
+                'bubble_factor': bubble_factor,
+                'stack_to_pot_ratio': stack_to_pot_ratio,
+                'tournament_pressure': tournament_pressure,
+                'defense_frequencies': defense_frequencies,
+                'bluff_catching_frequency': bluff_catching_frequency,
+                'range_coordination_score': range_coordination_score,
+                'optimization_data': optimization_data
+            }
+            
+            # Store in appropriate cache
+            if not board_cards and self._cache_config.preflop_cache_enabled:
+                # Store in preflop cache for preflop scenarios
+                self._preflop_cache.store_preflop_result(
+                    hero_hand, num_opponents, cache_result_data, hero_position
+                )
+            else:
+                # Store in general hand cache
+                self._hand_cache.store_result(cache_key, cache_result_data)
+        
+        # Note: Cache pre-population replaces adaptive learning - scenarios are pre-computed
+        # during solver initialization for maximum performance
         
         return SimulationResult(
             win_probability=round(win_prob, self.config["output_settings"]["decimal_precision"]),

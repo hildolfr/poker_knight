@@ -1,0 +1,31 @@
+Test: test_storage_cache
+File: tests\test_storage_cache.py
+Status: error
+Execution time: 0.26s
+Exit code: 1
+Timestamp: 2025-06-02 01:38:13.181266
+
+Deadlock indicators:
+  - Cache system deadlock
+
+STDOUT:
+
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_storage_cache.py", line 34, in <module>
+    from poker_knight.storage.cache import (
+    ...<4 lines>...
+    )
+ModuleNotFoundError: No module named 'poker_knight'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_storage_cache.py", line 43, in <module>
+    pytest.skip(f"Caching system not available: {e}", allow_module_level=True)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Roaming\Python\Python313\site-packages\_pytest\outcomes.py", line 160, in skip
+    raise Skipped(msg=reason, allow_module_level=allow_module_level)
+Skipped: Caching system not available: No module named 'poker_knight'
+

@@ -1,0 +1,22 @@
+Test: test_solver_caching_integration
+File: test_solver_caching_integration.py
+Status: error
+Execution time: 0.35s
+Exit code: 1
+Timestamp: 2025-06-02 01:37:45.956012
+
+Deadlock indicators:
+
+STDOUT:
+
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\test_solver_caching_integration.py", line 17, in <module>
+    print("\u2705 MonteCarloSolver and caching system imported successfully")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+

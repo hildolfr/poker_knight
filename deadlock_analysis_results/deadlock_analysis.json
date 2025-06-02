@@ -1,0 +1,225 @@
+{
+  "summary": {
+    "total_tests": 25,
+    "successful_tests": 1,
+    "timeout_tests": 0,
+    "error_tests": 24,
+    "success_rate": 0.04,
+    "average_success_time": 7.3048107624053955
+  },
+  "deadlock_indicators": {
+    "Redis connection issue": 4,
+    "Cache system deadlock": 10,
+    "SQLite locking issue": 3,
+    "NUMA allocation issue": 1
+  },
+  "problematic_tests": [
+    {
+      "name": "test_advanced_parallel",
+      "file": "test_advanced_parallel.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.38628196716308594
+    },
+    {
+      "name": "test_force_advanced_parallel",
+      "file": "test_force_advanced_parallel.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.33556437492370605
+    },
+    {
+      "name": "test_cache_with_redis_demo",
+      "file": "test_cache_with_redis_demo.py",
+      "status": "error",
+      "indicators": [
+        "Redis connection issue",
+        "Cache system deadlock"
+      ],
+      "execution_time": 13.955143690109253
+    },
+    {
+      "name": "test_cache_warming_demo",
+      "file": "test_cache_warming_demo.py",
+      "status": "error",
+      "indicators": [
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.3389091491699219
+    },
+    {
+      "name": "test_cache_prepopulation_demo",
+      "file": "test_cache_prepopulation_demo.py",
+      "status": "error",
+      "indicators": [
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.3301825523376465
+    },
+    {
+      "name": "test_redis_integration",
+      "file": "test_redis_integration.py",
+      "status": "error",
+      "indicators": [
+        "Redis connection issue"
+      ],
+      "execution_time": 4.403890371322632
+    },
+    {
+      "name": "test_redis_simple",
+      "file": "test_redis_simple.py",
+      "status": "error",
+      "indicators": [
+        "Redis connection issue",
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.3422353267669678
+    },
+    {
+      "name": "test_redis_vs_sqlite_demo",
+      "file": "test_redis_vs_sqlite_demo.py",
+      "status": "error",
+      "indicators": [
+        "Redis connection issue",
+        "SQLite locking issue"
+      ],
+      "execution_time": 0.3368258476257324
+    },
+    {
+      "name": "test_sqlite_fallback_demo",
+      "file": "test_sqlite_fallback_demo.py",
+      "status": "error",
+      "indicators": [
+        "SQLite locking issue",
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.3382880687713623
+    },
+    {
+      "name": "test_sqlite_integration",
+      "file": "test_sqlite_integration.py",
+      "status": "error",
+      "indicators": [
+        "SQLite locking issue"
+      ],
+      "execution_time": 0.3365044593811035
+    },
+    {
+      "name": "test_solver_caching_integration",
+      "file": "test_solver_caching_integration.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.34877443313598633
+    },
+    {
+      "name": "test_fallback_demo",
+      "file": "test_fallback_demo.py",
+      "status": "error",
+      "indicators": [
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.3319056034088135
+    },
+    {
+      "name": "test_caching",
+      "file": "test_caching.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.3315846920013428
+    },
+    {
+      "name": "test_caching_debug",
+      "file": "test_caching_debug.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.33275365829467773
+    },
+    {
+      "name": "debug_parallel",
+      "file": "debug_parallel.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.3340718746185303
+    },
+    {
+      "name": "test_numa",
+      "file": "tests\\test_numa.py",
+      "status": "error",
+      "indicators": [
+        "NUMA allocation issue"
+      ],
+      "execution_time": 0.31810832023620605
+    },
+    {
+      "name": "test_cache_integration",
+      "file": "tests\\test_cache_integration.py",
+      "status": "error",
+      "indicators": [
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.08301258087158203
+    },
+    {
+      "name": "test_storage_cache",
+      "file": "tests\\test_storage_cache.py",
+      "status": "error",
+      "indicators": [
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.2561202049255371
+    },
+    {
+      "name": "test_cache_population",
+      "file": "tests\\test_cache_population.py",
+      "status": "error",
+      "indicators": [
+        "Cache system deadlock"
+      ],
+      "execution_time": 0.24635100364685059
+    },
+    {
+      "name": "test_poker_solver",
+      "file": "tests\\test_poker_solver.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.08414936065673828
+    },
+    {
+      "name": "test_statistical_validation",
+      "file": "tests\\test_statistical_validation.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.18417763710021973
+    },
+    {
+      "name": "test_stress_scenarios",
+      "file": "tests\\test_stress_scenarios.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.22363972663879395
+    },
+    {
+      "name": "test_performance_regression",
+      "file": "tests\\test_performance_regression.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.08873629570007324
+    },
+    {
+      "name": "test_multi_way_scenarios",
+      "file": "tests\\test_multi_way_scenarios.py",
+      "status": "error",
+      "indicators": [],
+      "execution_time": 0.08177304267883301
+    }
+  ],
+  "recommendations": [
+    "\ud83d\udd27 Implement Redis connection pooling and timeout handling",
+    "\ud83d\udd27 Review parallel processing initialization and cleanup procedures",
+    "\ud83d\udd27 Implement proper cache connection lifecycle management",
+    "\ud83d\udd27 Add NUMA availability checks and graceful fallbacks",
+    "\ud83d\udd27 Consider isolating tests in separate processes with proper cleanup"
+  ],
+  "timestamp": "2025-06-02T01:38:30.023657",
+  "analysis_duration": 87.746432
+}

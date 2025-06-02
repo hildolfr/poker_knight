@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Precision and accuracy tests for Monte Carlo simulations
 """
@@ -15,7 +16,7 @@ def test_precision_mode():
     print("Testing precision mode...")
     
     start_time = time.time()
-    result = solve_poker_hand(['A♠️', 'A♥️'], 1, simulation_mode='precision')
+    result = solve_poker_hand(['AS', 'AH'], 1, simulation_mode='precision')
     total_time = time.time() - start_time
     
     print(f"Precision mode results:")

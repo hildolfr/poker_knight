@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test enhanced input validation
 """
@@ -15,28 +16,28 @@ def test_validation():
     
     # Test duplicate cards
     try:
-        result = solve_poker_hand(['A♠️', 'A♠️'], 1)
+        result = solve_poker_hand(['AS', 'AS'], 1)
         print("ERROR: Duplicate cards should have been caught!")
     except ValueError as e:
         print(f"[OK] Duplicate cards caught: {e}")
     
     # Test invalid simulation mode
     try:
-        result = solve_poker_hand(['A♠️', 'K♥️'], 1, simulation_mode='invalid')
+        result = solve_poker_hand(['AS', 'KH'], 1, simulation_mode='invalid')
         print("ERROR: Invalid simulation mode should have been caught!")
     except ValueError as e:
         print(f"[OK] Invalid simulation mode caught: {e}")
     
     # Test duplicate between hero and board
     try:
-        result = solve_poker_hand(['A♠️', 'K♥️'], 1, ['A♠️', 'Q♦️', 'J♣️'])
+        result = solve_poker_hand(['AS', 'KH'], 1, ['AS', 'QD', 'JC'])
         print("ERROR: Duplicate between hero and board should have been caught!")
     except ValueError as e:
         print(f"[OK] Hero/board duplicate caught: {e}")
     
     # Test valid input still works
     try:
-        result = solve_poker_hand(['A♠️', 'K♥️'], 1, simulation_mode='fast')
+        result = solve_poker_hand(['AS', 'KH'], 1, simulation_mode='fast')
         print(f"[OK] Valid input works: {result.win_probability:.1%} win rate")
     except Exception as e:
         print(f"ERROR: Valid input failed: {e}")

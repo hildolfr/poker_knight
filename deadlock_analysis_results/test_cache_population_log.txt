@@ -1,0 +1,31 @@
+Test: test_cache_population
+File: tests\test_cache_population.py
+Status: error
+Execution time: 0.25s
+Exit code: 1
+Timestamp: 2025-06-02 01:38:15.663163
+
+Deadlock indicators:
+  - Cache system deadlock
+
+STDOUT:
+
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_cache_population.py", line 37, in <module>
+    from poker_knight.storage.cache_prepopulation import (
+    ...<2 lines>...
+    )
+ModuleNotFoundError: No module named 'poker_knight'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_cache_population.py", line 47, in <module>
+    pytest.skip(f"Cache population system not available: {e}", allow_module_level=True)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Roaming\Python\Python313\site-packages\_pytest\outcomes.py", line 160, in skip
+    raise Skipped(msg=reason, allow_module_level=allow_module_level)
+Skipped: Cache population system not available: No module named 'poker_knight'
+

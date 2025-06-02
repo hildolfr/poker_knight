@@ -1,0 +1,18 @@
+Test: test_statistical_validation
+File: tests\test_statistical_validation.py
+Status: error
+Execution time: 0.18s
+Exit code: 1
+Timestamp: 2025-06-02 01:38:20.473294
+
+Deadlock indicators:
+
+STDOUT:
+
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_statistical_validation.py", line 21, in <module>
+    from poker_knight import solve_poker_hand, MonteCarloSolver
+ModuleNotFoundError: No module named 'poker_knight'
+

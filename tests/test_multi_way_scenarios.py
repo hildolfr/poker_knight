@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Comprehensive Multi-Way Pot Analysis Tests (Task 7.2)
 
@@ -31,7 +32,7 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         Test position-aware equity calculation with different table positions.
         Validates Task 7.2.a: Position-Aware Equity Calculation.
         """
-        hero_hand = ['A♠️', 'K♠️']  # Strong hand for position testing
+        hero_hand = ['AS', 'KS']  # Strong hand for position testing
         num_opponents = 2
         
         positions = ['early', 'middle', 'late', 'button', 'sb', 'bb']
@@ -88,14 +89,14 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         self.assertGreater(late_advantage, early_advantage,
                           "Late position should have better equity than early position")
         
-        print("✅ Position-aware equity calculation validated")
+        print("[PASS] Position-aware equity calculation validated")
     
     def test_multi_way_statistics_3_opponents(self):
         """
         Test multi-way statistics calculation for 3+ opponents.
         Validates advanced multi-way pot metrics and coordination effects.
         """
-        hero_hand = ['Q♠️', 'Q♥️']  # Premium pair for multi-way testing
+        hero_hand = ['QS', 'QH']  # Premium pair for multi-way testing
         num_opponents = 3  # 4-way pot
         
         result = solve_poker_hand(
@@ -146,14 +147,14 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         print(f"  Coordination effect: {coordination['total_coordination_effect']:.3f}")
         print(f"  Optimal defense freq: {defense_freq['optimal_defense_frequency']:.3f}")
         
-        print("✅ Multi-way statistics (3+ opponents) validated")
+        print("[PASS] Multi-way statistics (3+ opponents) validated")
     
     def test_icm_integration_tournament_context(self):
         """
         Test ICM (Independent Chip Model) integration for tournament play.
         Validates Task 7.2.b: ICM Integration.
         """
-        hero_hand = ['J♠️', 'J♥️']  # Medium strength hand for ICM testing
+        hero_hand = ['JS', 'JH']  # Medium strength hand for ICM testing
         num_opponents = 2
         
         # Tournament context: bubble situation
@@ -206,7 +207,7 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         print(f"  Chip %: {tournament_pressure['hero_chip_percentage']:.1%}")
         print(f"  Stack pressure: {tournament_pressure['stack_pressure']:.3f}")
         
-        print("✅ ICM integration validated")
+        print("[PASS] ICM integration validated")
     
     def test_multi_way_range_analysis(self):
         """
@@ -215,9 +216,9 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         """
         test_scenarios = [
             # (hand, opponents, expected_characteristics)
-            (['A♠️', 'A♥️'], 4, {'strong_vs_many': True}),   # Premium hand vs many
-            (['7♠️', '6♠️'], 3, {'drawing_hand': True}),      # Drawing hand multiway
-            (['K♠️', 'Q♦️'], 5, {'marginal_multiway': True}), # Marginal hand vs many
+            (['AS', 'AH'], 4, {'strong_vs_many': True}),   # Premium hand vs many
+            (['7S', '6S'], 3, {'drawing_hand': True}),      # Drawing hand multiway
+            (['KS', 'QD'], 5, {'marginal_multiway': True}), # Marginal hand vs many
         ]
         
         print("Testing multi-way range analysis...")
@@ -259,13 +260,13 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
                 self.assertLess(bluff_catch_freq, 0.3,
                                "Marginal hands should bluff catch less vs many opponents")
         
-        print("✅ Multi-way range analysis validated")
+        print("[PASS] Multi-way range analysis validated")
     
     def test_position_and_stack_interaction(self):
         """
         Test interaction between position and stack size in multi-way analysis.
         """
-        hero_hand = ['A♠️', 'Q♠️']  # Strong but not premium hand
+        hero_hand = ['AS', 'QS']  # Strong but not premium hand
         num_opponents = 2
         
         # Test different position/stack combinations
@@ -316,14 +317,14 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
             "Stack size should affect ICM equity"
         )
         
-        print("✅ Position and stack interactions validated")
+        print("[PASS] Position and stack interactions validated")
     
     def test_backward_compatibility(self):
         """
         Test that existing code without multi-way parameters still works.
         Ensures backward compatibility while adding new features.
         """
-        hero_hand = ['K♠️', 'K♥️']
+        hero_hand = ['KS', 'KH']
         num_opponents = 2
         
         # Use a fixed seed for reproducible results in this test
@@ -357,13 +358,13 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         self.assertIsNone(result_old.icm_equity)
         self.assertIsNone(result_old.multi_way_statistics)
         
-        print("✅ Backward compatibility validated")
+        print("[PASS] Backward compatibility validated")
     
     def test_edge_cases_multiway_analysis(self):
         """
         Test edge cases in multi-way analysis.
         """
-        hero_hand = ['2♠️', '3♠️']  # Weak hand for edge case testing
+        hero_hand = ['2S', '3S']  # Weak hand for edge case testing
         
         # Test maximum opponents (6)
         result_max = solve_poker_hand(
@@ -391,7 +392,7 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         # SPR should be very low (short stack)
         self.assertLess(result_extreme.stack_to_pot_ratio, 1.0)
         
-        print("✅ Edge cases in multi-way analysis validated")
+        print("[PASS] Edge cases in multi-way analysis validated")
 
 
 class TestMultiWayPerformance(unittest.TestCase):
@@ -401,7 +402,7 @@ class TestMultiWayPerformance(unittest.TestCase):
         """Test that multi-way analysis doesn't significantly impact performance."""
         import time
         
-        hero_hand = ['A♠️', 'K♠️']
+        hero_hand = ['AS', 'KS']
         num_opponents = 3
         
         # Test without multi-way analysis
@@ -429,7 +430,7 @@ class TestMultiWayPerformance(unittest.TestCase):
         print(f"  Simple analysis: {simple_time:.3f}s")
         print(f"  Multi-way analysis: {multiway_time:.3f}s")
         print(f"  Overhead: {(performance_ratio - 1) * 100:.1f}%")
-        print("✅ Multi-way analysis performance acceptable")
+        print("[PASS] Multi-way analysis performance acceptable")
 
 
 if __name__ == '__main__':

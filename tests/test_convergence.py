@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Simple test for convergence analysis functionality."""
 
 from poker_knight import solve_poker_hand
@@ -10,15 +11,15 @@ def test_convergence():
     print("=" * 60)
     
     # Test with strong hand (pocket aces)
-    print("Testing convergence with A♠️ A♥️ vs 1 opponent...")
+    print("Testing convergence with AS AH vs 1 opponent...")
     start_time = time.time()
     
     try:
-        result = solve_poker_hand(['A♠️', 'A♥️'], 1, simulation_mode='default')
+        result = solve_poker_hand(['AS', 'AH'], 1, simulation_mode='default')
         end_time = time.time()
         
-        print(f"✅ Analysis completed successfully!")
-        print(f"📊 Results:")
+        print(f"[PASS] Analysis completed successfully!")
+        print(f"[STATS] Results:")
         print(f"   Win probability: {result.win_probability:.1%}")
         print(f"   Simulations run: {result.simulations_run:,}")
         print(f"   Execution time: {(end_time - start_time):.2f}s")
@@ -54,7 +55,7 @@ def test_convergence():
         print("\n🎉 All convergence analysis tests passed!")
         
     except Exception as e:
-        print(f"❌ Error during testing: {e}")
+        print(f"[FAIL] Error during testing: {e}")
         import traceback
         traceback.print_exc()
 

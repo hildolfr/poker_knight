@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Quick test of Multi-Way Pot Analysis (Task 7.2)
 Tests the new multi-way features with proper Unicode card format.
@@ -13,10 +14,10 @@ def test_multiway_analysis():
     print("=" * 60)
     
     # Test 1: Position-aware equity
-    print("\n🔍 Test 1: Position-Aware Equity")
+    print("\n[SEARCH] Test 1: Position-Aware Equity")
     print("-" * 35)
     
-    hero_hand = ['A♠️', 'K♠️']  # Strong hand for position testing
+    hero_hand = ['AS', 'KS']  # Strong hand for position testing
     
     positions = ['early', 'button']
     for position in positions:
@@ -44,7 +45,7 @@ def test_multiway_analysis():
     print("-" * 40)
     
     result = solve_poker_hand(
-        ['Q♠️', 'Q♥️'], 3,  # QQ vs 3 opponents
+        ['QS', 'QH'], 3,  # QQ vs 3 opponents
         simulation_mode="fast"
     )
     
@@ -69,7 +70,7 @@ def test_multiway_analysis():
     print("-" * 38)
     
     result = solve_poker_hand(
-        ['J♠️', 'J♥️'], 2,
+        ['JS', 'JH'], 2,
         simulation_mode="fast",
         stack_sizes=[15000, 25000, 10000],  # [hero, opp1, opp2]
         pot_size=3000,
@@ -93,11 +94,11 @@ def test_multiway_analysis():
         print(f"  Stack pressure: {tp['stack_pressure']:.3f}")
     
     # Test 4: Combined Analysis (Position + ICM + Multi-way)
-    print("\n🚀 Test 4: Combined Analysis")
+    print("\n[ROCKET] Test 4: Combined Analysis")
     print("-" * 30)
     
     result = solve_poker_hand(
-        ['A♠️', 'Q♠️'], 3,
+        ['AS', 'QS'], 3,
         simulation_mode="fast",
         hero_position="button",
         stack_sizes=[25000, 20000, 15000, 30000],
@@ -123,8 +124,8 @@ def test_multiway_analysis():
     if result.range_coordination_score:
         print(f"  Range coordination score: {result.range_coordination_score:.3f}")
     
-    print("\n✅ Multi-Way Pot Analysis Test Complete!")
-    print("📊 All features working correctly")
+    print("\n[PASS] Multi-Way Pot Analysis Test Complete!")
+    print("[STATS] All features working correctly")
     return True
 
 if __name__ == "__main__":

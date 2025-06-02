@@ -1,0 +1,20 @@
+Test: test_poker_solver
+File: tests\test_poker_solver.py
+Status: error
+Execution time: 0.08s
+Exit code: 1
+Timestamp: 2025-06-02 01:38:18.132795
+
+Deadlock indicators:
+
+STDOUT:
+
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_poker_solver.py", line 8, in <module>
+    from poker_knight import (
+    ...<2 lines>...
+    )
+ModuleNotFoundError: No module named 'poker_knight'
+

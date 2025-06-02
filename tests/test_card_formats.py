@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test script to verify card format API consistency fix.
 
 Tests that the optimizer now accepts the same formats as the solver:
-- Unicode list format: ["K♥️", "Q♥️"]  
-- Unicode string format: "K♥️ Q♥️"
+- Unicode list format: ["KH", "QH"]  
+- Unicode string format: "KH QH"
 - Simple string format: "Kh Qh" (backward compatibility)
 """
 
@@ -21,13 +22,13 @@ def test_card_formats():
     test_cases = [
         {
             "name": "Unicode List Format (like solver)",
-            "hand": ["K♥️", "Q♥️"],
-            "board": ["7♥️", "6♣️", "K♠️"]
+            "hand": ["KH", "QH"],
+            "board": ["7H", "6C", "KS"]
         },
         {
             "name": "Unicode String Format",
-            "hand": "K♥️ Q♥️",
-            "board": "7♥️ 6♣️ K♠️"
+            "hand": "KH QH",
+            "board": "7H 6C KS"
         },
         {
             "name": "Simple String Format (backward compatibility)", 
@@ -50,18 +51,18 @@ def test_card_formats():
                 position='late'
             )
             
-            print(f"   ✅ Result: {complexity.overall_complexity.name}")
-            print(f"   📊 Complexity: {complexity.complexity_score:.1f}/10.0")
+            print(f"   [PASS] Result: {complexity.overall_complexity.name}")
+            print(f"   [STATS] Complexity: {complexity.complexity_score:.1f}/10.0")
             print(f"   🎯 Recommended: {complexity.recommended_simulations:,} sims")
             
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            print(f"   [FAIL] Error: {e}")
             return False
     
     print(f"\n🎉 All tests passed! API consistency fix working perfectly.")
-    print(f"✅ Users can now use the same format across solver and optimizer")
-    print(f"✅ No more manual format conversion needed")
-    print(f"✅ Backward compatibility maintained")
+    print(f"[PASS] Users can now use the same format across solver and optimizer")
+    print(f"[PASS] No more manual format conversion needed")
+    print(f"[PASS] Backward compatibility maintained")
     
     return True
 

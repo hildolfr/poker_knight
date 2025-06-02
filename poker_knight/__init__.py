@@ -10,6 +10,7 @@ Key Features:
 - Parallel processing with intelligent thread management
 - Comprehensive statistical validation and confidence intervals
 - Memory-optimized algorithms for high-throughput analysis
+- Intelligent caching system for near-instant repeated queries (v1.6)
 """
 
 from .solver import (
@@ -17,10 +18,29 @@ from .solver import (
     solve_poker_hand, SimulationResult
 )
 
-__version__ = "1.4.0"
+# Import caching functionality if available (Task 1.3)
+try:
+    from .storage import (
+        HandCache, BoardTextureCache, PreflopRangeCache,
+        CacheConfig, CacheStats, create_cache_key
+    )
+    CACHING_AVAILABLE = True
+    
+    __all__ = [
+        "Card", "HandEvaluator", "Deck", "SimulationResult", 
+        "MonteCarloSolver", "solve_poker_hand",
+        # Caching components
+        "HandCache", "BoardTextureCache", "PreflopRangeCache",
+        "CacheConfig", "CacheStats", "create_cache_key"
+    ]
+except ImportError:
+    CACHING_AVAILABLE = False
+    
+    __all__ = [
+        "Card", "HandEvaluator", "Deck", "SimulationResult", 
+        "MonteCarloSolver", "solve_poker_hand"
+    ]
+
+__version__ = "1.6.0-alpha1"
 __author__ = "hildolfr"
-__license__ = "MIT"
-__all__ = [
-    "Card", "HandEvaluator", "Deck", "SimulationResult", 
-    "MonteCarloSolver", "solve_poker_hand"
-] 
+__license__ = "MIT" 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test Enhanced Monte Carlo Convergence Analysis (Task 7.1)
 
@@ -28,10 +29,10 @@ def test_enhanced_convergence_analysis():
     print("=" * 70)
     
     # Test 1: Adaptive Convergence Detection
-    print("\n📊 Test 1: Adaptive Convergence Detection")
+    print("\n[STATS] Test 1: Adaptive Convergence Detection")
     print("-" * 45)
     
-    hero_hand = ['A♠️', 'A♥️']
+    hero_hand = ['AS', 'AH']
     num_opponents = 1
     
     # Run simulation with convergence monitoring
@@ -53,7 +54,7 @@ def test_enhanced_convergence_analysis():
     print("\n🔬 Test 2: Cross-Validation Framework")
     print("-" * 37)
     
-    hero_hand2 = ['K♠️', 'Q♠️']
+    hero_hand2 = ['KS', 'QS']
     
     print("Running split-half validation...")
     result1 = solve_poker_hand(hero_hand2, 1, simulation_mode="default")
@@ -151,7 +152,7 @@ def test_enhanced_convergence_analysis():
     print(f"  Effective sample size: {split_result.effective_sample_size:.1f}")
     
     # Test 6: Standalone Convergence Diagnostics
-    print("\n🔍 Test 6: Standalone Convergence Diagnostics")
+    print("\n[SEARCH] Test 6: Standalone Convergence Diagnostics")
     print("-" * 42)
     
     # Test Geweke diagnostic
@@ -206,23 +207,23 @@ def test_enhanced_convergence_analysis():
                   f"status={status['status']}, geweke={status.get('geweke_statistic', 'N/A')}")
             
             if monitor.has_converged():
-                print(f"  ✅ Converged at {len(current_data):,} samples!")
+                print(f"  [PASS] Converged at {len(current_data):,} samples!")
                 break
     
     print(f"\nMonitored {len(convergence_points)} convergence checkpoints")
     
     print("\n🎉 Task 7.1 Implementation Complete!")
     print("=" * 70)
-    print("✅ Adaptive convergence detection with Geweke diagnostics")
-    print("✅ Cross-validation framework (split-half, bootstrap, jackknife)")
-    print("✅ Convergence rate visualization and export")
-    print("✅ Batch convergence analysis with R-hat diagnostics")
-    print("✅ Split-chain convergence diagnostic")
-    print("✅ Real-time convergence monitoring")
-    print("✅ Enhanced statistical validation test suite")
+    print("[PASS] Adaptive convergence detection with Geweke diagnostics")
+    print("[PASS] Cross-validation framework (split-half, bootstrap, jackknife)")
+    print("[PASS] Convergence rate visualization and export")
+    print("[PASS] Batch convergence analysis with R-hat diagnostics")
+    print("[PASS] Split-chain convergence diagnostic")
+    print("[PASS] Real-time convergence monitoring")
+    print("[PASS] Enhanced statistical validation test suite")
     
     print(f"\n📈 Expected Impact: 15-20% improvement in simulation efficiency")
-    print(f"📊 Development Status: Task 7.1 COMPLETED ✅")
+    print(f"[STATS] Development Status: Task 7.1 COMPLETED [PASS]")
 
 if __name__ == "__main__":
     test_enhanced_convergence_analysis() 

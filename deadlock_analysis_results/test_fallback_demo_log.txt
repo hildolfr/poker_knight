@@ -1,0 +1,26 @@
+Test: test_fallback_demo
+File: test_fallback_demo.py
+Status: error
+Execution time: 0.33s
+Exit code: 1
+Timestamp: 2025-06-02 01:37:48.523409
+
+Deadlock indicators:
+  - Cache system deadlock
+
+STDOUT:
+
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\test_fallback_demo.py", line 122, in <module>
+    test_fallback()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\test_fallback_demo.py", line 20, in test_fallback
+    print("\U0001f504 Poker Knight Cache Fallback Demo")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f504' in position 0: character maps to <undefined>
+

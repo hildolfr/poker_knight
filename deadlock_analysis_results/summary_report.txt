@@ -1,0 +1,131 @@
+POKER KNIGHT DEADLOCK ANALYSIS REPORT
+==================================================
+
+Analysis completed at: 2025-06-02T01:38:30.023657
+Total analysis time: 87.7 seconds
+
+TEST SUMMARY:
+  Total tests: 25
+  Successful: 1
+  Timeouts: 0
+  Errors: 24
+  Success rate: 4.0%
+  Avg success time: 7.30s
+
+DEADLOCK INDICATORS:
+  Redis connection issue: 4 occurrences
+  Cache system deadlock: 10 occurrences
+  SQLite locking issue: 3 occurrences
+  NUMA allocation issue: 1 occurrences
+
+PROBLEMATIC TESTS:
+  test_advanced_parallel (error)
+    File: test_advanced_parallel.py
+    Time: 0.39s
+
+  test_force_advanced_parallel (error)
+    File: test_force_advanced_parallel.py
+    Time: 0.34s
+
+  test_cache_with_redis_demo (error)
+    File: test_cache_with_redis_demo.py
+    Time: 13.96s
+    Issues: Redis connection issue, Cache system deadlock
+
+  test_cache_warming_demo (error)
+    File: test_cache_warming_demo.py
+    Time: 0.34s
+    Issues: Cache system deadlock
+
+  test_cache_prepopulation_demo (error)
+    File: test_cache_prepopulation_demo.py
+    Time: 0.33s
+    Issues: Cache system deadlock
+
+  test_redis_integration (error)
+    File: test_redis_integration.py
+    Time: 4.40s
+    Issues: Redis connection issue
+
+  test_redis_simple (error)
+    File: test_redis_simple.py
+    Time: 0.34s
+    Issues: Redis connection issue, Cache system deadlock
+
+  test_redis_vs_sqlite_demo (error)
+    File: test_redis_vs_sqlite_demo.py
+    Time: 0.34s
+    Issues: Redis connection issue, SQLite locking issue
+
+  test_sqlite_fallback_demo (error)
+    File: test_sqlite_fallback_demo.py
+    Time: 0.34s
+    Issues: SQLite locking issue, Cache system deadlock
+
+  test_sqlite_integration (error)
+    File: test_sqlite_integration.py
+    Time: 0.34s
+    Issues: SQLite locking issue
+
+  test_solver_caching_integration (error)
+    File: test_solver_caching_integration.py
+    Time: 0.35s
+
+  test_fallback_demo (error)
+    File: test_fallback_demo.py
+    Time: 0.33s
+    Issues: Cache system deadlock
+
+  test_caching (error)
+    File: test_caching.py
+    Time: 0.33s
+
+  test_caching_debug (error)
+    File: test_caching_debug.py
+    Time: 0.33s
+
+  debug_parallel (error)
+    File: debug_parallel.py
+    Time: 0.33s
+
+  test_numa (error)
+    File: tests\test_numa.py
+    Time: 0.32s
+    Issues: NUMA allocation issue
+
+  test_cache_integration (error)
+    File: tests\test_cache_integration.py
+    Time: 0.08s
+    Issues: Cache system deadlock
+
+  test_storage_cache (error)
+    File: tests\test_storage_cache.py
+    Time: 0.26s
+    Issues: Cache system deadlock
+
+  test_cache_population (error)
+    File: tests\test_cache_population.py
+    Time: 0.25s
+    Issues: Cache system deadlock
+
+  test_poker_solver (error)
+    File: tests\test_poker_solver.py
+    Time: 0.08s
+
+  test_statistical_validation (error)
+    File: tests\test_statistical_validation.py
+    Time: 0.18s
+
+  test_stress_scenarios (error)
+    File: tests\test_stress_scenarios.py
+    Time: 0.22s
+
+  test_performance_regression (error)
+    File: tests\test_performance_regression.py
+    Time: 0.09s
+
+  test_multi_way_scenarios (error)
+    File: tests\test_multi_way_scenarios.py
+    Time: 0.08s
+
+RECOMMENDATIONS:

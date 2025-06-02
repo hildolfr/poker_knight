@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Comprehensive Statistical Validation Tests for Poker Knight
 
@@ -56,7 +57,7 @@ class TestStatisticalValidation(unittest.TestCase):
         Tests if observed hand frequencies match expected poker probabilities.
         """
         # Run large simulation to get hand category frequencies
-        hero_hand = ['7♠️', '8♦️']  # Medium-strength hand for variety
+        hero_hand = ['7S', '8D']  # Medium-strength hand for variety
         num_opponents = 1
         
         result = solve_poker_hand(
@@ -92,7 +93,7 @@ class TestStatisticalValidation(unittest.TestCase):
         self.assertLess(chi_square, critical_value,
                        f"Chi-square test failed: χ² = {chi_square:.3f} > {critical_value}")
         
-        print(f"✅ Chi-square goodness-of-fit: χ² = {chi_square:.3f} (df = {degrees_of_freedom})")
+        print(f"[PASS] Chi-square goodness-of-fit: χ² = {chi_square:.3f} (df = {degrees_of_freedom})")
     
     def test_confidence_interval_coverage(self):
         """
@@ -100,7 +101,7 @@ class TestStatisticalValidation(unittest.TestCase):
         95% confidence intervals should contain the true value 95% of the time.
         """
         # Use a scenario with known approximate probability
-        hero_hand = ['A♠️', 'A♥️']  # Pocket aces
+        hero_hand = ['AS', 'AH']  # Pocket aces
         num_opponents = 1
         true_win_rate = 0.85  # Approximate known value
         
@@ -122,14 +123,14 @@ class TestStatisticalValidation(unittest.TestCase):
         self.assertGreaterEqual(coverage_rate, 0.75,
                           f"Confidence interval coverage too low: {coverage_rate:.1%}")
         
-        print(f"✅ Confidence interval coverage: {coverage_rate:.1%} ({intervals_containing_true_value}/{total_tests})")
+        print(f"[PASS] Confidence interval coverage: {coverage_rate:.1%} ({intervals_containing_true_value}/{total_tests})")
     
     def test_sample_size_effect_on_accuracy(self):
         """
         Test that larger sample sizes reduce standard error and improve accuracy.
         This validates the Monte Carlo convergence property.
         """
-        hero_hand = ['K♠️', 'K♥️']
+        hero_hand = ['KS', 'KH']
         num_opponents = 2
         
         # Test different sample sizes
@@ -155,7 +156,7 @@ class TestStatisticalValidation(unittest.TestCase):
                                   f"{sample_sizes[i]} std={accuracies[i]:.4f} vs "
                                   f"{sample_sizes[i+1]} std={accuracies[i+1]:.4f}")
         
-        print("✅ Sample size effect validated: larger samples → better accuracy")
+        print("[PASS] Sample size effect validated: larger samples → better accuracy")
     
     def test_known_poker_probabilities(self):
         """
@@ -164,10 +165,10 @@ class TestStatisticalValidation(unittest.TestCase):
         """
         test_scenarios = [
             # (hero_hand, opponents, board, expected_win_rate, tolerance, description)
-            (['A♠️', 'A♥️'], 1, [], 0.85, 0.05, "AA vs random preflop"),
-            (['A♠️', 'K♠️'], 1, [], 0.66, 0.05, "AKs vs random preflop"),
-            (['7♠️', '2♦️'], 1, [], 0.32, 0.05, "72o vs random preflop"),
-            (['A♠️', 'A♥️'], 1, ['A♦️', 'K♠️', 'Q♥️'], 0.95, 0.05, "AA with top set"),
+            (['AS', 'AH'], 1, [], 0.85, 0.05, "AA vs random preflop"),
+            (['AS', 'KS'], 1, [], 0.66, 0.05, "AKs vs random preflop"),
+            (['7S', '2D'], 1, [], 0.32, 0.05, "72o vs random preflop"),
+            (['AS', 'AH'], 1, ['AD', 'KS', 'QH'], 0.95, 0.05, "AA with top set"),
         ]
         
         for hero_hand, opponents, board, expected, tolerance, description in test_scenarios:
@@ -179,14 +180,14 @@ class TestStatisticalValidation(unittest.TestCase):
                                f"{description}: Expected {expected:.1%}, got {result.win_probability:.1%}, "
                                f"error {error:.3f} > tolerance {tolerance}")
                 
-                print(f"✅ {description}: {result.win_probability:.1%} (expected {expected:.1%})")
+                print(f"[PASS] {description}: {result.win_probability:.1%} (expected {expected:.1%})")
     
     def test_simulation_variance_stability(self):
         """
         Test that simulation variance is stable across multiple runs.
         High variance could indicate implementation issues.
         """
-        hero_hand = ['Q♠️', 'J♠️']
+        hero_hand = ['QS', 'JS']
         num_opponents = 3
         
         # Run multiple simulations and check variance
@@ -206,7 +207,7 @@ class TestStatisticalValidation(unittest.TestCase):
         self.assertLess(std_dev, max_acceptable_std,
                        f"Simulation variance too high: std={std_dev:.4f} > {max_acceptable_std:.4f}")
         
-        print(f"✅ Simulation variance stable: std={std_dev:.4f}, variance={variance:.6f}")
+        print(f"[PASS] Simulation variance stable: std={std_dev:.4f}, variance={variance:.6f}")
     
     def test_symmetry_validation(self):
         """
@@ -215,9 +216,9 @@ class TestStatisticalValidation(unittest.TestCase):
         """
         # Test equivalent hands with different suits
         equivalent_hands = [
-            (['A♠️', 'K♠️'], ['A♥️', 'K♥️']),  # Same suited connector
-            (['Q♠️', 'Q♥️'], ['Q♦️', 'Q♣️']),  # Same pocket pair
-            (['10♠️', '9♦️'], ['10♥️', '9♣️']), # Same offsuit connector
+            (['AS', 'KS'], ['AH', 'KH']),  # Same suited connector
+            (['QS', 'QH'], ['QD', 'QC']),  # Same pocket pair
+            (['10S', '9D'], ['10H', '9C']), # Same offsuit connector
         ]
         
         num_opponents = 2
@@ -236,14 +237,14 @@ class TestStatisticalValidation(unittest.TestCase):
                                f"{hand2} = {result2.win_probability:.3f}, "
                                f"diff = {win_rate_diff:.3f}")
                 
-                print(f"✅ Symmetry validated: {hand1} vs {hand2}, diff = {win_rate_diff:.3f}")
+                print(f"[PASS] Symmetry validated: {hand1} vs {hand2}, diff = {win_rate_diff:.3f}")
     
     def test_normality_of_simulation_results(self):
         """
         Test that simulation results follow expected statistical distributions.
         Win rates should be approximately normally distributed around the true value.
         """
-        hero_hand = ['J♠️', 'J♥️']
+        hero_hand = ['JS', 'JH']
         num_opponents = 2
         
         # Collect many simulation results
@@ -271,14 +272,14 @@ class TestStatisticalValidation(unittest.TestCase):
         self.assertGreater(pct_within_2_std, 0.85,  # At least 85% within 2σ
                           f"Too few values within 2σ: {pct_within_2_std:.1%}")
         
-        print(f"✅ Distribution normality: {pct_within_1_std:.1%} within 1σ, {pct_within_2_std:.1%} within 2σ")
+        print(f"[PASS] Distribution normality: {pct_within_1_std:.1%} within 1σ, {pct_within_2_std:.1%} within 2σ")
     
     def test_monte_carlo_convergence_rate(self):
         """
         Test that Monte Carlo error decreases as 1/√n (theoretical convergence rate).
         This validates the fundamental Monte Carlo property with robust statistical handling.
         """
-        hero_hand = ['A♠️', 'Q♠️']
+        hero_hand = ['AS', 'QS']
         num_opponents = 1
         
         # We'll use the solver's internal methods to control simulation count precisely
@@ -358,7 +359,7 @@ class TestStatisticalValidation(unittest.TestCase):
                 self.assertLess(max_error, 0.1,
                                f"Maximum error too high: {max_error:.4f}")
         
-        print("✅ Monte Carlo convergence rate validated (robust statistical bounds)")
+        print("[PASS] Monte Carlo convergence rate validated (robust statistical bounds)")
 
     def test_adaptive_convergence_detection(self):
         """
@@ -367,7 +368,7 @@ class TestStatisticalValidation(unittest.TestCase):
         """
         from poker_knight.analysis import ConvergenceMonitor, convergence_diagnostic, calculate_effective_sample_size
         
-        hero_hand = ['K♠️', 'K♥️']
+        hero_hand = ['KS', 'KH']
         num_opponents = 2
         
         # Test ConvergenceMonitor with real simulation data
@@ -425,14 +426,14 @@ class TestStatisticalValidation(unittest.TestCase):
         self.assertLessEqual(ess_result.effective_size, len(synthetic_win_rates))
         print(f"  Synthetic data ESS: {ess_result.effective_size:.1f}/{len(synthetic_win_rates)} (efficiency: {ess_result.efficiency:.1%})")
         
-        print("✅ Adaptive convergence detection validated")
+        print("[PASS] Adaptive convergence detection validated")
 
     def test_cross_validation_framework(self):
         """
         Test cross-validation framework for large simulations.
         This implements Task 7.1.b: Cross-Validation Framework.
         """
-        hero_hand = ['A♠️', 'K♠️']
+        hero_hand = ['AS', 'KS']
         num_opponents = 1
         
         print("  Testing split-half validation...")
@@ -509,7 +510,7 @@ class TestStatisticalValidation(unittest.TestCase):
             # Bias should be small for Monte Carlo simulations
             self.assertLess(abs(bias_estimate), 0.1, f"Jackknife bias too large: {bias_estimate:.4f}")
         
-        print("✅ Cross-validation framework validated")
+        print("[PASS] Cross-validation framework validated")
 
     def test_convergence_rate_analysis_and_export(self):
         """
@@ -520,7 +521,7 @@ class TestStatisticalValidation(unittest.TestCase):
         import tempfile
         import os
         
-        hero_hand = ['Q♠️', 'Q♥️']
+        hero_hand = ['QS', 'QH']
         num_opponents = 1
         
         print("  Testing convergence metrics export...")
@@ -625,7 +626,7 @@ class TestStatisticalValidation(unittest.TestCase):
                            "Margin of error should decrease over time")
         
         print(f"    Monitored {len(convergence_timeline)} convergence points")
-        print("✅ Convergence rate analysis and export validated")
+        print("[PASS] Convergence rate analysis and export validated")
 
 
 class TestStatisticalUtils(unittest.TestCase):
@@ -656,7 +657,7 @@ class TestStatisticalUtils(unittest.TestCase):
             self.assertLess(margin_error, 0.001,
                            f"Confidence interval calculation error: {margin_error:.4f}")
             
-            print(f"✅ Confidence interval calculation: margin = {actual_margin:.4f} (expected {expected_margin:.4f})")
+            print(f"[PASS] Confidence interval calculation: margin = {actual_margin:.4f} (expected {expected_margin:.4f})")
     
     def test_extreme_probability_edge_cases(self):
         """Test statistical calculations with extreme probabilities (near 0 or 1)."""
@@ -683,7 +684,7 @@ class TestStatisticalUtils(unittest.TestCase):
                     self.assertGreaterEqual(lower, 0.0)
                     self.assertLessEqual(upper, 1.0)
                     
-                    print(f"✅ Extreme case validated: p={prob}, interval=[{lower:.4f}, {upper:.4f}]")
+                    print(f"[PASS] Extreme case validated: p={prob}, interval=[{lower:.4f}, {upper:.4f}]")
 
 
 if __name__ == '__main__':

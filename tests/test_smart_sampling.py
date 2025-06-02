@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test script for Task 3.3: Smart Sampling Strategies
 
@@ -66,30 +67,30 @@ def create_test_config(sampling_config):
 test_scenarios = [
     {
         "name": "Strong Hand - Pocket Aces",
-        "hero_hand": ['A♠️', 'A♥️'],
+        "hero_hand": ['AS', 'AH'],
         "opponents": 2,
         "board": [],
         "expected_strategy": "stratified"  # Strong starting hand
     },
     {
         "name": "Extreme Scenario - Four of a Kind",
-        "hero_hand": ['K♠️', 'K♥️'],
+        "hero_hand": ['KS', 'KH'],
         "opponents": 2,
-        "board": ['K♦️', 'K♣️', '2♠️'],
+        "board": ['KD', 'KC', '2S'],
         "expected_strategy": "importance"  # Very strong made hand
     },
     {
         "name": "Weak Hand - Low Cards",
-        "hero_hand": ['2♠️', '7♦️'],
+        "hero_hand": ['2S', '7D'],
         "opponents": 3,
-        "board": ['A♠️', 'K♥️', 'Q♣️'],
+        "board": ['AS', 'KH', 'QC'],
         "expected_strategy": "importance"  # Very weak hand
     },
     {
         "name": "Medium Hand - Top Pair",
-        "hero_hand": ['A♠️', '10♦️'],
+        "hero_hand": ['AS', '10D'],
         "opponents": 2,
-        "board": ['A♥️', '8♠️', '3♣️'],
+        "board": ['AH', '8S', '3C'],
         "expected_strategy": "uniform"  # Standard scenario
     }
 ]
@@ -116,7 +117,7 @@ try:
     # Test with a scenario that should trigger stratified sampling
     print("Testing stratified sampling with pocket Aces (high simulation count)...")
     start_time = time.time()
-    result_stratified = solver_stratified.analyze_hand(['A♠️', 'A♥️'], 2, simulation_mode="default")
+    result_stratified = solver_stratified.analyze_hand(['AS', 'AH'], 2, simulation_mode="default")
     elapsed_stratified = time.time() - start_time
     
     print(f"Win probability: {result_stratified.win_probability:.4f}")
@@ -124,7 +125,7 @@ try:
     print(f"Execution time: {elapsed_stratified:.2f} seconds")
     print(f"Smart sampling enabled: {result_stratified.convergence_details.get('smart_sampling_enabled', False) if result_stratified.convergence_details else 'N/A'}")
     
-    print("\n✅ 3.3.a: Stratified sampling implementation complete")
+    print("\n[PASS] 3.3.a: Stratified sampling implementation complete")
     
 finally:
     solver_stratified.close()
@@ -152,7 +153,7 @@ try:
     # Test with extreme scenario - very strong hand
     print("Testing importance sampling with four of a kind (extreme scenario)...")
     start_time = time.time()
-    result_importance = solver_importance.analyze_hand(['K♠️', 'K♥️'], 2, ['K♦️', 'K♣️', '2♠️'], simulation_mode="default")
+    result_importance = solver_importance.analyze_hand(['KS', 'KH'], 2, ['KD', 'KC', '2S'], simulation_mode="default")
     elapsed_importance = time.time() - start_time
     
     print(f"Win probability: {result_importance.win_probability:.4f}")
@@ -160,7 +161,7 @@ try:
     print(f"Execution time: {elapsed_importance:.2f} seconds")
     print(f"Smart sampling enabled: {result_importance.convergence_details.get('smart_sampling_enabled', False) if result_importance.convergence_details else 'N/A'}")
     
-    print("\n✅ 3.3.b: Importance sampling implementation complete")
+    print("\n[PASS] 3.3.b: Importance sampling implementation complete")
     
 finally:
     solver_importance.close()
@@ -190,7 +191,7 @@ try:
     results = []
     for i in range(5):
         start_time = time.time()
-        result = solver_control.analyze_hand(['Q♠️', 'J♠️'], 2, simulation_mode="fast")
+        result = solver_control.analyze_hand(['QS', 'JS'], 2, simulation_mode="fast")
         elapsed = time.time() - start_time
         results.append(result.win_probability)
         print(f"  Run {i+1}: {result.win_probability:.4f} (sims: {result.simulations_run:,})")
@@ -205,7 +206,7 @@ try:
     print(f"  Standard deviation: {std_dev:.4f}")
     print(f"  Coefficient of variation: {(std_dev / mean_prob * 100):.2f}%")
     
-    print("\n✅ 3.3.c: Control variates implementation complete")
+    print("\n[PASS] 3.3.c: Control variates implementation complete")
     
 finally:
     solver_control.close()
@@ -242,7 +243,7 @@ try:
     solver_uniform = MonteCarloSolver(uniform_config_path)
     solver_smart = MonteCarloSolver(smart_config_path)
     
-    test_hand = ['A♠️', 'K♠️']
+    test_hand = ['AS', 'KS']
     test_opponents = 2
     
     print("Comparing uniform sampling vs smart sampling strategies...")
@@ -257,7 +258,7 @@ try:
     print(f"Simulations run: {result_uniform.simulations_run:,}")
     print(f"Execution time: {elapsed_uniform:.2f} seconds")
     print(f"Convergence achieved: {result_uniform.convergence_achieved}")
-    print(f"Margin of error: {result_uniform.final_margin_of_error:.6f}")
+    print(f"Margin of error: {result_uniform.final_margin_of_error:.6f}" if result_uniform.final_margin_of_error is not None else "Margin of error: N/A")
     
     # Smart sampling with all strategies enabled
     print("\n--- Smart Sampling (All Strategies) ---")
@@ -269,7 +270,7 @@ try:
     print(f"Simulations run: {result_smart.simulations_run:,}")
     print(f"Execution time: {elapsed_smart:.2f} seconds")
     print(f"Convergence achieved: {result_smart.convergence_achieved}")
-    print(f"Margin of error: {result_smart.final_margin_of_error:.6f}")
+    print(f"Margin of error: {result_smart.final_margin_of_error:.6f}" if result_smart.final_margin_of_error is not None else "Margin of error: N/A")
     print(f"Smart sampling enabled: {result_smart.convergence_details.get('smart_sampling_enabled', False) if result_smart.convergence_details else 'N/A'}")
     
     # Performance comparison
@@ -282,7 +283,7 @@ try:
     print(f"Time improvement: {time_improvement:.1f}%")
     print(f"Simulation efficiency: {simulation_efficiency:.1f}%")
     
-    print("\n✅ 3.3.d: Performance validation complete")
+    print("\n[PASS] 3.3.d: Performance validation complete")
     
 finally:
     solver_uniform.close()
@@ -295,22 +296,22 @@ print("\n" + "=" * 70)
 print("TASK 3.3 IMPLEMENTATION SUMMARY")
 print("=" * 70)
 
-print("\n✓ 3.3.a: Stratified sampling for rare hand categories")
+print("\n[OK] 3.3.a: Stratified sampling for rare hand categories")
 print("   - Hand strength stratification implemented with 5 categories")
 print("   - Board texture analysis for adaptive stratification")
 print("   - Proportional sampling with bias correction")
 
-print("\n✓ 3.3.b: Importance sampling for extreme scenarios")
+print("\n[OK] 3.3.b: Importance sampling for extreme scenarios")
 print("   - Extreme scenario detection (very strong/weak hands)")
 print("   - Adaptive importance weights based on hand strength")
 print("   - Pocket pair vs overcard scenario handling")
 
-print("\n✓ 3.3.c: Variance reduction through control variates")
+print("\n[OK] 3.3.c: Variance reduction through control variates")
 print("   - Analytical baseline approximation as control variate")
 print("   - Running variance statistics and correction calculation")
 print("   - Hand strength-based control variate baseline")
 
-print("\n✓ 3.3.d: Performance validation against uniform sampling")
+print("\n[OK] 3.3.d: Performance validation against uniform sampling")
 print("   - Comprehensive comparison framework implemented")
 print("   - Accuracy preservation with potential efficiency gains")
 print("   - Configurable sampling strategy selection")
@@ -318,11 +319,11 @@ print("   - Configurable sampling strategy selection")
 print(f"\n🎯 Task 3.3: Smart Sampling Strategies - IMPLEMENTATION COMPLETE")
 print("   All four sub-tasks (3.3.a, 3.3.b, 3.3.c, 3.3.d) successfully implemented")
 
-print(f"\n📊 SMART SAMPLING FEATURES:")
-print(f"   ✓ Stratified sampling: Reduces variance for rare hand categories")
-print(f"   ✓ Importance sampling: Optimizes extreme scenario analysis")
-print(f"   ✓ Control variates: Analytical variance reduction")
-print(f"   ✓ Adaptive strategy selection: Automatic optimization based on scenario")
-print(f"   ✓ Configuration-driven: Full control via config.json settings")
+print(f"\n[STATS] SMART SAMPLING FEATURES:")
+print(f"   [OK] Stratified sampling: Reduces variance for rare hand categories")
+print(f"   [OK] Importance sampling: Optimizes extreme scenario analysis")
+print(f"   [OK] Control variates: Analytical variance reduction")
+print(f"   [OK] Adaptive strategy selection: Automatic optimization based on scenario")
+print(f"   [OK] Configuration-driven: Full control via config.json settings")
 
-print("\n🚀 Next: Ready to continue with Phase 4 - Advanced Features for v1.5.0") 
+print("\n[ROCKET] Next: Ready to continue with Phase 4 - Advanced Features for v1.5.0") 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 import time
 import gc
@@ -18,8 +19,8 @@ class TestExtremeScenarios:
         # Royal flush vs royal flush (extremely rare)
         # Both players have royal flush draws
         result = solver.analyze_hand(
-            hero_hand=["A♠️", "K♠️"],
-            board_cards=["Q♠️", "J♠️", "10♠️"],
+            hero_hand=["AS", "KS"],
+            board_cards=["QS", "JS", "10S"],
             num_opponents=1,  # Simulate one opponent with similar potential
             simulation_mode="precision"
         )
@@ -35,8 +36,8 @@ class TestExtremeScenarios:
         
         # Player has made straight flush, opponent cannot improve
         result = solver.analyze_hand(
-            hero_hand=["9♠️", "8♠️"],
-            board_cards=["7♠️", "6♠️", "5♠️", "2♣️", "3♦️"],
+            hero_hand=["9S", "8S"],
+            board_cards=["7S", "6S", "5S", "2C", "3D"],
             num_opponents=1,
             simulation_mode="fast"
         )
@@ -51,7 +52,7 @@ class TestExtremeScenarios:
         solver = MonteCarloSolver()
         
         result = solver.analyze_hand(
-            hero_hand=["A♠️", "A♥️"],
+            hero_hand=["AS", "AH"],
             num_opponents=1,
             simulation_mode="precision"
         )
@@ -65,7 +66,7 @@ class TestExtremeScenarios:
         
         # Simulate tournament ICM scenario with very short stacks
         result = solver.analyze_hand(
-            hero_hand=["K♠️", "Q♠️"],
+            hero_hand=["KS", "QS"],
             num_opponents=2,
             simulation_mode="default",
             # ICM parameters for short stack scenario
@@ -83,7 +84,7 @@ class TestExtremeScenarios:
         solver = MonteCarloSolver()
         
         result = solver.analyze_hand(
-            hero_hand=["A♠️", "K♠️"],
+            hero_hand=["AS", "KS"],
             num_opponents=6,  # Maximum realistic opponents
             simulation_mode="precision"
         )
@@ -98,7 +99,7 @@ class TestExtremeScenarios:
         
         # High pair vs high pair scenario (will often tie on similar boards)
         result = solver.analyze_hand(
-            hero_hand=["A♠️", "A♥️"],
+            hero_hand=["AS", "AH"],
             num_opponents=2,
             simulation_mode="default"
         )
@@ -119,7 +120,7 @@ class TestMemoryPressureScenarios:
         initial_memory = self._get_memory_usage()
         
         result = solver.analyze_hand(
-            hero_hand=["A♠️", "K♠️"],
+            hero_hand=["AS", "KS"],
             num_opponents=3,
             simulation_mode="precision"  # Uses large simulation count
         )
@@ -139,7 +140,7 @@ class TestMemoryPressureScenarios:
         def run_analysis(thread_id: int):
             solver = MonteCarloSolver()
             result = solver.analyze_hand(
-                hero_hand=["K♠️", "Q♠️"],
+                hero_hand=["KS", "QS"],
                 num_opponents=2,
                 simulation_mode="default"
             )
@@ -169,7 +170,7 @@ class TestMemoryPressureScenarios:
         # Run multiple analyses to check for memory accumulation
         for _ in range(10):
             result = solver.analyze_hand(
-                hero_hand=["J♠️", "10♠️"],
+                hero_hand=["JS", "10S"],
                 num_opponents=2,
                 simulation_mode="fast"
             )
@@ -191,7 +192,7 @@ class TestMemoryPressureScenarios:
         # Use solver in context manager
         with MonteCarloSolver() as solver:
             result = solver.analyze_hand(
-                hero_hand=["A♠️", "A♥️"],
+                hero_hand=["AS", "AH"],
                 num_opponents=3,
                 simulation_mode="precision"
             )
@@ -232,7 +233,7 @@ class TestTimeoutEdgeCases:
         
         try:
             result = solver.analyze_hand(
-                hero_hand=["K♠️", "Q♠️"],
+                hero_hand=["KS", "QS"],
                 num_opponents=2,
                 simulation_mode="fast"
             )
@@ -260,7 +261,7 @@ class TestTimeoutEdgeCases:
             
             try:
                 result = solver.analyze_hand(
-                    hero_hand=["A♠️", "K♠️"],
+                    hero_hand=["AS", "KS"],
                     num_opponents=3,
                     simulation_mode="default"
                 )
@@ -283,7 +284,7 @@ class TestTimeoutEdgeCases:
         
         try:
             result = solver.analyze_hand(
-                hero_hand=["Q♠️", "J♠️"],
+                hero_hand=["QS", "JS"],
                 num_opponents=4,
                 simulation_mode="precision"
             )
@@ -309,7 +310,7 @@ class TestTimeoutEdgeCases:
         
         try:
             result = solver.analyze_hand(
-                hero_hand=["10♠️", "9♠️"],
+                hero_hand=["10S", "9S"],
                 num_opponents=2,
                 simulation_mode="fast"
             )
@@ -332,8 +333,8 @@ class TestStatisticalEdgeCases:
         
         # Scenario with very high win probability
         result = solver.analyze_hand(
-            hero_hand=["A♠️", "A♥️"],
-            board_cards=["A♣️", "A♦️", "K♠️", "Q♣️", "J♦️"],  # Four aces
+            hero_hand=["AS", "AH"],
+            board_cards=["AC", "AD", "KS", "QC", "JD"],  # Four aces
             num_opponents=1,
             simulation_mode="precision"
         )
@@ -354,7 +355,7 @@ class TestStatisticalEdgeCases:
         # Run same scenario multiple times (reduced to 3 runs for stability)
         for _ in range(3):
             result = solver.analyze_hand(
-                hero_hand=["K♠️", "K♥️"],
+                hero_hand=["KS", "KH"],
                 num_opponents=2,
                 simulation_mode="default"
             )
@@ -379,7 +380,7 @@ class TestStatisticalEdgeCases:
         
         # Test convergence with very unbalanced scenario
         result = solver.analyze_hand(
-            hero_hand=["2♣️", "3♦️"],  # Very weak hand
+            hero_hand=["2C", "3D"],  # Very weak hand
             num_opponents=2,  # Strong statistical opposition
             simulation_mode="precision"
         )
@@ -397,7 +398,7 @@ class TestStatisticalEdgeCases:
         
         # Test with fast mode (lower simulation count)
         result = solver.analyze_hand(
-            hero_hand=["A♠️", "K♠️"],
+            hero_hand=["AS", "KS"],
             num_opponents=1,
             simulation_mode="fast"
         )

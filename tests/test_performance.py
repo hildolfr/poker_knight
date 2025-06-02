@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Performance benchmarks and optimization tests for Poker Knight
 """
@@ -22,30 +23,30 @@ def run_performance_test():
     test_scenarios = [
         {
             "name": "Pre-flop Premium Hand",
-            "hero_hand": ['A♠️', 'A♥️'],
+            "hero_hand": ['AS', 'AH'],
             "num_opponents": 2,
             "board_cards": None,
             "simulation_mode": "fast"
         },
         {
             "name": "Post-flop Draw",
-            "hero_hand": ['A♠️', 'K♠️'],
+            "hero_hand": ['AS', 'KS'],
             "num_opponents": 2,
-            "board_cards": ['Q♠️', 'J♦️', '7♠️'],
+            "board_cards": ['QS', 'JD', '7S'],
             "simulation_mode": "fast"
         },
         {
             "name": "Complex Turn Situation",
-            "hero_hand": ['10♠️', 'J♥️'],
+            "hero_hand": ['10S', 'JH'],
             "num_opponents": 3,
-            "board_cards": ['Q♦️', 'K♠️', 'A♣️', '7♥️'],
+            "board_cards": ['QD', 'KS', 'AC', '7H'],
             "simulation_mode": "default"
         },
         {
             "name": "River All-in Decision",
-            "hero_hand": ['A♠️', 'K♥️'],
+            "hero_hand": ['AS', 'KH'],
             "num_opponents": 1,
-            "board_cards": ['A♦️', 'K♠️', '7♣️', '2♥️', '9♠️'],
+            "board_cards": ['AD', 'KS', '7C', '2H', '9S'],
             "simulation_mode": "default"
         }
     ]
@@ -106,16 +107,16 @@ def run_performance_test():
     
     # Create test hands for different types
     test_hands = {
-        "High Card": [Card('A', '♠️'), Card('K', '♥️'), Card('Q', '♦️'), Card('J', '♠️'), Card('9', '♥️')],
-        "Pair": [Card('A', '♠️'), Card('A', '♥️'), Card('K', '♦️'), Card('Q', '♠️'), Card('J', '♥️')],
-        "Two Pair": [Card('A', '♠️'), Card('A', '♥️'), Card('K', '♦️'), Card('K', '♠️'), Card('Q', '♥️')],
-        "Three Kind": [Card('A', '♠️'), Card('A', '♥️'), Card('A', '♦️'), Card('K', '♠️'), Card('Q', '♥️')],
-        "Straight": [Card('A', '♠️'), Card('K', '♥️'), Card('Q', '♦️'), Card('J', '♠️'), Card('10', '♣️')],
-        "Flush": [Card('A', '♠️'), Card('J', '♠️'), Card('9', '♠️'), Card('7', '♠️'), Card('5', '♠️')],
-        "Full House": [Card('A', '♠️'), Card('A', '♥️'), Card('A', '♦️'), Card('K', '♠️'), Card('K', '♥️')],
-        "Four Kind": [Card('A', '♠️'), Card('A', '♥️'), Card('A', '♦️'), Card('A', '♣️'), Card('K', '♠️')],
-        "Straight Flush": [Card('9', '♠️'), Card('8', '♠️'), Card('7', '♠️'), Card('6', '♠️'), Card('5', '♠️')],
-        "Royal Flush": [Card('A', '♠️'), Card('K', '♠️'), Card('Q', '♠️'), Card('J', '♠️'), Card('10', '♠️')]
+        "High Card": [Card('A', 'S'), Card('K', 'H'), Card('Q', 'D'), Card('J', 'S'), Card('9', 'H')],
+        "Pair": [Card('A', 'S'), Card('A', 'H'), Card('K', 'D'), Card('Q', 'S'), Card('J', 'H')],
+        "Two Pair": [Card('A', 'S'), Card('A', 'H'), Card('K', 'D'), Card('K', 'S'), Card('Q', 'H')],
+        "Three Kind": [Card('A', 'S'), Card('A', 'H'), Card('A', 'D'), Card('K', 'S'), Card('Q', 'H')],
+        "Straight": [Card('A', 'S'), Card('K', 'H'), Card('Q', 'D'), Card('J', 'S'), Card('10', 'C')],
+        "Flush": [Card('A', 'S'), Card('J', 'S'), Card('9', 'S'), Card('7', 'S'), Card('5', 'S')],
+        "Full House": [Card('A', 'S'), Card('A', 'H'), Card('A', 'D'), Card('K', 'S'), Card('K', 'H')],
+        "Four Kind": [Card('A', 'S'), Card('A', 'H'), Card('A', 'D'), Card('A', 'C'), Card('K', 'S')],
+        "Straight Flush": [Card('9', 'S'), Card('8', 'S'), Card('7', 'S'), Card('6', 'S'), Card('5', 'S')],
+        "Royal Flush": [Card('A', 'S'), Card('K', 'S'), Card('Q', 'S'), Card('J', 'S'), Card('10', 'S')]
     }
     
     evaluator = HandEvaluator()

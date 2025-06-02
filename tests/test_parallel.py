@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test parallel processing performance
 """
@@ -8,7 +9,12 @@ import os
 # Add parent directory to path to allow importing poker_knight
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from poker_knight import MonteCarloSolver
+try:
+    from poker_knight import MonteCarloSolver
+except ImportError:
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from poker_knight import MonteCarloSolver
 import time
 
 def test_parallel_performance():
@@ -22,7 +28,7 @@ def test_parallel_performance():
     solver_sequential = MonteCarloSolver()
     solver_sequential.config["simulation_settings"]["parallel_processing"] = False
     
-    hand = ['A♠️', 'K♥️']
+    hand = ['AS', 'KH']
     opponents = 2
     
     # Test default mode (100K simulations)

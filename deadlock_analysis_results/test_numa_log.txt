@@ -1,0 +1,31 @@
+Test: test_numa
+File: tests\test_numa.py
+Status: error
+Execution time: 0.32s
+Exit code: 1
+Timestamp: 2025-06-02 01:38:08.298658
+
+Deadlock indicators:
+  - NUMA allocation issue
+
+STDOUT:
+
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_numa.py", line 37, in <module>
+    from poker_knight.core.parallel import (
+    ...<2 lines>...
+    )
+ModuleNotFoundError: No module named 'poker_knight'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\cursor_projects\poker_knight\tests\test_numa.py", line 44, in <module>
+    pytest.skip(f"NUMA module not available: {e}", allow_module_level=True)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Roaming\Python\Python313\site-packages\_pytest\outcomes.py", line 160, in skip
+    raise Skipped(msg=reason, allow_module_level=allow_module_level)
+Skipped: NUMA module not available: No module named 'poker_knight'
+
