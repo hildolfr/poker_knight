@@ -31,6 +31,16 @@ def test_sqlite_integration():
             "precision_mode_simulations": 5000,
             "max_workers": 2
         },
+        "performance_settings": {
+            "timeout_fast_mode_ms": 3000,
+            "timeout_default_mode_ms": 20000,
+            "timeout_precision_mode_ms": 120000,
+            "optimization_level": 2
+        },
+        "output_settings": {
+            "include_hand_categories": True,
+            "include_confidence_intervals": True
+        },
         "cache_settings": {
             "max_memory_mb": 64,
             "hand_cache_size": 100,

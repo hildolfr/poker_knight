@@ -389,10 +389,15 @@ def test_fallback_behavior():
     
     print("   [PASS] Data stored with Redis")
     
-    print("\n   🛑 Now stop the Redis container in another terminal:")
-    print("      docker stop poker-redis")
-    print("   Then press Enter to continue...")
-    input()
+    # Skip interactive part when running under pytest
+    import os
+    if not os.environ.get('PYTEST_CURRENT_TEST'):
+        print("\n   🛑 Now stop the Redis container in another terminal:")
+        print("      docker stop poker-redis")
+        print("   Then press Enter to continue...")
+        input()
+    else:
+        print("\n   🛑 Simulating Redis failure for automated test...")
     
     # Try to create a new cache instance - should fallback to SQLite
     cache2 = HandCache(config)

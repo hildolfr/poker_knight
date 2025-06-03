@@ -178,7 +178,10 @@ class TestCachePersistenceDemo:
         """Test that SQLite fallback is available."""
         config = CacheConfig(
             enable_persistence=True,
-            sqlite_path=":memory:"  # Use in-memory SQLite for testing
+            sqlite_path=":memory:",  # Use in-memory SQLite for testing
+            # Force SQLite by using invalid Redis settings
+            redis_host="invalid_host_that_does_not_exist",
+            redis_port=99999
         )
         
         hand_cache = HandCache(config)
@@ -186,7 +189,7 @@ class TestCachePersistenceDemo:
         
         # Check that SQLite is being used (not Redis)
         stats = hand_cache.get_persistence_stats()
-        assert stats['persistence_type'] in ['sqlite', 'none']
+        assert stats['persistence_type'] == 'sqlite'
 
 
 @pytest.mark.cache

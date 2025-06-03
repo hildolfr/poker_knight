@@ -1862,10 +1862,13 @@ class MonteCarloSolver:
                 'stack_pressure': 1.0 - hero_chip_percentage  # Higher when short-stacked
             }
         
-        # Process tournament context if provided
-        if tournament_context:
-            bubble_factor = tournament_context.get('bubble_factor', 1.0)
-            icm_analysis['bubble_factor'] = bubble_factor
+        # Calculate ICM equity if we have tournament context or stack sizes
+        if tournament_context or (stack_sizes and pot_size):
+            # Get bubble factor from tournament context if available
+            bubble_factor = 1.0
+            if tournament_context:
+                bubble_factor = tournament_context.get('bubble_factor', 1.0)
+                icm_analysis['bubble_factor'] = bubble_factor
             
             # Calculate ICM equity (simplified model)
             base_icm_equity = win_prob  # Start with basic win probability

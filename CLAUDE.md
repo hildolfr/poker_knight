@@ -100,6 +100,7 @@ The v1.6.0 development focuses on intelligent cache pre-population for near-inst
 - Performance-sensitive changes should include benchmark comparisons
 - Statistical tests may fail occasionally due to randomness - run them multiple times if needed
 - Cache tests can be run with `pytest -m cache`
+- Don't bother running test suites, tell the user the command and defer to them. Ensure all test suites we write output results to the relevant folder with date and test-type within the filename.
 
 ## Documentation
 

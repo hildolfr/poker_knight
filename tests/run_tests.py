@@ -172,7 +172,7 @@ def main():
         return
     
     # Build pytest command
-    pytest_args = ["python", "-m", "pytest"]
+    pytest_args = [sys.executable, "-m", "pytest"]
     
     # Add any additional arguments passed to this script
     pytest_args.extend(sys.argv[1:])

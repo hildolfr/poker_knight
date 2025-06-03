@@ -59,7 +59,7 @@ def cleanup_test_environment(temp_dir):
 
 def run_pytest_command(args, test_selection=None):
     """Run pytest with specific arguments."""
-    cmd = ['python', '-m', 'pytest']
+    cmd = [sys.executable, '-m', 'pytest']
     
     # Add verbosity
     cmd.extend(['-v', '--tb=short'])

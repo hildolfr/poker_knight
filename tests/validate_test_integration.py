@@ -54,21 +54,21 @@ def test_marker_functionality() -> Dict[str, bool]:
     
     marker_tests = {
         # Cache markers
-        "cache": ["python", "-m", "pytest", "-m", "cache", "--collect-only", "-q"],
-        "cache_unit": ["python", "-m", "pytest", "-m", "cache_unit", "--collect-only", "-q"],
-        "cache_integration": ["python", "-m", "pytest", "-m", "cache_integration", "--collect-only", "-q"],
-        "cache_performance": ["python", "-m", "pytest", "-m", "cache_performance", "--collect-only", "-q"],
-        "redis_required": ["python", "-m", "pytest", "-m", "redis_required", "--collect-only", "-q"],
+        "cache": [sys.executable, "-m", "pytest", "-m", "cache", "--collect-only", "-q"],
+        "cache_unit": [sys.executable, "-m", "pytest", "-m", "cache_unit", "--collect-only", "-q"],
+        "cache_integration": [sys.executable, "-m", "pytest", "-m", "cache_integration", "--collect-only", "-q"],
+        "cache_performance": [sys.executable, "-m", "pytest", "-m", "cache_performance", "--collect-only", "-q"],
+        "redis_required": [sys.executable, "-m", "pytest", "-m", "redis_required", "--collect-only", "-q"],
         
         # Existing markers
-        "unit": ["python", "-m", "pytest", "-m", "unit", "--collect-only", "-q"],
-        "quick": ["python", "-m", "pytest", "-m", "quick", "--collect-only", "-q"],
-        "statistical": ["python", "-m", "pytest", "-m", "statistical", "--collect-only", "-q"],
-        "performance": ["python", "-m", "pytest", "-m", "performance", "--collect-only", "-q"],
+        "unit": [sys.executable, "-m", "pytest", "-m", "unit", "--collect-only", "-q"],
+        "quick": [sys.executable, "-m", "pytest", "-m", "quick", "--collect-only", "-q"],
+        "statistical": [sys.executable, "-m", "pytest", "-m", "statistical", "--collect-only", "-q"],
+        "performance": [sys.executable, "-m", "pytest", "-m", "performance", "--collect-only", "-q"],
         
         # Marker combinations
-        "cache_and_quick": ["python", "-m", "pytest", "-m", "cache and quick", "--collect-only", "-q"],
-        "cache_not_redis": ["python", "-m", "pytest", "-m", "cache and not redis_required", "--collect-only", "-q"],
+        "cache_and_quick": [sys.executable, "-m", "pytest", "-m", "cache and quick", "--collect-only", "-q"],
+        "cache_not_redis": [sys.executable, "-m", "pytest", "-m", "cache and not redis_required", "--collect-only", "-q"],
     }
     
     results = {}
@@ -93,18 +93,18 @@ def test_command_line_options() -> Dict[str, bool]:
     
     option_tests = {
         # Cache options
-        "cache": ["python", "-m", "pytest", "--cache", "--collect-only", "-q"],
-        "cache-unit": ["python", "-m", "pytest", "--cache-unit", "--collect-only", "-q"],
-        "cache-integration": ["python", "-m", "pytest", "--cache-integration", "--collect-only", "-q"],
-        "cache-performance": ["python", "-m", "pytest", "--cache-performance", "--collect-only", "-q"],
-        "redis": ["python", "-m", "pytest", "--redis", "--collect-only", "-q"],
+        "cache": [sys.executable, "-m", "pytest", "--cache", "--collect-only", "-q"],
+        "cache-unit": [sys.executable, "-m", "pytest", "--cache-unit", "--collect-only", "-q"],
+        "cache-integration": [sys.executable, "-m", "pytest", "--cache-integration", "--collect-only", "-q"],
+        "cache-performance": [sys.executable, "-m", "pytest", "--cache-performance", "--collect-only", "-q"],
+        "redis": [sys.executable, "-m", "pytest", "--redis", "--collect-only", "-q"],
         
         # Existing options
-        "quick": ["python", "-m", "pytest", "--quick", "--collect-only", "-q"],
-        "unit": ["python", "-m", "pytest", "--unit", "--collect-only", "-q"],
-        "statistical": ["python", "-m", "pytest", "--statistical", "--collect-only", "-q"],
-        "performance": ["python", "-m", "pytest", "--performance", "--collect-only", "-q"],
-        "all": ["python", "-m", "pytest", "--all", "--collect-only", "-q"],
+        "quick": [sys.executable, "-m", "pytest", "--quick", "--collect-only", "-q"],
+        "unit": [sys.executable, "-m", "pytest", "--unit", "--collect-only", "-q"],
+        "statistical": [sys.executable, "-m", "pytest", "--statistical", "--collect-only", "-q"],
+        "performance": [sys.executable, "-m", "pytest", "--performance", "--collect-only", "-q"],
+        "all": [sys.executable, "-m", "pytest", "--all", "--collect-only", "-q"],
     }
     
     results = {}
@@ -129,13 +129,13 @@ def test_cache_test_execution() -> Dict[str, bool]:
     
     execution_tests = {
         # Quick cache tests (should be fast)
-        "cache_quick": ["python", "-m", "pytest", "-m", "cache and quick", "-v", "--tb=short"],
+        "cache_quick": [sys.executable, "-m", "pytest", "-m", "cache and quick", "-v", "--tb=short"],
         
         # Demo integration test
-        "integration_demo": ["python", "-m", "pytest", "tests/test_integration_demo.py", "-v"],
+        "integration_demo": [sys.executable, "-m", "pytest", "tests/test_integration_demo.py", "-v"],
         
         # Cache unit tests (fast subset)
-        "cache_unit_basic": ["python", "-m", "pytest", "-m", "cache_unit", "-k", "test_cache_config", "-v"],
+        "cache_unit_basic": [sys.executable, "-m", "pytest", "-m", "cache_unit", "-k", "test_cache_config", "-v"],
     }
     
     results = {}
