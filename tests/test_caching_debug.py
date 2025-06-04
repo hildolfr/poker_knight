@@ -50,7 +50,9 @@ def test_basic_cache():
     if retrieved:
         print(f"   Win probability: {retrieved['win_probability']}")
     
-    return True
+    assert stored, "Result should have been stored successfully"
+    assert retrieved is not None, "Retrieved result should not be None"
+    assert retrieved['win_probability'] == test_result['win_probability'], "Retrieved data should match stored data"
 
 
 def test_cache_miss_then_hit():
@@ -99,7 +101,10 @@ def test_cache_miss_then_hit():
     print(f"   Cache misses: {stats.cache_misses}")
     print(f"   Hit rate: {stats.hit_rate:.1%}")
     
-    return result2 is not None
+    assert result1 is None, "First call should be a cache miss"
+    assert result2 is not None, "Second call should be a cache hit"
+    assert stats.cache_hits == 1, "Should have exactly 1 cache hit"
+    assert stats.cache_misses == 1, "Should have exactly 1 cache miss"
 
 
 def main():

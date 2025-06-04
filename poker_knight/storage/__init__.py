@@ -10,17 +10,26 @@ License: MIT
 
 from .cache import (
     HandCache, BoardTextureCache, PreflopRangeCache, 
-    CacheConfig, CacheStats, create_cache_key,
-    get_cache_manager, clear_all_caches
+    CacheConfig, create_cache_key, get_cache_manager, REDIS_AVAILABLE,
+    clear_all_caches, ThreadSafeLRUCache, SQLiteCache
 )
+
+# Import CacheStats from unified_cache where it actually exists
+try:
+    from .unified_cache import CacheStats
+except ImportError:
+    CacheStats = None
 
 __all__ = [
     "HandCache",
     "BoardTextureCache", 
     "PreflopRangeCache",
     "CacheConfig",
-    "CacheStats",
+    "CacheStats", 
     "create_cache_key",
     "get_cache_manager",
-    "clear_all_caches"
+    "REDIS_AVAILABLE",
+    "clear_all_caches",
+    "ThreadSafeLRUCache",
+    "SQLiteCache"
 ] 

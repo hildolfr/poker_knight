@@ -13,10 +13,8 @@ Key Features:
 - Intelligent caching system for near-instant repeated queries (v1.6)
 """
 
-from .solver import (
-    Card, HandEvaluator, Deck, MonteCarloSolver, 
-    solve_poker_hand, SimulationResult
-)
+from .core import Card, HandEvaluator, Deck, SimulationResult
+from .solver import MonteCarloSolver, solve_poker_hand
 
 # Import caching functionality if available (Task 1.3)
 try:

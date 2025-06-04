@@ -49,9 +49,11 @@ def test_redis_performance():
     print(f"   Redis connected: {persistence_stats['redis_connected']}")
     
     if not persistence_stats['redis_connected']:
-        print("   [FAIL] Redis not connected! Make sure Docker Redis is running:")
+        print("   [SKIP] Redis not connected! Make sure Docker Redis is running:")
         print("      docker run -d --name poker-redis -p 6379:6379 redis:latest")
-        return None
+        print("   Skipping Redis performance test - Redis not available")
+        import pytest
+        pytest.skip("Redis not available - skipping Redis performance test")
     
     print("   [PASS] Redis connected successfully!")
     
@@ -138,13 +140,21 @@ def test_redis_performance():
     # Clean up
     cache.clear()
     
-    return {
-        'store_time': avg_store_time,
-        'retrieval_time': avg_retrieval_time,
-        'persistence_time': avg_persistence_time,
-        'hit_rate': cache_stats.hit_rate,
-        'persistence_type': 'redis'
-    }
+    # Add assertions for Redis performance
+    assert cache_stats.total_requests > 0, "Should have made requests to cache"
+    assert cache_stats.persistence_saves > 0, "Should have saved to Redis"
+    assert avg_store_time < 100, f"Redis store should be fast, but took {avg_store_time:.2f}ms"
+    assert avg_retrieval_time < 50, f"Redis retrieval should be fast, but took {avg_retrieval_time:.2f}ms"
+    
+    # Only return dict when not running under pytest
+    if not os.environ.get('PYTEST_CURRENT_TEST'):
+        return {
+            'store_time': avg_store_time,
+            'retrieval_time': avg_retrieval_time,
+            'persistence_time': avg_persistence_time,
+            'hit_rate': cache_stats.hit_rate,
+            'persistence_type': 'redis'
+        }
 
 
 def test_sqlite_fallback():
@@ -260,13 +270,20 @@ def test_sqlite_fallback():
     if os.path.exists(config.sqlite_path):
         os.remove(config.sqlite_path)
     
-    return {
-        'store_time': avg_store_time,
-        'retrieval_time': avg_retrieval_time,
-        'persistence_time': avg_persistence_time,
-        'hit_rate': cache_stats.hit_rate,
-        'persistence_type': 'sqlite'
-    }
+    # Add assertions for SQLite performance
+    assert persistence_stats['persistence_type'] == 'sqlite', "Should be using SQLite fallback"
+    assert cache_stats.total_requests > 0, "Should have made requests to cache"
+    assert cache_stats.persistence_saves > 0, "Should have saved to SQLite"
+    
+    # Only return dict when not running under pytest
+    if not os.environ.get('PYTEST_CURRENT_TEST'):
+        return {
+            'store_time': avg_store_time,
+            'retrieval_time': avg_retrieval_time,
+            'persistence_time': avg_persistence_time,
+            'hit_rate': cache_stats.hit_rate,
+            'persistence_type': 'sqlite'
+        }
 
 
 def test_memory_only():
@@ -351,13 +368,21 @@ def test_memory_only():
     print(f"      Hit rate: {cache_stats.hit_rate:.1%}")
     print(f"      Memory usage: {cache_stats.memory_usage_mb:.3f} MB")
     
-    return {
-        'store_time': avg_store_time,
-        'retrieval_time': avg_retrieval_time,
-        'persistence_time': 0.0,  # No persistence
-        'hit_rate': cache_stats.hit_rate,
-        'persistence_type': 'none'
-    }
+    # Add assertions for memory-only performance
+    assert persistence_stats['persistence_type'] == 'none', "Should be using memory-only mode"
+    assert cache_stats.total_requests > 0, "Should have made requests to cache"
+    assert avg_store_time < 10, f"Memory store should be very fast, but took {avg_store_time:.2f}ms"
+    assert avg_retrieval_time < 5, f"Memory retrieval should be very fast, but took {avg_retrieval_time:.2f}ms"
+    
+    # Only return dict when not running under pytest
+    if not os.environ.get('PYTEST_CURRENT_TEST'):
+        return {
+            'store_time': avg_store_time,
+            'retrieval_time': avg_retrieval_time,
+            'persistence_time': 0.0,  # No persistence
+            'hit_rate': cache_stats.hit_rate,
+            'persistence_type': 'none'
+        }
 
 
 def test_fallback_behavior():

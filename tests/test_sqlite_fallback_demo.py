@@ -235,7 +235,17 @@ def test_cache_fallback_system():
         print(f"   Success Rate: {result['successful_retrievals']}/{result['successful_stores']} scenarios")
         print(f"   Cache Hit Rate: {result['hit_rate']:.1%}")
     
-    return results
+    # Add assertions to verify the tests
+    for config_name, result in results.items():
+        assert result['successful_stores'] > 0, f"{config_name}: Should have successful stores"
+        assert result['successful_retrievals'] > 0, f"{config_name}: Should have successful retrievals"
+        assert result['avg_store_time_ms'] > 0, f"{config_name}: Store time should be positive"
+        assert result['avg_retrieval_time_ms'] > 0, f"{config_name}: Retrieval time should be positive"
+        assert result['hit_rate'] > 0, f"{config_name}: Hit rate should be positive"
+    
+    # Only return dict when not running under pytest
+    if not os.environ.get('PYTEST_CURRENT_TEST'):
+        return results
 
 
 def test_sqlite_specific_features():

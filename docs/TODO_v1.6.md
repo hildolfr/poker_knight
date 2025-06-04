@@ -16,6 +16,7 @@
 - 🏢 **Enterprise Ready** with REST APIs, monitoring, and containerized deployment
 - 📊 **Advanced Analytics** with interactive dashboards and statistical rigor
 - 🔧 **Production Quality** with 95% test coverage and comprehensive documentation
+- 🏠 **Code Organization** with clean architecture and maintainable structure
 
 ---
 
@@ -976,6 +977,59 @@ pip install prometheus_client structlog
 
 ---
 
+## 🏗️ **PRIORITY 0: CODE ORGANIZATION & ARCHITECTURE** 
+*IMMEDIATE | Critical for maintainability*
+
+### **Task 0.1: Refactor solver.py into Modular Components** 🚨 **HIGH PRIORITY**
+**Impact**: Improved maintainability and testability | **Effort**: 1 week | **Risk**: Medium
+
+#### Implementation Tasks:
+- [ ] **0.1.1** Extract card classes to `poker_knight/cards/` module
+  - **Files**: `card.py`, `deck.py`, `evaluator.py`
+  - **Details**: Move Card, Deck, HandEvaluator classes (approx 400 lines)
+  
+- [ ] **0.1.2** Extract simulation components to `poker_knight/simulation/`
+  - **Files**: `result.py`, `runner.py`, `multiway.py`
+  - **Details**: Move SimulationResult and simulation logic (approx 600 lines)
+  
+- [ ] **0.1.3** Extract convergence analysis to `poker_knight/convergence/`
+  - **Files**: `monitor.py`
+  - **Details**: Move convergence monitoring logic (approx 200 lines)
+  
+- [ ] **0.1.4** Update imports and maintain backward compatibility
+  - **Details**: Ensure existing API remains unchanged
+
+### **Task 0.2: Consolidate Analytics and Analysis Modules** 🟡 **MEDIUM PRIORITY**
+**Impact**: Clear separation of concerns | **Effort**: 0.5 weeks | **Risk**: Low
+
+#### Implementation Tasks:
+- [ ] **0.2.1** Merge analytics.py and analysis.py into `poker_knight/analysis/` package
+- [ ] **0.2.2** Create clear submodules: `convergence.py`, `statistics.py`, `performance.py`
+- [ ] **0.2.3** Update imports throughout codebase
+
+### **Task 0.3: Handle Dead Code - reporting.py Decision** 🚨 **HIGH PRIORITY**
+**Impact**: Remove 829 lines of dead code | **Effort**: 0.5 days | **Risk**: Low
+
+#### Decision Required:
+- [ ] **Option A**: Move to `examples/analytics_utils/` if keeping for demos
+- [ ] **Option B**: Promote as official feature and export in `__init__.py`
+- [ ] **Option C**: Remove entirely if not needed
+
+### **Task 0.4: Documentation Consolidation** 🟡 **MEDIUM PRIORITY**
+**Impact**: Reduce documentation redundancy by 60% | **Effort**: 0.5 weeks | **Risk**: Low
+
+#### Implementation Tasks:
+- [ ] **0.4.1** Create single `CACHE_SYSTEM_DOCUMENTATION.md` from 4 cache docs
+- [ ] **0.4.2** Archive old implementation summaries to `archived_documentation/`
+- [ ] **0.4.3** Clean up test results directory structure
+
+### **Task 0.5: Root Directory Cleanup** ✅ **COMPLETED**
+- [x] Remove `deadlock_analysis.log` 
+- [x] Remove `poker_knight_cache.db`
+- [x] Update `.gitignore` with `*.db` pattern
+
+---
+
 **🎯 Version 1.6 Target**: Transform Poker Knight into the definitive enterprise-grade poker analysis platform, suitable for production AI applications, research institutions, and commercial poker software integration.
 
-**📈 Expected Impact**: 10-50x performance improvement, professional AI features, enterprise deployment capabilities, and comprehensive production monitoring - positioning Poker Knight as the industry standard for Monte Carlo poker analysis. 
+**📈 Expected Impact**: 10-50x performance improvement, professional AI features, enterprise deployment capabilities, comprehensive production monitoring, and clean maintainable architecture - positioning Poker Knight as the industry standard for Monte Carlo poker analysis. 

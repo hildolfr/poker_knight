@@ -57,14 +57,12 @@ def test_card_formats():
             
         except Exception as e:
             print(f"   [FAIL] Error: {e}")
-            return False
+            assert False, f"Test case '{case['name']}' failed with error: {e}"
     
     print(f"\n🎉 All tests passed! API consistency fix working perfectly.")
     print(f"[PASS] Users can now use the same format across solver and optimizer")
     print(f"[PASS] No more manual format conversion needed")
     print(f"[PASS] Backward compatibility maintained")
-    
-    return True
 
 if __name__ == "__main__":
     test_card_formats() 

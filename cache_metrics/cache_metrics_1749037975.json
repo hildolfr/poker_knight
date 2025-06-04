@@ -1,0 +1,86 @@
+{
+  "export_timestamp": 1749037975,
+  "collection_interval_seconds": 30,
+  "metrics": [
+    {
+      "timestamp": 1749037704.539424,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037734.613231,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037764.6134193,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037794.74308,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037824.7608564,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037854.7610512,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037884.7892227,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037914.7894351,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037944.8563123,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    },
+    {
+      "timestamp": 1749037975.2300436,
+      "hit_rate": 1.0,
+      "response_time_ms": 0.0029771471023559573,
+      "memory_usage_mb": 0.0008754730224609375,
+      "cache_efficiency": 0.9999910685586928,
+      "memory_efficiency": 9.99991450531859
+    }
+  ]
+}

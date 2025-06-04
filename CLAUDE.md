@@ -8,8 +8,12 @@ Poker Knight is a high-performance Monte Carlo Texas Hold'em poker solver. It's 
 
 **Platform Philosophy**: This project aims to remain platform-agnostic. Avoid platform-specific code, dependencies, or assumptions. The codebase should work equally well on Linux, macOS, and Windows.
 
-## Common Development Commands
+THE CACHING SYSTEM SHALL STORE PLAYER CARDS, FLOP, RIVER, TURN. IT SHALL NOT USE BACKGROUND WARMING, BUT THE CACHE SHALL HAVE AN ARGUMENT AVAILABLE THAT WILL PREPOPULATE THE CACHE WILL ALL POSSIBLE DECISIONS FOR FASTER OPERATION.
 
+## Common Development Commands
+remember that we are likely working in a venv; when running commands make sure you remember that.
+
+DO NOT RUN TESTS YOURSELF UNLESS EXPLICITLY ASKED, DEFER TO USER IF POSSIBLE -- THEY ARE LENGTHY
 ### Installation
 ```bash
 # Development installation
@@ -101,6 +105,47 @@ The v1.6.0 development focuses on intelligent cache pre-population for near-inst
 - Statistical tests may fail occasionally due to randomness - run them multiple times if needed
 - Cache tests can be run with `pytest -m cache`
 - Don't bother running test suites, tell the user the command and defer to them. Ensure all test suites we write output results to the relevant folder with date and test-type within the filename.
+
+## Quick API Usage
+
+The main API entry point is `solve_poker_hand()`:
+
+```python
+from poker_knight import solve_poker_hand
+
+# Basic usage - analyze pre-flop hand
+result = solve_poker_hand(['A♠', 'K♠'], 2)  # AK suited vs 2 opponents
+print(f"Win: {result.win_probability:.1%}")
+
+# With board cards (flop/turn/river)
+result = solve_poker_hand(
+    ['K♠', 'Q♠'],           # Hero hand
+    3,                       # Number of opponents  
+    ['A♠', 'J♠', '10♥']     # Board cards
+)
+
+# Advanced usage with tournament context
+result = solve_poker_hand(
+    ['A♠', 'K♠'], 
+    2,
+    ['Q♠', 'J♠', '10♥'],
+    simulation_mode="precision",    # More simulations for accuracy
+    hero_position="button",         # Position info
+    stack_sizes=[5000, 3000, 2000], # ICM calculations
+    pot_size=1500                   # For SPR calculations
+)
+```
+
+Key parameters:
+- `hero_hand`: List of 2 cards using Unicode suits (♠♥♦♣)
+- `num_opponents`: 1-6 opponents
+- `board_cards`: Optional list of 3-5 community cards
+- `simulation_mode`: "fast" (10k), "default" (100k), or "precision" (500k) simulations
+
+Returns `SimulationResult` with:
+- `win_probability`, `tie_probability`, `loss_probability`
+- `confidence_interval`, `simulations_run`
+- Advanced metrics for tournament play
 
 ## Documentation
 

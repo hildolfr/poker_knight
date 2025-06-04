@@ -126,7 +126,11 @@ def test_multiway_analysis():
     
     print("\n[PASS] Multi-Way Pot Analysis Test Complete!")
     print("[STATS] All features working correctly")
-    return True
+    
+    # Add assertions to validate the tests
+    assert result is not None, "Result should not be None"
+    assert hasattr(result, 'win_probability'), "Result should have win_probability attribute"
+    assert 0 <= result.win_probability <= 1, "Win probability should be between 0 and 1"
 
 if __name__ == "__main__":
     test_multiway_analysis() 

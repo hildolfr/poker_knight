@@ -39,7 +39,8 @@ def test_sqlite_integration():
         },
         "output_settings": {
             "include_hand_categories": True,
-            "include_confidence_intervals": True
+            "include_confidence_interval": True,
+            "decimal_precision": 4
         },
         "cache_settings": {
             "max_memory_mb": 64,
@@ -97,10 +98,27 @@ def test_sqlite_integration():
             cache_stats_final = solver.get_cache_stats()
             if cache_stats_final:
                 print(f"\n[STATS] Cache Performance:")
-                print(f"   Total requests: {cache_stats_final['hand_cache']['total_requests']}")
-                print(f"   Cache hits: {cache_stats_final['hand_cache']['cache_hits']}")
-                print(f"   Cache misses: {cache_stats_final['hand_cache']['cache_misses']}")
-                print(f"   Hit rate: {cache_stats_final['hand_cache']['hit_rate']:.1%}")
+                
+                # Handle both unified and legacy cache formats
+                if 'unified_cache' in cache_stats_final:
+                    cache_data = cache_stats_final['unified_cache']
+                    print(f"   Cache type: unified")
+                elif 'hand_cache' in cache_stats_final:
+                    cache_data = cache_stats_final['hand_cache']
+                    print(f"   Cache type: legacy")
+                else:
+                    cache_data = {}
+                    print(f"   Cache type: unknown")
+                
+                total_requests = cache_data.get('total_requests', 0)
+                cache_hits = cache_data.get('cache_hits', 0)
+                cache_misses = cache_data.get('cache_misses', 0)
+                hit_rate = cache_data.get('hit_rate', 0.0)
+                
+                print(f"   Total requests: {total_requests}")
+                print(f"   Cache hits: {cache_hits}")
+                print(f"   Cache misses: {cache_misses}")
+                print(f"   Hit rate: {hit_rate:.1%}")
                 
                 cached = time2 < time1 * 0.5  # Second run should be much faster
                 print(f"   Caching working: {'[PASS]' if cached else '[FAIL]'}")
@@ -135,10 +153,24 @@ def test_sqlite_integration():
             
             cache_stats_new = new_solver.get_cache_stats()
             if cache_stats_new:
-                print(f"   New instance cache hits: {cache_stats_new['hand_cache']['cache_hits']}")
+                # Handle both unified and legacy cache stats structures
+                if 'unified_cache' in cache_stats_new:
+                    cache_hits = cache_stats_new['unified_cache'].get('cache_hits', 0)
+                elif 'hand_cache' in cache_stats_new:
+                    cache_hits = cache_stats_new['hand_cache'].get('cache_hits', 0)
+                else:
+                    cache_hits = 0
+                print(f"   New instance cache hits: {cache_hits}")
         
         print("\n[PASS] SQLite integration test completed!")
-        return True
+        
+        # Add assertions
+        assert result1 is not None and result2 is not None, "Results should not be None"
+        assert abs(result1.win_probability - result2.win_probability) < 0.001, "Results should match"
+        # For very fast operations, both might be 0.0ms, so we check if cached time is not greater
+        assert time2 <= time1 * 0.5 or (time1 < 1.0 and time2 < 1.0), f"Second run should be cached and faster: {time2:.1f}ms vs {time1:.1f}ms"
+        assert result4 is not None, "Result from new instance should not be None"
+        assert time4 <= time1 * 0.5 or (time1 < 1.0 and time4 < 1.0), f"Persistent cache should be fast: {time4:.1f}ms vs {time1:.1f}ms"
         
     finally:
         # Clean up temporary config file

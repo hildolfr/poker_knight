@@ -162,15 +162,7 @@ def test_basic_functionality():
         
         # Create solver with safe settings
         solver = MonteCarloSolver(
-            enable_caching=False,  # Disable caching to avoid Redis issues
-            config_overrides={
-                'simulation_settings': {
-                    'parallel_processing': False,  # Disable parallel processing
-                    'fast_mode_simulations': 1000,  # Reduce simulation count
-                    'default_simulations': 5000,
-                    'precision_mode_simulations': 10000
-                }
-            }
+            enable_caching=False  # Disable caching to avoid Redis issues
         )
         
         # Simple test case
@@ -191,11 +183,15 @@ def test_basic_functionality():
         
         # Clean up
         solver.close()
-        return True
+        
+        # Add assertions
+        assert result is not None, "Result should not be None"
+        assert 0 <= result.win_probability <= 1, "Win probability should be between 0 and 1"
+        assert result.simulations_run > 0, "Should have run some simulations"
         
     except Exception as e:
         print(f"[FAIL] Basic test failed: {e}")
-        return False
+        assert False, f"Basic test failed with error: {e}"
 
 
 def test_caching_safe():
@@ -211,8 +207,7 @@ def test_caching_safe():
         config = CacheConfig(
             max_memory_mb=64,
             hand_cache_size=100,
-            enable_persistence=False,  # Disable Redis
-            enable_compression=False   # Disable compression for simplicity
+            enable_persistence=False  # Disable Redis
         )
         
         cache = HandCache(config)
@@ -231,14 +226,17 @@ def test_caching_safe():
         
         if success and retrieved and retrieved['win_probability'] == 0.6:
             print("[PASS] Safe caching test passed")
-            return True
         else:
             print("[FAIL] Safe caching test failed: retrieve mismatch")
-            return False
+        
+        # Add assertions
+        assert success, "Should be able to store in cache"
+        assert retrieved is not None, "Should be able to retrieve from cache"
+        assert retrieved['win_probability'] == 0.6, "Retrieved value should match stored value"
             
     except Exception as e:
         print(f"[FAIL] Safe caching test failed: {e}")
-        return False
+        assert False, f"Safe caching test failed with error: {e}"
 
 
 def run_critical_tests():

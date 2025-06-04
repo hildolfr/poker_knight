@@ -196,6 +196,10 @@ Thumbs.db
 # Uncomment if you want to ignore local config modifications
 # config.json
 
+# Cache database files
+poker_knight_cache.db
+*.db
+
 # SpecStory generated files
 .specstory/
 

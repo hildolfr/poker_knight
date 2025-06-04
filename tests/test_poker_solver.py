@@ -10,6 +10,7 @@ from poker_knight import (
     Card, HandEvaluator, Deck, MonteCarloSolver, 
     solve_poker_hand, SimulationResult
 )
+from poker_knight.constants import HAND_RANKINGS
 
 class TestCard(unittest.TestCase):
     """Test Card class functionality."""
@@ -58,7 +59,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('J', 'S'), Card('10', 'S')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['royal_flush'])
+        self.assertEqual(rank, HAND_RANKINGS['royal_flush'])
     
     def test_straight_flush(self):
         """Test straight flush evaluation."""
@@ -67,7 +68,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('6', 'S'), Card('5', 'S')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['straight_flush'])
+        self.assertEqual(rank, HAND_RANKINGS['straight_flush'])
     
     def test_four_of_a_kind(self):
         """Test four of a kind evaluation."""
@@ -76,7 +77,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('A', 'C'), Card('K', 'S')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['four_of_a_kind'])
+        self.assertEqual(rank, HAND_RANKINGS['four_of_a_kind'])
         self.assertEqual(tiebreakers[0], 12)  # Aces
     
     def test_full_house(self):
@@ -86,7 +87,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('K', 'S'), Card('K', 'H')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['full_house'])
+        self.assertEqual(rank, HAND_RANKINGS['full_house'])
     
     def test_flush(self):
         """Test flush evaluation."""
@@ -95,7 +96,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('7', 'S'), Card('5', 'S')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['flush'])
+        self.assertEqual(rank, HAND_RANKINGS['flush'])
     
     def test_straight(self):
         """Test straight evaluation."""
@@ -104,7 +105,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('J', 'S'), Card('10', 'C')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['straight'])
+        self.assertEqual(rank, HAND_RANKINGS['straight'])
         
         # Test wheel straight (A-2-3-4-5)
         cards = [
@@ -112,7 +113,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('4', 'S'), Card('5', 'C')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['straight'])
+        self.assertEqual(rank, HAND_RANKINGS['straight'])
         self.assertEqual(tiebreakers[0], 3)  # 5-high straight
     
     def test_three_of_a_kind(self):
@@ -122,7 +123,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('K', 'S'), Card('Q', 'H')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['three_of_a_kind'])
+        self.assertEqual(rank, HAND_RANKINGS['three_of_a_kind'])
     
     def test_two_pair(self):
         """Test two pair evaluation."""
@@ -131,7 +132,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('K', 'S'), Card('Q', 'H')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['two_pair'])
+        self.assertEqual(rank, HAND_RANKINGS['two_pair'])
     
     def test_pair(self):
         """Test pair evaluation."""
@@ -140,7 +141,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('Q', 'S'), Card('J', 'H')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['pair'])
+        self.assertEqual(rank, HAND_RANKINGS['pair'])
     
     def test_high_card(self):
         """Test high card evaluation."""
@@ -149,7 +150,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('J', 'S'), Card('9', 'H')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['high_card'])
+        self.assertEqual(rank, HAND_RANKINGS['high_card'])
     
     def test_seven_card_evaluation(self):
         """Test evaluation with 7 cards (finds best 5)."""
@@ -158,7 +159,7 @@ class TestHandEvaluator(unittest.TestCase):
             Card('K', 'S'), Card('K', 'H'), Card('2', 'C'), Card('3', 'D')
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['full_house'])
+        self.assertEqual(rank, HAND_RANKINGS['full_house'])
 
 class TestDeck(unittest.TestCase):
     """Test deck functionality."""
@@ -327,13 +328,13 @@ class TestEdgeCaseHandEvaluation(unittest.TestCase):
         # Basic wheel straight
         cards = [Card('A', 'S'), Card('2', 'H'), Card('3', 'D'), Card('4', 'S'), Card('5', 'C')]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['straight'])
+        self.assertEqual(rank, HAND_RANKINGS['straight'])
         self.assertEqual(tiebreakers[0], 3)  # 5-high straight
         
         # Wheel straight flush
         cards = [Card('A', 'S'), Card('2', 'S'), Card('3', 'S'), Card('4', 'S'), Card('5', 'S')]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['straight_flush'])
+        self.assertEqual(rank, HAND_RANKINGS['straight_flush'])
         self.assertEqual(tiebreakers[0], 3)  # 5-high straight flush
         
         # Wheel vs higher straight (wheel should lose)
@@ -399,7 +400,7 @@ class TestEdgeCaseHandEvaluation(unittest.TestCase):
             Card('Q', 'H'), Card('J', 'D'), Card('9', 'S')  # High cards (no straight)
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['two_pair'])
+        self.assertEqual(rank, HAND_RANKINGS['two_pair'])
         
         # 7 cards with potential straight and flush
         cards = [
@@ -408,7 +409,7 @@ class TestEdgeCaseHandEvaluation(unittest.TestCase):
             Card('9', 'H'), Card('8', 'D')   # Extra cards
         ]
         rank, tiebreakers = self.evaluator.evaluate_hand(cards)
-        self.assertEqual(rank, self.evaluator.HAND_RANKINGS['royal_flush'])
+        self.assertEqual(rank, HAND_RANKINGS['royal_flush'])
 
 class TestConfigurationEdgeCases(unittest.TestCase):
     """Test configuration-related edge cases."""

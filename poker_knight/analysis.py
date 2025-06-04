@@ -238,8 +238,20 @@ class ConvergenceMonitor:
             # Calculate lag-1 autocorrelation
             x_vals = series[:-1]
             y_vals = series[1:]
-            corr_matrix = np.corrcoef(x_vals, y_vals)
-            lag1_corr = corr_matrix[0][1] if not np.isnan(corr_matrix[0][1]) else 0.0
+            if len(x_vals) > 0 and len(y_vals) > 0:
+                corr_matrix = np.corrcoef(x_vals, y_vals)
+                # corrcoef returns scalar if arrays are single-valued
+                # Check if we have a proper 2x2 correlation matrix
+                try:
+                    if (hasattr(corr_matrix, '__len__') and len(corr_matrix) >= 2 and 
+                        hasattr(corr_matrix[0], '__len__') and len(corr_matrix[0]) >= 2):
+                        lag1_corr = corr_matrix[0][1] if not math.isnan(corr_matrix[0][1]) else 0.0
+                    else:
+                        lag1_corr = 0.0
+                except (IndexError, TypeError):
+                    lag1_corr = 0.0
+            else:
+                lag1_corr = 0.0
             
             if abs(lag1_corr) < 0.99:
                 # Adjust variance for autocorrelation

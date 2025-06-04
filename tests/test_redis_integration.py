@@ -82,7 +82,7 @@ def test_redis_cache_persistence():
     # Verify Redis client is connected
     if hand_cache._redis_client is None:
         print("Redis client not initialized")
-        return False
+        assert False, "Redis client should be initialized"
     
     print("Redis client initialized successfully")
     
@@ -144,7 +144,7 @@ def test_redis_cache_persistence():
             print(f"Scenario {i+1} retrieved from memory cache")
         else:
             print(f"Scenario {i+1} not found in memory cache")
-            return False
+            assert False, f"Scenario {i+1} should be found in memory cache"
     
     # Test Redis persistence by creating new cache instance
     print("\nTesting Redis persistence (new cache instance):")
@@ -157,7 +157,7 @@ def test_redis_cache_persistence():
             print(f"Scenario {i+1} retrieved from Redis persistence")
         else:
             print(f"Scenario {i+1} not found in Redis persistence")
-            return False
+            assert False, f"Scenario {i+1} should be found in Redis persistence"
     
     # Get statistics
     stats = hand_cache_new.get_stats()
@@ -173,7 +173,9 @@ def test_redis_cache_persistence():
     hand_cache_new.clear()
     print("Test data cleaned up")
     
-    return True
+    # Add final assertions
+    assert stats.total_requests >= len(cache_keys), "Total requests should be at least the number of cache keys"
+    assert stats.cache_hits >= len(cache_keys), "Cache hits should be at least the number of cache keys"
 
 def test_redis_performance():
     """Test Redis cache performance."""
@@ -263,7 +265,11 @@ def test_redis_performance():
     
     # Clean up
     hand_cache_new.clear()
-    return performance_ok
+    
+    # Add assertions for performance
+    assert retrieved_count == num_scenarios, f"Should retrieve all {num_scenarios} scenarios"
+    assert avg_store_ms <= 50, f"Store performance should be <50ms, but was {avg_store_ms:.1f}ms"
+    assert avg_retrieve_ms <= 10, f"Retrieval performance should be <10ms, but was {avg_retrieve_ms:.1f}ms"
 
 def test_redis_failover():
     """Test Redis failover behavior when Redis is unavailable."""
@@ -286,7 +292,7 @@ def test_redis_failover():
         print("Cache gracefully fell back to memory-only mode")
     else:
         print("Cache should have fallen back to memory-only mode")
-        return False
+        assert False, "Cache should have fallen back to memory-only mode when Redis is unavailable"
     
     # Test normal caching operations still work
     cache_key = create_cache_key(['As', 'Ah'], 2, None, "failover_test")
@@ -300,10 +306,12 @@ def test_redis_failover():
     
     if stored and retrieved and retrieved['win_probability'] == 0.85:
         print("Memory cache still works during Redis failover")
-        return True
     else:
         print("Memory cache failed during Redis failover")
-        return False
+    
+    assert stored, "Should be able to store in memory cache during Redis failover"
+    assert retrieved is not None, "Should be able to retrieve from memory cache during Redis failover"
+    assert retrieved['win_probability'] == 0.85, "Retrieved value should match stored value"
 
 def main():
     """Run Redis integration tests."""
