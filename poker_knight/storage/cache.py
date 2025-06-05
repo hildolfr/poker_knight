@@ -70,7 +70,9 @@ class HandCache:
                     'simulations_run': result.simulations_run,
                     'execution_time_ms': result.execution_time_ms,
                     'hand_category_frequencies': result.hand_categories,
-                    'cached': True
+                    'cached': True,
+                    'metadata': result.metadata if hasattr(result, 'metadata') else {},
+                    **((result.metadata or {}) if hasattr(result, 'metadata') else {})
                 }
             return None
             
@@ -112,7 +114,9 @@ class HandCache:
                     'loss_probability': result.loss_probability,
                     'simulations_run': result.simulations_run,
                     'execution_time_ms': result.execution_time_ms,
-                    'hand_category_frequencies': result.hand_categories
+                    'hand_category_frequencies': result.hand_categories,
+                    'metadata': result.metadata if hasattr(result, 'metadata') else {},
+                    **((result.metadata or {}) if hasattr(result, 'metadata') else {})
                 }
         return None
     
@@ -133,7 +137,8 @@ class HandCache:
                 loss_probability=result.get('loss_probability', 0.0),
                 simulations_run=result.get('simulations_run', 0),
                 execution_time_ms=result.get('execution_time_ms', 0.0),
-                hand_categories=result.get('hand_category_frequencies', {})
+                hand_categories=result.get('hand_category_frequencies', {}),
+                metadata=result.get('metadata', {})
             )
             self._cache.put(cache_key, cache_result)
             return True
@@ -173,7 +178,8 @@ class HandCache:
                 loss_probability=result.get('loss_probability', 0.0),
                 simulations_run=result.get('simulations_run', 0),
                 execution_time_ms=result.get('execution_time_ms', 0.0),
-                hand_categories=result.get('hand_category_frequencies', {})
+                hand_categories=result.get('hand_category_frequencies', {}),
+                metadata=result.get('metadata', {})
             )
             
             self._cache.put(cache_key, cache_result)

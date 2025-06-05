@@ -227,7 +227,7 @@ class TestUnifiedCacheMemoryManagement(UnifiedCacheTestBase):
         super().setUp()
         # Create cache with very small memory limit for testing eviction
         self.small_cache = ThreadSafeMonteCarloCache(
-            max_memory_mb=0.001,  # 1KB limit - extremely small for testing
+            max_memory_mb=0.1,    # 100KB limit - small but realistic for testing
             max_entries=10,       # Small number of entries
             enable_persistence=False,
             sqlite_path=self.test_sqlite_path

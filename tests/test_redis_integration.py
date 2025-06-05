@@ -70,6 +70,7 @@ def test_redis_cache_persistence():
         max_memory_mb=64,
         hand_cache_size=100,
         enable_persistence=True,
+        sqlite_path="test_redis_cache.db",  # SQLite path for persistence
         redis_host="localhost",
         redis_port=6379,
         redis_db=0
@@ -130,8 +131,10 @@ def test_redis_cache_persistence():
             'loss_probability': 1.0 - scenario['expected_win_rate'] - 0.02,
             'simulations_run': 10000,
             'execution_time_ms': 150.5,
-            'scenario_id': i,
-            'redis_test': True
+            'metadata': {
+                'scenario_id': i,
+                'redis_test': True
+            }
         }
         
         stored = hand_cache.store_result(cache_key, result)
@@ -173,6 +176,11 @@ def test_redis_cache_persistence():
     # Clean up test data
     hand_cache_new.clear()
     print("Test data cleaned up")
+    
+    # Clean up test database file
+    if os.path.exists("test_redis_cache.db"):
+        os.remove("test_redis_cache.db")
+        print("Test database file removed")
     
     # Add final assertions
     assert stats.total_requests >= len(cache_keys), "Total requests should be at least the number of cache keys"

@@ -428,7 +428,13 @@ class HierarchicalCache(CacheInterface):
             # Always try to store in L1 for immediate access
             if self._l1_cache:
                 try:
-                    if self._l1_cache.put(key, result):
+                    # Use store method if available, otherwise put (put doesn't return bool)
+                    if hasattr(self._l1_cache, 'store'):
+                        if self._l1_cache.store(key, result):
+                            self._update_access_stats(key_str, CacheLayer.L1_MEMORY)
+                            success = True
+                    else:
+                        self._l1_cache.put(key, result)
                         self._update_access_stats(key_str, CacheLayer.L1_MEMORY)
                         success = True
                 except Exception as e:
@@ -437,7 +443,12 @@ class HierarchicalCache(CacheInterface):
             # Store in L2 for warm cache
             if self._l2_cache:
                 try:
-                    if self._l2_cache.put(key, result):
+                    # Use store method if available, otherwise put (put doesn't return bool)
+                    if hasattr(self._l2_cache, 'store'):
+                        if self._l2_cache.store(key, result):
+                            success = True
+                    else:
+                        self._l2_cache.put(key, result)
                         success = True
                 except Exception as e:
                     logger.warning(f"L2 storage failed: {e}")
@@ -445,7 +456,12 @@ class HierarchicalCache(CacheInterface):
             # Store in L3 for persistence
             if self._l3_cache:
                 try:
-                    if self._l3_cache.put(key, result):
+                    # Use store method if available, otherwise put (put doesn't return bool)
+                    if hasattr(self._l3_cache, 'store'):
+                        if self._l3_cache.store(key, result):
+                            success = True
+                    else:
+                        self._l3_cache.put(key, result)
                         success = True
                 except Exception as e:
                     logger.warning(f"L3 storage failed: {e}")

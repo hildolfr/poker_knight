@@ -135,9 +135,11 @@ def test_cache_fallback_system():
                 'loss_probability': 0.55 - (i * 0.15),
                 'simulations_run': 10000,
                 'execution_time_ms': 120.0 + (i * 10),
-                'scenario_description': scenario['description'],
-                'cache_test': True,
-                'config_name': config_name
+                'metadata': {
+                    'scenario_description': scenario['description'],
+                    'cache_test': True,
+                    'config_name': config_name
+                }
             }
             
             success = cache.store_result(cache_key, result)
@@ -157,9 +159,14 @@ def test_cache_fallback_system():
             retrieval_time = (time.time() - start_time) * 1000
             retrieval_times.append(retrieval_time)
             
-            if result and result.get('cache_test'):
-                successful_retrievals += 1
-                print(f"      Scenario {i+1}: Retrieved in {retrieval_time:.2f}ms")
+            if result:
+                # Check if cache_test is in result or metadata
+                cache_test = result.get('cache_test') or (result.get('metadata', {}).get('cache_test'))
+                if cache_test:
+                    successful_retrievals += 1
+                    print(f"      Scenario {i+1}: Retrieved in {retrieval_time:.2f}ms")
+                else:
+                    print(f"      Scenario {i+1}: [FAIL] Missing cache_test field")
             else:
                 print(f"      Scenario {i+1}: [FAIL] Not found")
         
@@ -202,8 +209,10 @@ def test_cache_fallback_system():
                 retrieval_time = (time.time() - start_time) * 1000
                 persistence_retrieval_times.append(retrieval_time)
                 
-                if result and result.get('cache_test'):
-                    persistence_successful += 1
+                if result:
+                    cache_test = result.get('cache_test') or (result.get('metadata', {}).get('cache_test'))
+                    if cache_test:
+                        persistence_successful += 1
             
             avg_persistence_time = sum(persistence_retrieval_times) / len(persistence_retrieval_times)
             print(f"      Persistence test: {persistence_successful}/{len(cache_keys)} scenarios retrieved")

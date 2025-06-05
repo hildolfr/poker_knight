@@ -232,19 +232,30 @@ class ThreadSafeMonteCarloCache:
                     conn = sqlite3.connect(self.sqlite_path)
                     cursor = conn.execute(
                         "SELECT win_probability, tie_probability, loss_probability, "
-                        "simulations_run, execution_time_ms FROM cache_results WHERE key = ?",
+                        "simulations_run, execution_time_ms, hand_categories, metadata "
+                        "FROM cache_results WHERE key = ?",
                         (key_str,)
                     )
                     row = cursor.fetchone()
                     conn.close()
                     
                     if row:
+                        # Parse metadata back from string
+                        metadata = {}
+                        if row[6]:  # metadata column
+                            try:
+                                import ast
+                                metadata = ast.literal_eval(row[6])
+                            except:
+                                metadata = {}
+                        
                         result = CacheResult(
                             win_probability=row[0],
                             tie_probability=row[1],
                             loss_probability=row[2],
                             simulations_run=row[3],
-                            execution_time_ms=row[4]
+                            execution_time_ms=row[4],
+                            metadata=metadata
                         )
                         # Add to memory cache
                         self._cache[key_str] = result
