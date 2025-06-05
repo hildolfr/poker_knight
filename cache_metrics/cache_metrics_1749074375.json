@@ -1,0 +1,14 @@
+{
+  "export_timestamp": 1749074375,
+  "collection_interval_seconds": 30,
+  "metrics": [
+    {
+      "timestamp": 1749074375.0399027,
+      "hit_rate": 0.0,
+      "response_time_ms": 0.0,
+      "memory_usage_mb": 0.0,
+      "cache_efficiency": 0.3,
+      "memory_efficiency": 0.0
+    }
+  ]
+}

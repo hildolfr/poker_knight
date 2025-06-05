@@ -216,7 +216,7 @@ def test_cache_fallback_system():
         if cache._sqlite_cache:
             cache._sqlite_cache.close()
         
-        if os.path.exists(config.sqlite_path):
+        if config.sqlite_path and os.path.exists(config.sqlite_path):
             try:
                 os.remove(config.sqlite_path)
                 print(f"   Cleaned up demo file: {config.sqlite_path}")

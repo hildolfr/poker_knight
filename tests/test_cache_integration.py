@@ -124,7 +124,12 @@ class TestCacheIntegration(unittest.TestCase):
     
     def test_cache_hit_miss_behavior(self):
         """Test cache hit and miss behavior."""
-        # Clear cache to start fresh - handle both unified and legacy
+        # Clear all caches to start fresh
+        if hasattr(self.solver, '_board_cache') and self.solver._board_cache:
+            self.solver._board_cache._cache.clear()
+        if hasattr(self.solver, '_preflop_cache') and self.solver._preflop_cache:
+            if hasattr(self.solver._preflop_cache, '_cache'):
+                self.solver._preflop_cache._cache.clear()
         if hasattr(self.solver, '_unified_cache') and self.solver._unified_cache:
             self.solver._unified_cache.clear()
         if hasattr(self.solver, '_legacy_hand_cache') and self.solver._legacy_hand_cache:
@@ -137,54 +142,64 @@ class TestCacheIntegration(unittest.TestCase):
             simulation_mode="fast"
         )
         
-        # Get initial stats
+        # Get initial stats - need to check all cache types
         stats = self.solver.get_cache_stats()
-        if stats:  # Only test if caching is available
-            # Handle both legacy and unified cache stats
-            cache_type = stats.get('cache_type', 'legacy')
-            if cache_type == 'unified':
-                cache_stats = stats['unified_cache']
-            else:
-                cache_stats = stats.get('hand_cache', {})
+        if not stats or stats.get('error'):  # Skip test if caching is not available
+            self.skipTest("Caching not available")
             
-            initial_hits = cache_stats.get('cache_hits', 0)
-            initial_misses = cache_stats.get('cache_misses', 0)
-            
-            # Second identical analysis should be a cache hit
-            result2 = self.solver.analyze_hand(
-                hero_hand=["AS", "KS"],
-                num_opponents=2,
-                simulation_mode="fast"
-            )
-            
-            # Get updated stats
-            stats_after = self.solver.get_cache_stats()
-            
-            # Handle both legacy and unified cache stats
-            if cache_type == 'unified':
-                cache_stats_after = stats_after['unified_cache']
-            else:
-                cache_stats_after = stats_after.get('hand_cache', {})
-            
-            # Verify cache hit occurred
-            self.assertEqual(cache_stats_after.get('cache_hits', 0), initial_hits + 1, "Should have exactly one more cache hit")
-            self.assertEqual(cache_stats_after.get('cache_misses', 0), initial_misses, "Cache misses should not increase")
-            
-            # TODO: Cache implementation bug - cache hits should return identical results
-            # Currently the cache reports hits but still runs new simulations, causing Monte Carlo variance
-            # This needs to be fixed in the unified cache system
-            # For now, we verify the cache hit count increased and results are reasonably close
-            
-            # Verify cache hit occurred (actual cache functionality test)
-            self.assertGreater(cache_stats_after.get('cache_hits', 0), initial_hits, 
-                             "Cache hit count should increase")
-            
-            # Results should be similar (within Monte Carlo variance ~1-2%)
-            # Once cache bug is fixed, this should be assertEqual for exact match
-            self.assertAlmostEqual(result1.win_probability, result2.win_probability, delta=0.02,
-                                 msg="Results should be very similar from cache (will be identical once cache bug is fixed)")
-            self.assertAlmostEqual(result1.tie_probability, result2.tie_probability, delta=0.01)
-            self.assertAlmostEqual(result1.loss_probability, result2.loss_probability, delta=0.02)
+        # Handle both legacy and unified cache stats
+        cache_type = stats.get('cache_type', 'legacy')
+        if cache_type == 'unified':
+            cache_stats = stats['unified_cache']
+        else:
+            cache_stats = stats.get('hand_cache', {})
+        
+        initial_requests = cache_stats.get('total_requests', 0)
+        
+        # Second identical analysis should use cache
+        result2 = self.solver.analyze_hand(
+            hero_hand=["AS", "KS"],
+            num_opponents=2,
+            simulation_mode="fast"
+        )
+        
+        # Get updated stats
+        stats_after = self.solver.get_cache_stats()
+        
+        # Handle both legacy and unified cache stats
+        if cache_type == 'unified':
+            cache_stats_after = stats_after['unified_cache']
+        else:
+            cache_stats_after = stats_after.get('hand_cache', {})
+        
+        # Verify another request was made
+        self.assertGreater(cache_stats_after.get('total_requests', 0), initial_requests, 
+                          "Total requests should increase")
+        
+        # Results should be identical from cache
+        self.assertEqual(result1.win_probability, result2.win_probability,
+                        "Win probabilities should be identical from cache")
+        self.assertEqual(result1.tie_probability, result2.tie_probability,
+                        "Tie probabilities should be identical from cache")
+        self.assertEqual(result1.loss_probability, result2.loss_probability,
+                        "Loss probabilities should be identical from cache")
+        
+        # TODO: Cache implementation bug - cache hits should return identical results
+        # Currently the cache reports hits but still runs new simulations, causing Monte Carlo variance
+        # This needs to be fixed in the unified cache system
+        # For now, we verify the cache hit count increased and results are reasonably close
+        
+        # Verify cache hit occurred (actual cache functionality test)
+        initial_hits = cache_stats.get('cache_hits', 0)
+        self.assertGreater(cache_stats_after.get('cache_hits', 0), initial_hits, 
+                         "Cache hit count should increase")
+        
+        # Results should be similar (within Monte Carlo variance ~1-2%)
+        # Once cache bug is fixed, this should be assertEqual for exact match
+        self.assertAlmostEqual(result1.win_probability, result2.win_probability, delta=0.02,
+                             msg="Results should be very similar from cache (will be identical once cache bug is fixed)")
+        self.assertAlmostEqual(result1.tie_probability, result2.tie_probability, delta=0.01)
+        self.assertAlmostEqual(result1.loss_probability, result2.loss_probability, delta=0.02)
     
     def test_preflop_cache_behavior(self):
         """Test preflop-specific caching behavior."""
@@ -312,14 +327,19 @@ class TestCacheIntegration(unittest.TestCase):
         
         # Cache should have entries
         stats = self.solver.get_cache_stats()
-        if stats:  # Only test if caching is available
-            cache_type = stats.get('cache_type', 'legacy')
-            if cache_type == 'unified':
-                cache_stats = stats['unified_cache']
-            else:
-                cache_stats = stats.get('hand_cache', {})
+        if not stats or stats.get('error'):  # Skip test if caching is not available
+            self.skipTest("Caching not available")
             
-            self.assertGreater(cache_stats.get('cache_misses', 0), 0)
+        cache_type = stats.get('cache_type', 'legacy')
+        if cache_type == 'unified':
+            cache_stats = stats['unified_cache']
+        else:
+            cache_stats = stats.get('hand_cache', {})
+        
+        # Should have cached some entries
+        self.assertGreater(cache_stats.get('cache_size', 0), 0, "Cache should contain entries")
+        # Should have made requests
+        self.assertGreater(cache_stats.get('total_requests', 0), 0, "Should have made cache requests")
     
     def test_cache_statistics_accuracy(self):
         """Test basic cache functionality and statistics tracking."""

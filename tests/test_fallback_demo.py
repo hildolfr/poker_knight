@@ -78,7 +78,7 @@ def test_fallback():
     for i, cache_key in enumerate(cache_keys):
         result = cache.get_result(cache_key)
         if result:
-            print(f"   Retrieved: {scenarios[i]['desc']} - backend: {result['backend']}")
+            print(f"   Retrieved: {scenarios[i]['desc']} - win_prob: {result['win_probability']:.2f}")
         else:
             print(f"   [FAIL] Failed to retrieve: {scenarios[i]['desc']}")
     
@@ -89,7 +89,7 @@ def test_fallback():
     for i, cache_key in enumerate(cache_keys):
         result = cache_new.get_result(cache_key)
         if result:
-            print(f"   Persisted: {scenarios[i]['desc']} - backend: {result['backend']}")
+            print(f"   Persisted: {scenarios[i]['desc']} - win_prob: {result['win_probability']:.2f}")
         else:
             print(f"   [FAIL] Not persisted: {scenarios[i]['desc']}")
     
