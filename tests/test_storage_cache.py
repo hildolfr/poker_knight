@@ -925,33 +925,32 @@ class TestCacheIntegration(unittest.TestCase):
         self.assertIs(board_cache1, board_cache2)
         self.assertIs(preflop_cache1, preflop_cache2)
     
-    def test_caching_simulation_result(self):
-        """Test CachingSimulationResult wrapper."""
-        # Mock simulation result
-        mock_result = MagicMock()
-        mock_result.win_probability = 0.75
-        mock_result.simulations_run = 10000
-        
-        # Test cached result
-        cached_result = CachingSimulationResult(
-            result=mock_result,
-            cached=True,
-            cache_key="test_key"
+    def test_cache_result_structure(self):
+        """Test CacheResult dataclass structure."""
+        # Test creating a cache result
+        result = CacheResult(
+            win_probability=0.75,
+            tie_probability=0.10,
+            loss_probability=0.15,
+            simulations_run=10000,
+            execution_time_ms=150.5,
+            hand_categories={'pair': 5000, 'high_card': 5000},
+            metadata={'test': True}
         )
         
-        self.assertTrue(cached_result.cached)
-        self.assertEqual(cached_result.cache_key, "test_key")
-        self.assertIsNotNone(cached_result.cache_timestamp)
+        # Test attributes
+        self.assertEqual(result.win_probability, 0.75)
+        self.assertEqual(result.tie_probability, 0.10)
+        self.assertEqual(result.loss_probability, 0.15)
+        self.assertEqual(result.simulations_run, 10000)
+        self.assertEqual(result.execution_time_ms, 150.5)
+        self.assertEqual(result.hand_categories['pair'], 5000)
+        self.assertEqual(result.metadata['test'], True)
         
-        # Test attribute delegation
-        self.assertEqual(cached_result.win_probability, 0.75)
-        self.assertEqual(cached_result.simulations_run, 10000)
-        
-        # Test non-cached result
-        non_cached_result = CachingSimulationResult(mock_result)
-        self.assertFalse(non_cached_result.cached)
-        self.assertEqual(non_cached_result.cache_key, "")
-        self.assertIsNone(non_cached_result.cache_timestamp)
+        # Test optional fields are initialized
+        self.assertIsNone(result.confidence_interval)
+        self.assertIsNone(result.convergence_achieved)
+        self.assertIsNone(result.timestamp)
     
     def test_cross_cache_consistency(self):
         """Test consistency across different cache types."""
