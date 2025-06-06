@@ -110,11 +110,14 @@ class TestStatisticalValidation(unittest.TestCase):
         num_opponents = 1
         true_win_rate = 0.849  # Actual empirical value from precision testing
         
+        # Create solver without caching to ensure fresh simulations each time
+        solver = MonteCarloSolver(enable_caching=False)
+        
         intervals_containing_true_value = 0
         total_tests = 20  # Number of confidence intervals to test
         
         for _ in range(total_tests):
-            result = solve_poker_hand(hero_hand, num_opponents, simulation_mode="default")
+            result = solver.analyze_hand(hero_hand, num_opponents, simulation_mode="default")
             
             if result.confidence_interval:
                 lower, upper = result.confidence_interval
@@ -138,6 +141,9 @@ class TestStatisticalValidation(unittest.TestCase):
         hero_hand = ['K♠', 'K♥']
         num_opponents = 2
         
+        # Create solver without caching to ensure fresh simulations show variance
+        solver = MonteCarloSolver(enable_caching=False)
+        
         # Test different sample sizes
         sample_sizes = ["fast", "default", "precision"]  # 10K, 100K, 500K
         accuracies = []
@@ -146,7 +152,7 @@ class TestStatisticalValidation(unittest.TestCase):
         for mode in sample_sizes:
             win_rates = []
             for _ in range(5):  # 5 repetitions per sample size
-                result = solve_poker_hand(hero_hand, num_opponents, simulation_mode=mode)
+                result = solver.analyze_hand(hero_hand, num_opponents, simulation_mode=mode)
                 win_rates.append(result.win_probability)
             
             # Calculate standard deviation as measure of accuracy
@@ -168,6 +174,9 @@ class TestStatisticalValidation(unittest.TestCase):
         Test simulation results against known poker probabilities.
         Validates that the Monte Carlo method produces theoretically correct results.
         """
+        # Create solver without caching for accurate fresh simulations
+        solver = MonteCarloSolver(enable_caching=False)
+        
         test_scenarios = [
             # (hero_hand, opponents, board, expected_win_rate, tolerance, description)
             (['A♠', 'A♥'], 1, [], 0.849, 0.05, "AA vs random preflop"),
@@ -178,7 +187,7 @@ class TestStatisticalValidation(unittest.TestCase):
         
         for hero_hand, opponents, board, expected, tolerance, description in test_scenarios:
             with self.subTest(scenario=description):
-                result = solve_poker_hand(hero_hand, opponents, board, "default")
+                result = solver.analyze_hand(hero_hand, opponents, board, "default")
                 
                 error = abs(result.win_probability - expected)
                 self.assertLess(error, tolerance,

@@ -135,26 +135,27 @@ class TestCacheIntegration(unittest.TestCase):
         if hasattr(self.solver, '_legacy_hand_cache') and self.solver._legacy_hand_cache:
             self.solver._legacy_hand_cache.clear()
         
+        # Get initial stats BEFORE any calls
+        initial_stats = self.solver.get_cache_stats()
+        if not initial_stats or initial_stats.get('error'):  # Skip test if caching is not available
+            self.skipTest("Caching not available")
+            
+        # Handle both legacy and unified cache stats
+        cache_type = initial_stats.get('cache_type', 'legacy')
+        if cache_type == 'unified':
+            initial_cache_stats = initial_stats['unified_cache']
+        else:
+            initial_cache_stats = initial_stats.get('hand_cache', {})
+        
+        initial_requests = initial_cache_stats.get('total_requests', 0)
+        initial_hits = initial_cache_stats.get('cache_hits', 0)
+        
         # First analysis should be a cache miss
         result1 = self.solver.analyze_hand(
             hero_hand=["AS", "KS"],
             num_opponents=2,
             simulation_mode="fast"
         )
-        
-        # Get initial stats - need to check all cache types
-        stats = self.solver.get_cache_stats()
-        if not stats or stats.get('error'):  # Skip test if caching is not available
-            self.skipTest("Caching not available")
-            
-        # Handle both legacy and unified cache stats
-        cache_type = stats.get('cache_type', 'legacy')
-        if cache_type == 'unified':
-            cache_stats = stats['unified_cache']
-        else:
-            cache_stats = stats.get('hand_cache', {})
-        
-        initial_requests = cache_stats.get('total_requests', 0)
         
         # Second identical analysis should use cache
         result2 = self.solver.analyze_hand(
@@ -175,6 +176,11 @@ class TestCacheIntegration(unittest.TestCase):
         # Verify another request was made
         self.assertGreater(cache_stats_after.get('total_requests', 0), initial_requests, 
                           "Total requests should increase")
+        
+        # Verify cache was hit on second call
+        final_hits = cache_stats_after.get('cache_hits', 0)
+        # The first call might be a hit if preflop cache is populated, but second should definitely hit
+        self.assertGreaterEqual(final_hits, 1, "Should have at least one cache hit")
         
         # TODO: Results should be identical from cache once cache bug is fixed
         # Currently cache still runs simulations causing variance
