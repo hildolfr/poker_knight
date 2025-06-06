@@ -197,7 +197,7 @@ class TestCacheIntegration(unittest.TestCase):
         # For now, we verify the cache hit count increased and results are reasonably close
         
         # Verify cache hit occurred (actual cache functionality test)
-        initial_hits = cache_stats.get('cache_hits', 0)
+        initial_hits = initial_cache_stats.get('cache_hits', 0)
         self.assertGreater(cache_stats_after.get('cache_hits', 0), initial_hits, 
                          "Cache hit count should increase")
         
