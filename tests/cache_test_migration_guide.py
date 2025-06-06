@@ -287,7 +287,7 @@ def print_migration_guide():
     print("-" * 30)
     print("HIGH PRIORITY (Complete rewrite needed):")
     print("• test_caching.py - Core cache functionality tests")
-    print("• test_storage_cache.py - Comprehensive cache tests")
+    print("• test_storage_cache_v2.py - Comprehensive cache tests")
     print("• test_cache_integration.py - Solver integration tests")
     print()
     print("MEDIUM PRIORITY (Moderate changes needed):")
@@ -343,7 +343,7 @@ if __name__ == "__main__":
     # Analyze a few key test files (if they exist)
     test_files = [
         "tests/test_caching.py",
-        "tests/test_storage_cache.py", 
+        "tests/test_storage_cache_v2.py", 
         "tests/test_cache_integration.py",
         "tests/test_unified_cache.py"
     ]

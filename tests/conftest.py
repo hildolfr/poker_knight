@@ -196,7 +196,7 @@ def pytest_collection_modifyitems(config, items):
     # Auto-mark tests based on filename patterns
     for item in items:
         # Mark cache tests (integrated cache test marking)
-        if "test_storage_cache.py" in item.nodeid:
+        if "test_storage_cache_v2.py" in item.nodeid:
             item.add_marker(pytest.mark.cache)
             item.add_marker(pytest.mark.cache_unit)
             

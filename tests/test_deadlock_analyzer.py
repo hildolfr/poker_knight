@@ -130,7 +130,7 @@ class DeadlockAnalyzer:
                 ("test_parallel.py", "Basic Parallel Tests"),
                 ("test_numa.py", "NUMA Tests"),
                 ("test_cache_integration.py", "Cache Integration"),
-                ("test_storage_cache.py", "Storage Cache"),
+                ("test_storage_cache_v2.py", "Storage Cache"),
                 ("test_cache_population.py", "Cache Population"),
                 ("test_poker_solver.py", "Poker Solver Tests"),
                 ("test_statistical_validation.py", "Statistical Validation"),

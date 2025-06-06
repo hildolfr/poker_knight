@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Test suite for Poker Knight v1.6 caching system - Current Architecture
-Tests the actual cache implementation as it exists now.
 
-This replaces test_storage_cache.py which was written for an older architecture.
+Tests the actual cache implementation as it exists in the current architecture.
 """
 
 import unittest

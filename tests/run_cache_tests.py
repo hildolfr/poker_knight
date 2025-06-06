@@ -70,7 +70,7 @@ def run_pytest_command(args, test_selection=None):
     
     # Add specific test files
     cmd.extend([
-        'tests/test_storage_cache.py',
+        'tests/test_storage_cache_v2.py',
         'tests/test_cache_integration.py'
     ])
     
