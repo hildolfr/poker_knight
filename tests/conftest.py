@@ -399,6 +399,16 @@ def _write_test_results(config, stats, exitstatus):
             "longrepr": str(test_report.longrepr) if test_report.longrepr else None
         })
     
+    # Collect skipped test details
+    skipped_tests = []
+    for test_report in stats.get('skipped', []):
+        skipped_tests.append({
+            "name": test_report.nodeid,
+            "outcome": test_report.outcome,
+            "duration": getattr(test_report, 'duration', 0),
+            "reason": str(test_report.longrepr) if test_report.longrepr else None
+        })
+    
     # Prepare result data
     result_data = {
         "timestamp": timestamp,
@@ -410,7 +420,7 @@ def _write_test_results(config, stats, exitstatus):
             "failed": failed,
             "errors": errors,
             "skipped": skipped,
-            "success_rate": (passed / total * 100) if total > 0 else 0,
+            "success_rate": (passed / (passed + failed) * 100) if (passed + failed) > 0 else 0,
             "exit_status": exitstatus
         },
         "configuration": {
@@ -431,13 +441,14 @@ def _write_test_results(config, stats, exitstatus):
         },
         "failed_tests": failed_tests,
         "error_tests": error_tests,
+        "skipped_tests": skipped_tests,
         "analysis": {
             "overall_status": "PASS" if failed == 0 and errors == 0 else "FAIL",
             "critical_failures": failed + errors,
             "regression_indicators": {
                 "has_failures": failed > 0,
                 "has_errors": errors > 0,
-                "success_rate_below_threshold": (passed / total * 100) < 95 if total > 0 else False
+                "success_rate_below_threshold": (passed / (passed + failed) * 100) < 95 if (passed + failed) > 0 else False
             }
         }
     }
@@ -513,9 +524,11 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         total = passed + failed + errors + skipped
         
         if total > 0:
-            success_rate = (passed / total) * 100
+            # Calculate success rate excluding skipped tests
+            tests_run = passed + failed
+            success_rate = (passed / tests_run) * 100 if tests_run > 0 else 0
             terminalreporter.write(f"♞ Tests: {passed} passed, {failed} failed, {errors} errors, {skipped} skipped\n")
-            terminalreporter.write(f"♞ Success Rate: {success_rate:.1f}%\n")
+            terminalreporter.write(f"♞ Success Rate: {success_rate:.1f}% (excluding skipped)\n")
             
             if failed == 0 and errors == 0:
                 terminalreporter.write("🎉 All tests passed!\n")
