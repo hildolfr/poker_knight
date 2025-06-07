@@ -55,25 +55,73 @@ class TestStatisticalValidation(unittest.TestCase):
         """
         Chi-square goodness-of-fit test for hand category distributions.
         Tests if observed hand frequencies match expected poker probabilities.
+        This version ensures fresh simulations without cache interference.
         """
+        # Create solver with caching explicitly disabled to ensure fresh simulations
+        solver = MonteCarloSolver(enable_caching=False)
+        
+        # Ensure hand categories are included in output
+        solver.config["output_settings"]["include_hand_categories"] = True
+        
         # Run large simulation to get hand category frequencies
         hero_hand = ['7♠', '8♦']  # Medium-strength hand for variety
         num_opponents = 1
         
-        result = solve_poker_hand(
-            hero_hand, num_opponents, 
-            simulation_mode="precision"  # Large sample size for statistical power
+        # Use precision mode for large sample size
+        result = solver.analyze_hand(
+            hero_hand, 
+            num_opponents, 
+            simulation_mode="precision"
         )
         
+        # Debug: Print what we got
+        print(f"\nDebug info:")
+        print(f"  Simulations run: {result.simulations_run}")
+        print(f"  Hand categories available: {result.hand_category_frequencies is not None}")
+        if result.hand_category_frequencies:
+            print(f"  Categories found: {list(result.hand_category_frequencies.keys())}")
+            print(f"  Sample frequencies: {dict(list(result.hand_category_frequencies.items())[:3])}")
+        
+        # If no hand categories from normal path, use direct simulation
         if not result.hand_category_frequencies:
-            self.skipTest("Hand category frequencies not available")
+            print("  Falling back to direct simulation method...")
+            hero_cards = [solver.evaluator.parse_card(card) for card in hero_hand]
+            board_cards = []
+            removed_cards = hero_cards
+            
+            import time
+            start_time = time.time()
+            
+            # Use internal method that always returns hand categories
+            wins, ties, losses, hand_categories, _ = solver._run_sequential_simulations(
+                hero_cards,
+                num_opponents, 
+                board_cards,
+                removed_cards,
+                50000,  # Enough simulations for statistical significance
+                30000,  # 30 second timeout
+                start_time
+            )
+            
+            total_sims = wins + ties + losses
+            
+            if total_sims > 0 and hand_categories:
+                result.hand_category_frequencies = {
+                    category: count / total_sims 
+                    for category, count in hand_categories.items()
+                }
+                print(f"  Direct simulation succeeded: {total_sims} simulations")
+            else:
+                self.skipTest("Hand category frequencies not available even with direct simulation")
+        
+        # Now check if we have hand categories
+        self.assertIsNotNone(result.hand_category_frequencies, 
+                            "Hand category frequencies should be available")
+        
+        self.assertGreater(len(result.hand_category_frequencies), 0,
+                          "Hand category frequencies should not be empty")
         
         observed_frequencies = result.hand_category_frequencies
-        
-        # Ensure setUp was called (safety check)
-        if not hasattr(self, 'expected_hand_frequencies'):
-            self.setUp()
-        
         expected_frequencies = self.expected_hand_frequencies
         
         # Calculate chi-square statistic
@@ -374,6 +422,73 @@ class TestStatisticalValidation(unittest.TestCase):
                                f"Maximum error too high: {max_error:.4f}")
         
         print("[PASS] Monte Carlo convergence rate validated (robust statistical bounds)")
+    
+    def test_chi_square_with_direct_simulation(self):
+        """
+        Alternative chi-square test using direct simulation methods to ensure hand categories.
+        This provides a secondary validation approach with explicit control over the simulation.
+        """
+        solver = MonteCarloSolver()
+        
+        # Convert cards for internal use
+        hero_hand = ['Q♠', 'J♠']
+        hero_cards = [solver.evaluator.parse_card(card) for card in hero_hand]
+        board_cards = []
+        removed_cards = hero_cards
+        num_opponents = 1
+        
+        # Run simulations directly with a reasonable count
+        import time
+        start_time = time.time()
+        
+        # Use internal method that always returns hand categories
+        wins, ties, losses, hand_categories, convergence_data = solver._run_sequential_simulations(
+            hero_cards,
+            num_opponents, 
+            board_cards,
+            removed_cards,
+            50000,  # Enough simulations for statistical significance
+            30000,  # 30 second timeout
+            start_time
+        )
+        
+        total_sims = wins + ties + losses
+        
+        self.assertGreater(total_sims, 0, "Should have run simulations")
+        self.assertIsNotNone(hand_categories, "Hand categories should be returned")
+        self.assertGreater(len(hand_categories), 0, "Hand categories should not be empty")
+        
+        # Convert to frequencies
+        hand_category_frequencies = {
+            category: count / total_sims 
+            for category, count in hand_categories.items()
+        }
+        
+        print(f"\nDirect simulation chi-square test:")
+        print(f"  Total simulations: {total_sims}")
+        print(f"  Categories found: {len(hand_category_frequencies)}")
+        print(f"  Top categories: {dict(sorted(hand_category_frequencies.items(), key=lambda x: x[1], reverse=True)[:5])}")
+        
+        # Now run chi-square test
+        chi_square = 0
+        degrees_of_freedom = 0
+        
+        for category in self.expected_hand_frequencies:
+            if category in hand_category_frequencies:
+                observed = hand_category_frequencies[category]
+                expected = self.expected_hand_frequencies[category]
+                
+                if expected >= 0.01:
+                    chi_square += ((observed - expected) ** 2) / expected
+                    degrees_of_freedom += 1
+        
+        degrees_of_freedom -= 1
+        critical_value = 15.51
+        
+        self.assertLess(chi_square, critical_value,
+                       f"Chi-square test failed: χ² = {chi_square:.3f} > {critical_value}")
+        
+        print(f"[PASS] Direct chi-square test: χ² = {chi_square:.3f} (df = {degrees_of_freedom})")
 
     def test_adaptive_convergence_detection(self):
         """

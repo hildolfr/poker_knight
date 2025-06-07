@@ -34,7 +34,7 @@ def cpu_intensive_analysis(arg):
     # Run fewer analyses with fast mode to prevent hanging
     for _ in range(2):
         result = solver.analyze_hand(
-            hero_hand=["AS", "AH"],
+            hero_hand=["A♠", "A♥"],
             num_opponents=2,
             simulation_mode="fast"  # Use fast mode to prevent hanging
         )
@@ -53,7 +53,7 @@ class TestHighLoadScenarios:
         # Test with precision mode (uses large simulation counts)
         start_time = time.time()
         result = solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=2,
             simulation_mode="precision"
         )
@@ -77,7 +77,7 @@ class TestHighLoadScenarios:
         # Run 50 quick analyses in succession
         for i in range(50):
             result = solver.analyze_hand(
-                hero_hand=[f"{['A', 'K', 'Q', 'J', '10'][i % 5]}S", f"{['A', 'K', 'Q', 'J', '10'][(i+1) % 5]}H"],
+                hero_hand=[f"{['A', 'K', 'Q', 'J', '10'][i % 5]}♠", f"{['A', 'K', 'Q', 'J', '10'][(i+1) % 5]}♥"],
                 num_opponents=1,
                 simulation_mode="fast"
             )
@@ -101,7 +101,7 @@ class TestHighLoadScenarios:
         def run_concurrent_analysis(thread_id: int) -> Tuple[int, Any]:
             solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
             result = solver.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=2,
                 simulation_mode="default"
             )
@@ -140,7 +140,7 @@ class TestHighLoadScenarios:
         # Run multiple memory-intensive scenarios
         for opponent_count in [3, 5, 6]:  # Increasing complexity
             result = solver.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=opponent_count,
                 simulation_mode="precision",
                 # Add ICM parameters to increase memory usage
@@ -186,7 +186,7 @@ class TestResourceExhaustionScenarios:
             
             # Run analysis under memory pressure
             result = solver.analyze_hand(
-                hero_hand=["KS", "QS"],
+                hero_hand=["K♠", "Q♠"],
                 num_opponents=3,
                 simulation_mode="precision"
             )
@@ -236,7 +236,7 @@ class TestResourceExhaustionScenarios:
         
         def quick_analysis(thread_id: int) -> int:
             result = solver.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=1,
                 simulation_mode="fast"
             )
@@ -266,7 +266,7 @@ class TestEdgeCaseReliability:
         solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
         
         cards = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"]
-        suits = ["S", "H", "D", "C"]
+        suits = ["♠", "♥", "♦", "♣"]
         
         successful_analyses = 0
         
@@ -304,7 +304,7 @@ class TestEdgeCaseReliability:
         
         # Test minimum opponents
         result = solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=1,
             simulation_mode="fast"
         )
@@ -312,7 +312,7 @@ class TestEdgeCaseReliability:
         
         # Test maximum reasonable opponents (max is 6)
         result = solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=6,
             simulation_mode="fast"
         )
@@ -331,7 +331,7 @@ class TestEdgeCaseReliability:
             })
             
             result = solver.analyze_hand(
-                hero_hand=["2S", "7D"],  # Weak hand
+                hero_hand=["2♠", "7♦"],  # Weak hand
                 num_opponents=2,
                 simulation_mode="fast"
             )
@@ -364,7 +364,7 @@ class TestEdgeCaseReliability:
         # Test with impossible board configuration
         try:
             result = solver.analyze_hand(
-                hero_hand=["AS", "AS"],  # Duplicate card
+                hero_hand=["A♠", "A♠"],  # Duplicate card
                 num_opponents=1,
                 simulation_mode="fast"
             )
@@ -377,7 +377,7 @@ class TestEdgeCaseReliability:
         # Test with extreme opponent count
         try:
             result = solver.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=10,  # Too many opponents
                 simulation_mode="fast"
             )
@@ -401,7 +401,7 @@ class TestLongRunningStability:
         # Run analyses for 30 seconds continuously
         while time.time() - start_time < 30.0:
             result = solver.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=random.randint(1, 4),
                 simulation_mode="default"
             )
@@ -422,7 +422,7 @@ class TestLongRunningStability:
         for i in range(20):
             # Run analysis
             result = solver.analyze_hand(
-                hero_hand=["KS", "QS"],
+                hero_hand=["K♠", "Q♠"],
                 num_opponents=2,
                 simulation_mode="default"
             )
@@ -463,7 +463,7 @@ class TestPerformanceRegression:
         # Baseline performance test
         start_time = time.time()
         baseline_result = solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=2,
             simulation_mode="default"
         )
@@ -472,7 +472,7 @@ class TestPerformanceRegression:
         # Performance under concurrent load
         def concurrent_analysis():
             return solver.analyze_hand(
-                hero_hand=["QS", "JS"],
+                hero_hand=["Q♠", "J♠"],
                 num_opponents=2,
                 simulation_mode="default"
             )
@@ -485,7 +485,7 @@ class TestPerformanceRegression:
             # Run target analysis under load
             start_time = time.time()
             loaded_result = solver.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=2,
                 simulation_mode="default"
             )
@@ -513,7 +513,7 @@ class TestPerformanceRegression:
         for mode in simulation_modes:
             start_time = time.time()
             result = solver.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=3,
                 simulation_mode=mode
             )
@@ -538,7 +538,7 @@ class TestPerformanceRegression:
         # Test with very high simulation count
         start_time = time.time()
         result = solver.analyze_hand(
-            hero_hand=["AS", "AH"],
+            hero_hand=["A♠", "A♥"],
             num_opponents=5,
             simulation_mode="precision"
         )
