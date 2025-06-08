@@ -45,8 +45,8 @@ class StartupPopulationConfig:
     
     # Persistence settings
     cache_file_path: str = "preflop_startup_cache.json"
-    save_populated_data: bool = True
-    load_existing_data: bool = True
+    save_populated_data: bool = False  # Disabled by default to avoid issues
+    load_existing_data: bool = False   # Disabled by default to avoid issues
     
     def __post_init__(self):
         if self.simulation_modes is None:
@@ -196,7 +196,7 @@ class StartupCachePopulator:
                         loss_probability=sim_result.loss_probability,
                         simulations_run=sim_result.simulations_run,
                         execution_time_ms=sim_result.execution_time_ms,
-                        hand_categories=sim_result.hand_category_frequencies,
+                        hand_categories=sim_result.hand_category_frequencies or {},
                         metadata=None,
                         confidence_interval={'low': sim_result.confidence_interval[0], 'high': sim_result.confidence_interval[1]} if sim_result.confidence_interval else None,
                         convergence_achieved=sim_result.convergence_achieved,
@@ -325,15 +325,23 @@ class StartupCachePopulator:
                         hand_notation, num_opponents, simulation_mode = parts
                         
                         # Create CacheResult
+                        confidence_interval = result_data.get('confidence_interval')
+                        if confidence_interval and isinstance(confidence_interval, list) and len(confidence_interval) >= 2:
+                            conf_interval_dict = {'low': confidence_interval[0], 'high': confidence_interval[1]}
+                        elif confidence_interval and isinstance(confidence_interval, dict):
+                            conf_interval_dict = confidence_interval
+                        else:
+                            conf_interval_dict = None
+                            
                         cache_result = CacheResult(
                             win_probability=result_data['win_probability'],
                             tie_probability=result_data['tie_probability'],
                             loss_probability=result_data['loss_probability'],
-                            confidence_interval=tuple(result_data.get('confidence_interval', (0, 0))),
+                            confidence_interval=conf_interval_dict,
                             simulations_run=result_data['simulations_run'],
                             execution_time_ms=result_data['execution_time_ms'],
                             hand_categories=result_data.get('hand_categories', {}),
-                            metadata=result_data.get('metadata', {}),
+                            metadata=result_data.get('metadata'),
                             timestamp=result_data.get('timestamp', time.time())
                         )
                         
@@ -346,13 +354,15 @@ class StartupCachePopulator:
                             loaded_count += 1
                 
                 except Exception as e:
-                    logger.warning(f"Failed to load cached result {key}: {e}")
+                    # Don't spam warnings for cache loading issues
+                    logger.debug(f"Failed to load cached result {key}: {e}")
             
             logger.info(f"Loaded {loaded_count} cached results from {cache_file}")
             return loaded_count > 0
             
         except Exception as e:
-            logger.error(f"Failed to load cache data from {cache_file}: {e}")
+            # Silently fail - corrupted cache files can be regenerated
+            logger.debug(f"Failed to load cache data from {cache_file}: {e}")
             return False
     
     def _save_cache_data(self) -> bool:
@@ -399,7 +409,8 @@ class StartupCachePopulator:
             return True
             
         except Exception as e:
-            logger.error(f"Failed to save cache data: {e}")
+            # Silently fail - cache save is optional optimization
+            logger.debug(f"Failed to save cache data: {e}")
             return False
     
     def _log_population_results(self, result: PopulationResult) -> None:
