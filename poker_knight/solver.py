@@ -342,7 +342,7 @@ class MonteCarloSolver:
             # Get unified cache stats if available
             if self._unified_cache:
                 stats = self._unified_cache.get_stats()
-                return {
+                result = {
                     'caching_enabled': True,
                     'cache_type': 'unified',
                     'unified_cache': {
@@ -354,6 +354,49 @@ class MonteCarloSolver:
                         'memory_usage_mb': stats.memory_usage_mb
                     }
                 }
+                
+                # Add board cache stats if available
+                if self._board_cache:
+                    board_stats = self._board_cache.get_cache_stats()
+                    result['board_cache'] = {
+                        'total_requests': board_stats.get('total_requests', 0),
+                        'cache_hits': board_stats.get('cache_hits', 0),
+                        'cache_misses': board_stats.get('cache_misses', 0),
+                        'hit_rate': board_stats.get('hit_rate', 0.0)
+                    }
+                
+                # Add preflop cache stats if available
+                if self._preflop_cache:
+                    if hasattr(self._preflop_cache, 'stats'):
+                        # New preflop cache with stats attribute
+                        preflop_stats = self._preflop_cache.stats
+                        result['preflop_cache'] = {
+                            'total_requests': preflop_stats.cache_hits + preflop_stats.cache_misses,
+                            'cache_hits': preflop_stats.cache_hits,
+                            'cache_misses': preflop_stats.cache_misses,
+                            'cached_combinations': preflop_stats.cached_combinations,
+                            'coverage_percentage': preflop_stats.coverage_percentage
+                        }
+                
+                # Aggregate total requests and hits across all caches
+                total_requests = result['unified_cache']['total_requests']
+                total_hits = result['unified_cache']['cache_hits']
+                
+                if 'board_cache' in result:
+                    total_requests += result['board_cache']['total_requests']
+                    total_hits += result['board_cache']['cache_hits']
+                
+                if 'preflop_cache' in result:
+                    total_requests += result['preflop_cache']['total_requests']
+                    total_hits += result['preflop_cache']['cache_hits']
+                
+                result['aggregate_stats'] = {
+                    'total_requests': total_requests,
+                    'total_hits': total_hits,
+                    'overall_hit_rate': total_hits / total_requests if total_requests > 0 else 0.0
+                }
+                
+                return result
             
             # Fall back to legacy cache stats
             elif self._legacy_hand_cache:

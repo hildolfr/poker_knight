@@ -445,9 +445,11 @@ class BoardScenarioCache:
         if result:
             self._stats['cache_hits'] += 1
             self._stats['hits_by_stage'][board_pattern.stage.value] += 1
+            # Note: unified_cache.get() already updates its own stats
             return result
         else:
             self._stats['cache_misses'] += 1
+            # Note: unified_cache.get() already updates its own stats
             return None
     
     def store_board_result(self,

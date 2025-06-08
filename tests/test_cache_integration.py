@@ -43,11 +43,12 @@ class TestCacheIntegration(unittest.TestCase):
         # Configure solver with isolated cache settings
         self.solver = MonteCarloSolver(enable_caching=True)
         
-        # If solver has cache configuration, use isolated settings
-        if hasattr(self.solver, '_cache_config') and self.solver._cache_config:
-            # Override cache paths to use temp directory
-            self.solver._cache_config.sqlite_path = os.path.join(self.temp_dir, "test_solver_cache.db")
-            self.solver._cache_config.enable_persistence = True  # Enable for testing
+        # Override cache settings BEFORE first use (cache is lazily initialized)
+        self.solver.config["cache_settings"]["sqlite_path"] = os.path.join(self.temp_dir, "test_solver_cache.db")
+        self.solver.config["cache_settings"]["enable_persistence"] = True  # Enable for testing
+        # Ensure we have a reasonable cache size for testing
+        self.solver.config["cache_settings"]["max_memory_mb"] = 64
+        self.solver.config["cache_settings"]["hand_cache_size"] = 1000
     
     def tearDown(self):
         """Clean up after tests with proper isolation."""
@@ -92,6 +93,10 @@ class TestCacheIntegration(unittest.TestCase):
         # Test with caching enabled
         solver_enabled = MonteCarloSolver(enable_caching=True)
         try:
+            # Configure cache to use temp directory
+            solver_enabled.config["cache_settings"]["sqlite_path"] = os.path.join(self.temp_dir, "test_init_cache.db")
+            solver_enabled.config["cache_settings"]["enable_persistence"] = True
+            
             self.assertTrue(solver_enabled._caching_enabled)
             # Force cache initialization
             solver_enabled._initialize_cache_if_needed()
@@ -124,18 +129,22 @@ class TestCacheIntegration(unittest.TestCase):
     
     def test_cache_hit_miss_behavior(self):
         """Test cache hit and miss behavior."""
+        # Force cache initialization first
+        self.solver._initialize_cache_if_needed()
+        
         # Clear all caches to start fresh
         if hasattr(self.solver, '_board_cache') and self.solver._board_cache:
-            self.solver._board_cache._cache.clear()
+            if hasattr(self.solver._board_cache, 'clear_cache'):
+                self.solver._board_cache.clear_cache()
         if hasattr(self.solver, '_preflop_cache') and self.solver._preflop_cache:
-            if hasattr(self.solver._preflop_cache, '_cache'):
-                self.solver._preflop_cache._cache.clear()
+            if hasattr(self.solver._preflop_cache, 'clear'):
+                self.solver._preflop_cache.clear()
         if hasattr(self.solver, '_unified_cache') and self.solver._unified_cache:
             self.solver._unified_cache.clear()
         if hasattr(self.solver, '_legacy_hand_cache') and self.solver._legacy_hand_cache:
             self.solver._legacy_hand_cache.clear()
         
-        # Get initial stats BEFORE any calls
+        # Get initial stats AFTER clearing caches
         initial_stats = self.solver.get_cache_stats()
         if not initial_stats or initial_stats.get('error'):  # Skip test if caching is not available
             self.skipTest("Caching not available")
@@ -143,23 +152,29 @@ class TestCacheIntegration(unittest.TestCase):
         # Handle both legacy and unified cache stats
         cache_type = initial_stats.get('cache_type', 'legacy')
         if cache_type == 'unified':
-            initial_cache_stats = initial_stats['unified_cache']
+            # Use aggregate stats if available, otherwise fall back to unified cache stats
+            if 'aggregate_stats' in initial_stats:
+                initial_requests = initial_stats['aggregate_stats']['total_requests']
+                initial_hits = initial_stats['aggregate_stats']['total_hits']
+            else:
+                initial_cache_stats = initial_stats['unified_cache']
+                initial_requests = initial_cache_stats.get('total_requests', 0)
+                initial_hits = initial_cache_stats.get('cache_hits', 0)
         else:
             initial_cache_stats = initial_stats.get('hand_cache', {})
-        
-        initial_requests = initial_cache_stats.get('total_requests', 0)
-        initial_hits = initial_cache_stats.get('cache_hits', 0)
+            initial_requests = initial_cache_stats.get('total_requests', 0)
+            initial_hits = initial_cache_stats.get('cache_hits', 0)
         
         # First analysis should be a cache miss
         result1 = self.solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=2,
             simulation_mode="fast"
         )
         
         # Second identical analysis should use cache
         result2 = self.solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=2,
             simulation_mode="fast"
         )
@@ -169,16 +184,24 @@ class TestCacheIntegration(unittest.TestCase):
         
         # Handle both legacy and unified cache stats
         if cache_type == 'unified':
-            cache_stats_after = stats_after['unified_cache']
+            # Use aggregate stats if available
+            if 'aggregate_stats' in stats_after:
+                final_requests = stats_after['aggregate_stats']['total_requests']
+                final_hits = stats_after['aggregate_stats']['total_hits']
+            else:
+                cache_stats_after = stats_after['unified_cache']
+                final_requests = cache_stats_after.get('total_requests', 0)
+                final_hits = cache_stats_after.get('cache_hits', 0)
         else:
             cache_stats_after = stats_after.get('hand_cache', {})
+            final_requests = cache_stats_after.get('total_requests', 0)
+            final_hits = cache_stats_after.get('cache_hits', 0)
         
         # Verify another request was made
-        self.assertGreater(cache_stats_after.get('total_requests', 0), initial_requests, 
+        self.assertGreater(final_requests, initial_requests, 
                           "Total requests should increase")
         
         # Verify cache was hit on second call
-        final_hits = cache_stats_after.get('cache_hits', 0)
         # The first call might be a hit if preflop cache is populated, but second should definitely hit
         self.assertGreaterEqual(final_hits, 1, "Should have at least one cache hit")
         
@@ -197,8 +220,7 @@ class TestCacheIntegration(unittest.TestCase):
         # For now, we verify the cache hit count increased and results are reasonably close
         
         # Verify cache hit occurred (actual cache functionality test)
-        initial_hits = initial_cache_stats.get('cache_hits', 0)
-        self.assertGreater(cache_stats_after.get('cache_hits', 0), initial_hits, 
+        self.assertGreater(final_hits, initial_hits, 
                          "Cache hit count should increase")
         
         # Results should be similar (within Monte Carlo variance ~1-2%)
@@ -212,14 +234,14 @@ class TestCacheIntegration(unittest.TestCase):
         """Test preflop-specific caching behavior."""
         # Test preflop scenario (no board cards)
         result1 = self.solver.analyze_hand(
-            hero_hand=["AS", "AH"],
+            hero_hand=["A♠", "A♥"],
             num_opponents=2,
             simulation_mode="fast"
         )
         
         # Same preflop scenario should hit cache
         result2 = self.solver.analyze_hand(
-            hero_hand=["AH", "AS"],  # Different order, should still hit cache
+            hero_hand=["A♥", "A♠"],  # Different order, should still hit cache
             num_opponents=2,
             simulation_mode="fast"
         )
@@ -230,10 +252,10 @@ class TestCacheIntegration(unittest.TestCase):
     def test_cache_with_different_scenarios(self):
         """Test cache behavior with different scenarios."""
         scenarios = [
-            {"hero_hand": ["AS", "AH"], "num_opponents": 1, "simulation_mode": "fast"},
-            {"hero_hand": ["KS", "QS"], "num_opponents": 2, "simulation_mode": "fast"},
-            {"hero_hand": ["JS", "10S"], "num_opponents": 3, "simulation_mode": "fast"},
-            {"hero_hand": ["AS", "AH"], "num_opponents": 2, "simulation_mode": "fast"},  # Different from scenario 0
+            {"hero_hand": ["A♠", "A♥"], "num_opponents": 1, "simulation_mode": "fast"},
+            {"hero_hand": ["K♠", "Q♠"], "num_opponents": 2, "simulation_mode": "fast"},
+            {"hero_hand": ["J♠", "10♠"], "num_opponents": 3, "simulation_mode": "fast"},
+            {"hero_hand": ["A♠", "A♥"], "num_opponents": 2, "simulation_mode": "fast"},  # Different from scenario 0
         ]
         
         results = []
@@ -259,7 +281,7 @@ class TestCacheIntegration(unittest.TestCase):
         """Test cache behavior with position and stack depth parameters."""
         # Test with position
         result1 = self.solver.analyze_hand(
-            hero_hand=["KS", "QS"],
+            hero_hand=["K♠", "Q♠"],
             num_opponents=2,
             simulation_mode="fast",
             hero_position="button"
@@ -267,7 +289,7 @@ class TestCacheIntegration(unittest.TestCase):
         
         # Same scenario with different position should be different cache entry
         result2 = self.solver.analyze_hand(
-            hero_hand=["KS", "QS"],
+            hero_hand=["K♠", "Q♠"],
             num_opponents=2,
             simulation_mode="fast",
             hero_position="early"
@@ -296,7 +318,7 @@ class TestCacheIntegration(unittest.TestCase):
         
         try:
             result = solver_no_cache.analyze_hand(
-                hero_hand=["AS", "KS"],
+                hero_hand=["A♠", "K♠"],
                 num_opponents=2,
                 simulation_mode="fast"
             )
@@ -316,10 +338,10 @@ class TestCacheIntegration(unittest.TestCase):
         """Test cache memory management and eviction."""
         # Generate many different scenarios to test memory management
         hands = [
-            ["AS", "KS"], ["QS", "JS"], ["10S", "9S"], ["8S", "7S"],
-            ["AH", "KH"], ["QH", "JH"], ["10H", "9H"], ["8H", "7H"],
-            ["AD", "KD"], ["QD", "JD"], ["10D", "9D"], ["8D", "7D"],
-            ["AC", "KC"], ["QC", "JC"], ["10C", "9C"], ["8C", "7C"]
+            ["A♠", "K♠"], ["Q♠", "J♠"], ["10♠", "9♠"], ["8♠", "7♠"],
+            ["A♥", "K♥"], ["Q♥", "J♥"], ["10♥", "9♥"], ["8♥", "7♥"],
+            ["A♦", "K♦"], ["Q♦", "J♦"], ["10♦", "9♦"], ["8♦", "7♦"],
+            ["A♣", "K♣"], ["Q♣", "J♣"], ["10♣", "9♣"], ["8♣", "7♣"]
         ]
         
         # Run analyses to populate cache
@@ -382,7 +404,7 @@ class TestCacheIntegration(unittest.TestCase):
         
         # Run a simple analysis to ensure the cache system is working
         result = self.solver.analyze_hand(
-            hero_hand=["AS", "AH"],
+            hero_hand=["A♠", "A♥"],
             num_opponents=1,
             simulation_mode="fast"
         )
@@ -413,9 +435,12 @@ class TestCacheIntegration(unittest.TestCase):
     
     def test_cache_persistence_isolation(self):
         """Test that cache persistence doesn't interfere between test runs."""
+        # Force cache initialization
+        self.solver._initialize_cache_if_needed()
+        
         # This test ensures that cached data from one test doesn't affect another
         cache_key_data = {
-            "hero_hand": ["KS", "KH"],
+            "hero_hand": ["K♠", "K♥"],
             "num_opponents": 3,
             "simulation_mode": "fast"
         }
@@ -425,7 +450,12 @@ class TestCacheIntegration(unittest.TestCase):
         if stats_before:
             cache_type = stats_before.get('cache_type', 'legacy')
             if cache_type == 'unified':
-                initial_hits = stats_before['unified_cache']['cache_hits']
+                # For unified cache, we need to check board cache stats if available
+                # since board cache intercepts requests before they reach unified cache
+                if 'board_cache' in stats_before:
+                    initial_hits = stats_before['board_cache']['cache_hits']
+                else:
+                    initial_hits = stats_before['unified_cache']['cache_hits']
             else:
                 initial_hits = stats_before.get('hand_cache', {}).get('cache_hits', 0)
         else:
@@ -440,7 +470,11 @@ class TestCacheIntegration(unittest.TestCase):
         if stats_after:
             cache_type = stats_after.get('cache_type', 'legacy')
             if cache_type == 'unified':
-                final_hits = stats_after['unified_cache']['cache_hits']
+                # Check board cache first since it intercepts requests
+                if 'board_cache' in stats_after:
+                    final_hits = stats_after['board_cache']['cache_hits']
+                else:
+                    final_hits = stats_after['unified_cache']['cache_hits']
             else:
                 final_hits = stats_after.get('hand_cache', {}).get('cache_hits', 0)
             
@@ -458,12 +492,19 @@ class TestCacheIntegration(unittest.TestCase):
     
     def test_cache_with_board_cards(self):
         """Test caching behavior with board cards (post-flop scenarios)."""
+        # Force cache initialization
+        self.solver._initialize_cache_if_needed()
+        
         # Get initial cache stats
         stats_before = self.solver.get_cache_stats()
         if stats_before:
             cache_type = stats_before.get('cache_type', 'legacy')
             if cache_type == 'unified':
-                initial_hits = stats_before['unified_cache']['cache_hits']
+                # Board cache handles board scenarios, so check it first
+                if 'board_cache' in stats_before:
+                    initial_hits = stats_before['board_cache']['cache_hits']
+                else:
+                    initial_hits = stats_before['unified_cache']['cache_hits']
             else:
                 initial_hits = stats_before.get('hand_cache', {}).get('cache_hits', 0)
         else:
@@ -471,17 +512,17 @@ class TestCacheIntegration(unittest.TestCase):
         
         # Test flop scenario
         result1 = self.solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=2,
-            board_cards=["2S", "7H", "JD"],
+            board_cards=["2♠", "7♥", "J♦"],
             simulation_mode="fast"
         )
         
         # Same scenario should hit cache
         result2 = self.solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=2,
-            board_cards=["2S", "7H", "JD"],
+            board_cards=["2♠", "7♥", "J♦"],
             simulation_mode="fast"
         )
         
@@ -490,7 +531,11 @@ class TestCacheIntegration(unittest.TestCase):
         if stats_after:
             cache_type = stats_after.get('cache_type', 'legacy')
             if cache_type == 'unified':
-                final_hits = stats_after['unified_cache']['cache_hits']
+                # Board cache handles board scenarios
+                if 'board_cache' in stats_after:
+                    final_hits = stats_after['board_cache']['cache_hits']
+                else:
+                    final_hits = stats_after['unified_cache']['cache_hits']
             else:
                 final_hits = stats_after.get('hand_cache', {}).get('cache_hits', 0)
             
@@ -504,9 +549,9 @@ class TestCacheIntegration(unittest.TestCase):
         
         # Different board should be different result
         result3 = self.solver.analyze_hand(
-            hero_hand=["AS", "KS"],
+            hero_hand=["A♠", "K♠"],
             num_opponents=2,
-            board_cards=["AH", "KH", "QH"],  # Much stronger board for hero
+            board_cards=["A♥", "K♥", "Q♥"],  # Much stronger board for hero
             simulation_mode="fast"
         )
         
