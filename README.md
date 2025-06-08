@@ -9,7 +9,7 @@
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
   [![Tests](https://img.shields.io/badge/tests-passing-green.svg)](tests/)
   [![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)](tests/)
-  [![Version: 1.5.0](https://img.shields.io/badge/version-1.5.0-green.svg)](docs/CHANGELOG.md)
+  [![Version: 1.6.0](https://img.shields.io/badge/version-1.6.0-green.svg)](docs/CHANGELOG.md)
   [![Performance](https://img.shields.io/badge/performance-optimized-orange.svg)](docs/TECHNICAL_DETAILS.md)
 </div>
 
@@ -20,6 +20,13 @@ Poker Knight is a specialized Monte Carlo simulation engine built specifically f
 **What sets Poker Knight apart:** Unlike basic poker calculators, Poker Knight includes advanced tournament features like **ICM (Independent Chip Model) integration**, position-aware equity calculations, and sophisticated multi-way pot analysis - features typically found only in professional poker software.
 
 ## ✨ Core Capabilities & Technical Innovations
+
+**Intelligent Cache Prepopulation** 🚀 *NEW in v1.6*
+- **Near-instant results**: Common hands return in <1ms after prepopulation
+- **Smart prepopulation**: Automatically prepopulates cache with priority poker hands
+- **Dual modes**: Quick mode (30s) for priority hands, comprehensive mode (2-3min) for all scenarios
+- **90%+ cache hit rate**: Dramatically improves performance for repeated analyses
+- **Memory efficient**: Unified cache architecture without background threads
 
 **Advanced Monte Carlo Simulation Engine**
 - **Stratified Sampling**: Intelligent variance reduction using board texture analysis and hand strength stratification
@@ -97,7 +104,10 @@ your_project/
 
 **Basic Usage:**
 ```python
-from poker_knight import solve_poker_hand
+from poker_knight import solve_poker_hand, prepopulate_cache
+
+# NEW in v1.6: Prepopulate cache for instant results (optional)
+prepopulate_cache()  # Quick 30-second prepopulation
 
 # Simplest usage - just your hand (assumes 1 opponent, pre-flop)
 result = solve_poker_hand(['A♠️', 'A♥️'])
@@ -143,12 +153,17 @@ print(f"Position advantage: {result.position_aware_equity['position_advantage']:
 ```
 
 **Advanced Usage with MonteCarloSolver Class:**
-For access to additional optimization features, use the solver class directly:
+For access to additional optimization features and cache control, use the solver class directly:
 
 ```python
 from poker_knight import MonteCarloSolver
 
-solver = MonteCarloSolver()
+# Create solver with caching enabled (default)
+solver = MonteCarloSolver(enable_caching=True)
+
+# Or disable caching for pure simulation
+solver = MonteCarloSolver(enable_caching=False)
+
 result = solver.analyze_hand(
     ['A♠️', 'A♥️'],                    # Hero hand
     2,                                 # Number of opponents
@@ -191,111 +206,45 @@ python tests/run_tests.py --statistical  # Full statistical validation
 
 ---
 
-## 🎉 Completed: Intelligent Cache Pre-Population System (v1.6.0)
+## 🚀 Cache Prepopulation for Lightning-Fast Analysis (v1.6)
 
-### 📋 Implementation Completed ✅
+**NEW in v1.6**: Poker Knight now includes intelligent cache prepopulation that delivers near-instant results for common poker scenarios.
 
-We have successfully implemented a smart cache pre-population system that dramatically improves performance for script and session usage by achieving near 100% cache hit rates for common scenarios.
+### Quick Start with Cache Prepopulation
 
-### 🎯 Design Philosophy ✅
-
-**One-Time Pre-Population Instead of Background Warming**
-- ✅ Check cache coverage on startup
-- ✅ If under-populated, run **one-time comprehensive warming**
-- ✅ Target **100% cache hit rate** for common poker scenarios  
-- ✅ Perfect for both script usage and long-running sessions
-
-### 🏗️ Implementation Architecture ✅
-
-#### **Smart Cache Population Logic**
 ```python
-# Startup flow:
-1. ✅ Check: Persistent caching enabled? → If no, skip entirely
-2. ✅ Check: Cache coverage < 95%? → If no, proceed normally  
-3. ✅ If yes → Run one-time pre-population of ALL common scenarios
-4. ✅ Future queries = instant cache hits (0.001s instead of 2.0s)
+from poker_knight import prepopulate_cache, solve_poker_hand
+
+# Option 1: Quick prepopulation (30 seconds, recommended)
+stats = prepopulate_cache()
+print(f"Populated {stats['scenarios_populated']} scenarios")
+
+# Option 2: Comprehensive prepopulation (2-3 minutes, maximum coverage)
+stats = prepopulate_cache(comprehensive=True)
+print(f"Cache coverage: {stats['final_coverage']:.1f}%")
+
+# Now enjoy instant results!
+result = solve_poker_hand(['A♠️', 'K♠️'], 2)  # Returns in <1ms!
 ```
 
-#### **Comprehensive Scenario Coverage**
-- ✅ **All 169 preflop combinations** × Standard opponent counts (1-6) × Key positions
-- ✅ **Common board textures**: Rainbow, monotone, paired, connected, disconnected  
-- ✅ **Premium hand analysis**: Focus on high-value scenarios first
-- ✅ **Total scenarios**: ~6,534 scenarios (manageable one-time cost)
-- ✅ **Population time**: ~3 seconds once, then instant forever
+### Performance Impact
 
-#### **User Control Options**
-```python
-# ✅ Auto-populate cache if needed (default)
-solver = MonteCarloSolver(enable_caching=True)
+- **Before prepopulation**: 50ms - 2.5s per analysis
+- **After prepopulation**: <1ms for cached scenarios (90%+ hit rate)
+- **Prepopulation time**: 30s (quick) or 2-3min (comprehensive)
+- **Storage**: ~10-20MB persistent cache file
 
-# ✅ Skip caching entirely for quick scripts
-solver = MonteCarloSolver(enable_caching=False)
+### When to Use Cache Prepopulation
 
-# ✅ Skip cache warming, use live simulation
-solver = MonteCarloSolver(skip_cache_warming=True)
+- **Production servers**: Prepopulate on startup for instant API responses
+- **AI training**: Fast repeated evaluations during model training
+- **Batch analysis**: Process thousands of hands with minimal latency
+- **Interactive tools**: Provide real-time feedback to users
 
-# ✅ Force cache regeneration
-solver = MonteCarloSolver(force_cache_regeneration=True)
-```
-
-### 📊 Achieved Performance Results ✅
-
-#### **Real Performance Results**
-```bash
-$ python test_cache_prepopulation_demo.py
-# Cache populated with 6,504 scenarios... (3s)
-# Cache coverage: 60,000%
-# Query 1: 73.1% win rate in 0.000s  # Instant!
-```
-
-#### **Performance Targets Achieved**
-- ✅ **Cache hit rate**: 95-100% for common scenarios
-- ✅ **Query response time**: 0.000s for cached results  
-- ✅ **Storage requirements**: 10-20MB persistent cache
-- ✅ **Population time**: ~3 seconds one-time cost
-- ✅ **Speed improvement**: ∞x for cached scenarios (effectively instant)
-
-### 🎛️ Configuration ✅
-
-```json
-{
-  "cache_settings": {
-    "enable_persistence": true,           // ✅ Master cache toggle
-    "cache_population_threshold": 0.95,   // ✅ Warm if coverage < 95%
-    "skip_cache_warming": false,          // ✅ User override to skip
-    "force_cache_regeneration": false,    // ✅ Force complete re-warming
-    "preflop_hands_coverage": "all_169",  // ✅ Complete preflop coverage
-    "opponent_counts_coverage": [1,2,3,4,5,6],   // ✅ Standard opponent range
-    "board_patterns_coverage": ["rainbow", "monotone", "paired", "connected"],
-    "positions_coverage": ["early", "middle", "late", "button", "sb", "bb"]
-  }
-}
-```
-
-### ✅ Benefits Achieved Over Background Warming
-
-1. ✅ **Script-Friendly**: Predictable one-time cost, then instant performance
-2. ✅ **Complete Coverage**: Targets 100% hit rate for common scenarios  
-3. ✅ **Resource Efficient**: No background threads, no wasted CPU cycles
-4. ✅ **User Control**: Can disable entirely or force regeneration
-5. ✅ **Deterministic**: Users know exactly when warming happens
-6. ✅ **Session-Friendly**: Same benefits for long-running applications
-
-### 📅 Implementation Status: **COMPLETED** ✅
-
-- ✅ **Phase 1**: Cache coverage detection and population trigger logic
-- ✅ **Phase 2**: Comprehensive scenario generator for all 169 preflop hands
-- ✅ **Phase 3**: Board texture pattern generation and optimization
-- ✅ **Phase 4**: User control options and configuration integration
-- ✅ **Phase 5**: Performance testing and optimization
-- ✅ **Phase 6**: Documentation and examples
-
-**Release Status**: **v1.6.0 - COMPLETED**
-
-This implementation makes Poker Knight incredibly fast for both one-shot scripts and interactive sessions, with near-instant response times for the vast majority of poker scenarios. The approach successfully replaces complex background warming with a much simpler, more predictable, and more user-friendly system.
+The cache system is completely optional - Poker Knight works great without it, but prepopulation makes it blazing fast for production use cases.
 
 ---
 
-**Poker Knight v1.5.0** - Empowering AI poker players with precise, fast hand analysis and professional tournament features.
+**Poker Knight v1.6.0** - Empowering AI poker players with precise, fast hand analysis and professional tournament features.
 
 *Built with ♠️♥️♦️♣️ by [hildolfr](https://github.com/hildolfr)* 

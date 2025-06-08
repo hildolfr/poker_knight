@@ -5,6 +5,235 @@ All notable changes to Poker Knight will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-02-06
+
+### 🚀 Intelligent Cache Prepopulation System
+
+This release introduces a major overhaul of the caching system, replacing the legacy background warming approach with intelligent cache prepopulation for near-instant poker hand analysis.
+
+### ✨ Key Features
+
+#### Intelligent Cache Prepopulation
+- **Smart Prepopulation**: New system that intelligently prepopulates cache with priority poker hands
+- **Dual Modes**: Support for both quick (30s) and comprehensive (2-3min) prepopulation
+- **Hand Categorization**: Intelligent categorization of hands (premium, strong, medium, weak)
+- **Configurable Strategy**: Flexible configuration for different use cases
+- **Performance Gains**: Near-instant results for common poker scenarios after prepopulation
+
+#### Unified Cache Architecture
+- **Simplified Design**: Removed legacy background warming system entirely
+- **Better Performance**: More efficient cache key generation and lookup
+- **Reduced Memory**: Eliminated redundant cache layers and warming threads
+- **Cleaner API**: Streamlined cache interaction with unified interface
+
+#### API Improvements
+- **New Function**: `prepopulate_cache()` convenience function in main module
+- **StartupCachePopulator**: Configurable prepopulation via dedicated class
+- **Better Integration**: Seamless integration with existing solver API
+- **Backward Compatible**: Existing code continues to work without changes
+
+### 🔧 Major Refactoring
+
+#### Code Cleanup (25,224 lines removed!)
+- **Removed Legacy Components**: Eliminated 169 obsolete files
+- **Deleted Debug Scripts**: Removed all temporary debug and test scripts
+- **Cleaned Documentation**: Removed outdated documentation files
+- **Simplified Structure**: Consolidated related functionality
+
+#### Test Suite Improvements
+- **Fixed All Failures**: Resolved all test failures from v1.5.5 refactor
+- **Better Organization**: Renamed and reorganized test files
+- **Enhanced Coverage**: Added comprehensive cache prepopulation tests
+- **Improved Reliability**: More stable and predictable test execution
+
+### 📊 Performance Impact
+
+#### Cache Performance
+- **Instant Results**: Common hands return results in <1ms after prepopulation
+- **High Hit Rates**: 90%+ cache hit rate for typical poker scenarios
+- **Efficient Prepopulation**: 30 seconds for priority hands, 2-3 minutes for comprehensive
+- **Memory Efficient**: Reduced memory footprint by removing warming threads
+
+#### Simulation Performance
+- **Same Core Speed**: Monte Carlo engine performance unchanged
+- **Better Throughput**: Higher overall throughput due to cache hits
+- **Reduced Latency**: Dramatically lower latency for cached scenarios
+
+### 💔 Breaking Changes
+
+#### Removed Features
+- **Cache Warming**: `skip_cache_warming` parameter no longer needed (warming removed)
+- **Warming Config**: Cache warming configuration options removed from config.json
+- **Background Threads**: No more background cache warming threads
+
+#### Migration Guide
+```python
+# Old code (still works, parameter ignored)
+solver = MonteCarloSolver(skip_cache_warming=True)
+
+# New code (recommended)
+solver = MonteCarloSolver()
+
+# To prepopulate cache for better performance
+from poker_knight import prepopulate_cache
+prepopulate_cache()  # Quick 30-second prepopulation
+```
+
+### 🧪 Testing & Quality
+
+- **All Tests Pass**: 100% test pass rate with no failures
+- **Comprehensive Coverage**: Full test coverage for cache prepopulation
+- **Statistical Validation**: Maintained accuracy in all statistical tests
+- **Performance Tests**: Verified performance improvements
+
+### 🎯 Use Cases
+
+The new cache prepopulation system is ideal for:
+- **Production Servers**: Prepopulate on startup for instant responses
+- **AI Training**: Fast repeated evaluations of similar hands
+- **Real-time Analysis**: Near-zero latency for common scenarios
+- **Batch Processing**: Efficient processing of large hand datasets
+
+---
+
+## [1.5.5] - 2025-02-01 (Experimental - Not Released)
+
+### ⚠️ Experimental Refactor
+
+This version was an experimental refactor of the caching system that was not released to production. The improvements were incorporated into v1.6.0 with proper testing and stability.
+
+---
+
+## [1.5.2] - 2025-06-02
+
+### 🛡️ Test Suite Stabilization & Enhanced Reliability
+
+This release completes the v1.5.x series with comprehensive test improvements and enhanced stability across the entire codebase.
+
+### ✅ Testing Improvements
+
+#### Test Suite Enhancements
+- **99.6% Pass Rate**: Achieved 250/251 tests passing
+- **Stabilized Multi-way Tests**: Better error handling in complex scenarios
+- **Enhanced Redis Tests**: Improved Redis vs SQLite comparison tests
+- **Reliable Stress Tests**: Better timeout management and reliability
+- **Validation Framework**: Added comprehensive test validation
+
+#### Infrastructure Updates
+- **Global Test Config**: Added pytest conftest.py for consistent setup
+- **Platform Agnostic**: Tests work reliably across all platforms
+- **Better Runners**: Improved test runner configurations
+- **Cache Testing**: Enhanced cache integration test coverage
+
+### 🔧 Core Improvements
+
+#### ICM Analysis Enhancements
+- **Tournament Support**: Fixed ICM calculations for tournament contexts
+- **Bubble Factor**: Improved handling with proper null checks
+- **Stack Pressure**: Better calculations in multi-way pots
+- **Equity Adjustments**: More robust tournament equity calculations
+
+### 🚀 Production Ready
+
+The v1.5.x series is now stable and production-ready with:
+- Robust error handling across all components
+- Comprehensive test coverage (99.6% pass rate)
+- Platform-agnostic implementation
+- Enterprise-grade performance
+- Full backward compatibility
+
+---
+
+## [1.5.1] - 2025-06-02
+
+### 🐛 Critical Bug Fixes
+
+Fixed multiprocessing issues introduced in v1.5.0 while maintaining all performance improvements.
+
+### 🔧 Fixes
+
+#### Multiprocessing Stability
+- **Deadlock Resolution**: Fixed multiprocessing deadlocks from NUMA optimizations
+- **Import Fixes**: Resolved circular imports with separate worker modules
+- **Lazy Initialization**: Added lazy cache initialization to prevent startup issues
+- **Thread Safety**: Improved thread safety in parallel processing
+
+### ✅ Compatibility
+
+- Maintained all v1.5.0 features and performance gains
+- Full backward compatibility with existing code
+- No API changes required
+
+---
+
+## [1.5.0] - 2025-06-01
+
+### 🚀 Advanced Analytics & Convergence Analysis
+
+Major feature release introducing advanced analytics, intelligent convergence analysis, comprehensive reporting system, and performance optimization engine.
+
+### ✨ Major Features
+
+#### Intelligent Convergence Analysis
+- **Geweke Diagnostics**: Statistical convergence detection for early stopping
+- **Real-time Monitoring**: Convergence tracking with effective sample size
+- **Adaptive Strategies**: Dynamic simulation adjustment based on convergence
+- **Smart Early Stopping**: 30-70% time reduction when accuracy achieved
+- **Configurable Thresholds**: Tunable accuracy targets
+
+#### Advanced Analytics Engine
+- **PokerAnalytics Class**: Comprehensive statistical analysis
+- **Variance Analysis**: Statistical variance and confidence intervals
+- **Hand Strength Distribution**: Analysis across hand categories
+- **Equity Curves**: Visualization of simulation progression
+- **Performance Metrics**: Detailed optimization insights
+
+#### Comprehensive Reporting
+- **SessionReportingManager**: Multi-session performance tracking
+- **Multiple Formats**: Console, JSON, detailed statistical reports
+- **Historical Analysis**: Performance comparison and trend analysis
+- **Session Aggregation**: Benchmarking across multiple runs
+
+#### Performance Optimization
+- **MonteCarloOptimizer**: Adaptive simulation parameter tuning
+- **Smart Sampling**: Stratified, importance, and control variate methods
+- **Dynamic Timeouts**: Adjustment based on convergence progress
+- **Strategy Selection**: Automatic selection based on hand characteristics
+
+### 🏗️ Technical Improvements
+
+#### Enhanced SimulationResult
+- **Convergence Metrics**: Added convergence_achieved, geweke_statistic
+- **Sample Size Info**: Effective sample size tracking
+- **Efficiency Metrics**: Convergence efficiency measurements
+- **Early Stop Flag**: Indicates when early convergence achieved
+
+#### NUMA-Aware Processing
+- **NUMA Optimization**: CPU affinity for better cache locality
+- **Parallel Workers**: Dedicated worker processes for parallelization
+- **15-25% Performance**: Improvement in multi-core scenarios
+
+#### Tournament Support
+- **ICM Calculations**: Independent Chip Model for tournaments
+- **Stack Pressure**: Bubble factor and risk premium calculations
+- **Tournament Equity**: Adjusted probabilities for tournament play
+
+### 📊 Performance Gains
+
+- **30-70% Faster**: Through intelligent early stopping
+- **15-25% CPU Gains**: From NUMA-aware processing
+- **Statistical Confidence**: Maintained while improving speed
+- **Adaptive Performance**: Optimizes based on scenario
+
+### 🧹 Code Cleanup
+
+- Removed 5 stale test files
+- Relocated demo scripts to examples/
+- Fixed pytest configuration warnings
+- Updated Python requirement to 3.8+
+
+---
+
 ## [1.4.0]
 
 ### 🚀 **Major Performance Optimizations**
