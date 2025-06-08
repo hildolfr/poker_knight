@@ -200,6 +200,19 @@ Thumbs.db
 poker_knight_cache.db
 *.db
 
+# Archives directory
+.archives/
+
+# Debug and development scripts
+debug_scripts/
+archived_documentation/
+
+# Cache metrics (generated files)
+cache_metrics/
+
+# Cache warming progress files
+cache_warming_progress.json
+
 # SpecStory generated files
 .specstory/
 
