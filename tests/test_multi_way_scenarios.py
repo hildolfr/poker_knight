@@ -423,7 +423,16 @@ class TestMultiWayPerformance(unittest.TestCase):
         """Test that multi-way analysis doesn't significantly impact performance."""
         import time
         
-        hero_hand = ['AS', 'KS']
+        # Use unique hands to avoid cache hits that would skew performance comparison
+        import random
+        suits = ['S', 'H', 'D', 'C']
+        ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']
+        
+        # Generate a random hand that's unlikely to be cached
+        random.seed(42)  # For reproducibility
+        r1, r2 = random.sample(ranks, 2)
+        s1, s2 = random.sample(suits, 2)
+        hero_hand = [f'{r1}{s1}', f'{r2}{s2}']
         
         # Test without multi-way analysis (2 opponents - doesn't trigger multiway)
         start_time = time.time()
@@ -442,7 +451,7 @@ class TestMultiWayPerformance(unittest.TestCase):
         multiway_time = time.time() - start_time
         
         # Multi-way analysis should not add more than 50% overhead
-        performance_ratio = multiway_time / simple_time
+        performance_ratio = multiway_time / simple_time if simple_time > 0 else 1.0
         self.assertLess(performance_ratio, 1.5,
                        f"Multi-way analysis overhead too high: {performance_ratio:.2f}x")
         

@@ -126,7 +126,7 @@ except ImportError:
     LEGACY_PREPOPULATION_AVAILABLE = False
 
 # Module metadata
-__version__ = "1.5.1"
+__version__ = "1.5.5"
 __author__ = "hildolfr"
 __license__ = "MIT"
 __all__ = [
@@ -719,10 +719,48 @@ class MonteCarloSolver:
             else:
                 # Create result from cached data
                 decimal_precision = self.config["output_settings"]["decimal_precision"]
+                
+                # Extract probabilities for multi-way analysis
+                cached_win_prob = round(cached_result['win_probability'], decimal_precision)
+                cached_tie_prob = round(cached_result.get('tie_probability', 0.0), decimal_precision)
+                cached_loss_prob = round(cached_result.get('loss_probability', 0.0), decimal_precision)
+                
+                # Perform multi-way analysis if needed (even for cached results)
+                position_aware_equity = None
+                multi_way_statistics = None
+                fold_equity_estimates = None
+                coordination_effects = None
+                icm_equity = None
+                bubble_factor = None
+                stack_to_pot_ratio = None
+                tournament_pressure = None
+                defense_frequencies = None
+                bluff_catching_frequency = None
+                range_coordination_score = None
+                
+                if num_opponents >= 3 or hero_position or stack_sizes or tournament_context:
+                    multi_way_analysis = self.multiway_analyzer.calculate_multiway_statistics(
+                        hero_hand, num_opponents, board_cards, 
+                        cached_win_prob, cached_tie_prob, cached_loss_prob,
+                        hero_position, stack_sizes, pot_size, tournament_context
+                    )
+                    
+                    position_aware_equity = multi_way_analysis.get('position_aware_equity')
+                    multi_way_statistics = multi_way_analysis.get('multi_way_statistics') 
+                    fold_equity_estimates = multi_way_analysis.get('fold_equity_estimates')
+                    coordination_effects = multi_way_analysis.get('coordination_effects')
+                    icm_equity = multi_way_analysis.get('icm_equity')
+                    bubble_factor = multi_way_analysis.get('bubble_factor')
+                    stack_to_pot_ratio = multi_way_analysis.get('stack_to_pot_ratio')
+                    tournament_pressure = multi_way_analysis.get('tournament_pressure')
+                    defense_frequencies = multi_way_analysis.get('defense_frequencies')
+                    bluff_catching_frequency = multi_way_analysis.get('bluff_catching_frequency')
+                    range_coordination_score = multi_way_analysis.get('range_coordination_score')
+                
                 return SimulationResult(
-                    win_probability=round(cached_result['win_probability'], decimal_precision),
-                    tie_probability=round(cached_result.get('tie_probability', 0.0), decimal_precision),
-                    loss_probability=round(cached_result.get('loss_probability', 0.0), decimal_precision),
+                    win_probability=cached_win_prob,
+                    tie_probability=cached_tie_prob,
+                    loss_probability=cached_loss_prob,
                     simulations_run=cached_result.get('simulations_run', 0),
                     execution_time_ms=cache_execution_time,
                     confidence_interval=cached_result.get('confidence_interval'),
@@ -737,17 +775,17 @@ class MonteCarloSolver:
                 final_timeout_ms=cached_result.get('final_timeout_ms'),
                 target_accuracy_achieved=cached_result.get('target_accuracy_achieved'),
                 final_margin_of_error=cached_result.get('final_margin_of_error'),
-                position_aware_equity=cached_result.get('position_aware_equity'),
-                multi_way_statistics=cached_result.get('multi_way_statistics'),
-                fold_equity_estimates=cached_result.get('fold_equity_estimates'),
-                coordination_effects=cached_result.get('coordination_effects'),
-                icm_equity=cached_result.get('icm_equity'),
-                bubble_factor=cached_result.get('bubble_factor'),
-                stack_to_pot_ratio=cached_result.get('stack_to_pot_ratio'),
-                tournament_pressure=cached_result.get('tournament_pressure'),
-                defense_frequencies=cached_result.get('defense_frequencies'),
-                bluff_catching_frequency=cached_result.get('bluff_catching_frequency'),
-                range_coordination_score=cached_result.get('range_coordination_score'),
+                position_aware_equity=position_aware_equity,
+                multi_way_statistics=multi_way_statistics,
+                fold_equity_estimates=fold_equity_estimates,
+                coordination_effects=coordination_effects,
+                icm_equity=icm_equity,
+                bubble_factor=bubble_factor,
+                stack_to_pot_ratio=stack_to_pot_ratio,
+                tournament_pressure=tournament_pressure,
+                defense_frequencies=defense_frequencies,
+                bluff_catching_frequency=bluff_catching_frequency,
+                range_coordination_score=range_coordination_score,
                 optimization_data=cached_result.get('optimization_data')
             )
         

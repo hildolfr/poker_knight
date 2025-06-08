@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Poker Knight v1.5.0 - Advanced Monte Carlo Convergence Analysis
+Poker Knight v1.5.5 - Advanced Monte Carlo Convergence Analysis
 
 Advanced statistical analysis and convergence diagnostics for Monte Carlo simulations.
 Provides real-time convergence monitoring, Geweke diagnostics, and effective sample size calculations.
@@ -8,7 +8,7 @@ Provides real-time convergence monitoring, Geweke diagnostics, and effective sam
 Author: hildolfr
 License: MIT
 GitHub: https://github.com/hildolfr/poker-knight
-Version: 1.5.0
+Version: 1.5.5
 
 Key Features:
 - Geweke diagnostic for convergence detection

@@ -669,6 +669,15 @@ class ParallelSimulationEngine:
             'total_simulations': sum(r.get('simulations', 0) for r in results)
         }
         
+        # Aggregate hand categories if present
+        if any('hand_categories' in r for r in results):
+            aggregated_categories = defaultdict(int)
+            for result in results:
+                if 'hand_categories' in result:
+                    for category, count in result['hand_categories'].items():
+                        aggregated_categories[category] += count
+            aggregated['hand_categories'] = dict(aggregated_categories)
+        
         return aggregated
     
     def _calculate_parallel_stats(self, worker_stats: List[WorkerStats],

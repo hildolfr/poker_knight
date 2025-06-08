@@ -183,6 +183,6 @@ def prepopulate_cache(comprehensive: bool = False, time_limit: float = 30.0) -> 
         'performance_improvement': result.performance_improvement
     }
 
-__version__ = "1.5.1"
+__version__ = "1.6.0"
 __author__ = "hildolfr"
 __license__ = "MIT" 
