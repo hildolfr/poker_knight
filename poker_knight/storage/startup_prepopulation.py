@@ -189,11 +189,25 @@ class StartupCachePopulator:
                 )
                 
                 if sim_result:
+                    # Convert SimulationResult to CacheResult
+                    cache_result = CacheResult(
+                        win_probability=sim_result.win_probability,
+                        tie_probability=sim_result.tie_probability,
+                        loss_probability=sim_result.loss_probability,
+                        simulations_run=sim_result.simulations_run,
+                        execution_time_ms=sim_result.execution_time_ms,
+                        hand_categories=sim_result.hand_category_frequencies,
+                        metadata=None,
+                        confidence_interval={'low': sim_result.confidence_interval[0], 'high': sim_result.confidence_interval[1]} if sim_result.confidence_interval else None,
+                        convergence_achieved=sim_result.convergence_achieved,
+                        timestamp=time.time()
+                    )
+                    
                     # Store in cache
                     success = self.preflop_cache.store_preflop_result(
                         task["hand_notation"],
                         task["num_opponents"],
-                        sim_result,
+                        cache_result,
                         task["simulation_mode"]
                     )
                     
@@ -363,12 +377,11 @@ class StartupCachePopulator:
                                 'win_probability': result.win_probability,
                                 'tie_probability': result.tie_probability,
                                 'loss_probability': result.loss_probability,
-                                'confidence_interval': list(result.confidence_interval),
+                                'confidence_interval': list(result.confidence_interval) if result.confidence_interval else None,
                                 'simulations_run': result.simulations_run,
                                 'execution_time_ms': result.execution_time_ms,
-                                'hand_categories': result.hand_categories,
-                                'metadata': result.metadata,
-                                'timestamp': result.timestamp
+                                'hand_categories': result.hand_categories or {},
+                                'timestamp': time.time()
                             }
             
             # Save to file

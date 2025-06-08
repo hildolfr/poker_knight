@@ -91,15 +91,9 @@ try:
 except ImportError:
     LEGACY_CACHING_AVAILABLE = False
 
-# Import cache warming system (Task 1.2)
-try:
-    from .storage.cache_warming import (
-        create_cache_warmer, WarmingConfig, NumaAwareCacheWarmer,
-        start_background_warming
-    )
-    CACHE_WARMING_AVAILABLE = True
-except ImportError:
-    CACHE_WARMING_AVAILABLE = False
+# Legacy cache warming - removed as per WARMING_INTEGRATION.md
+# These imports are no longer used and the files should be deleted
+CACHE_WARMING_AVAILABLE = False
 
 # Import cache pre-population system (Task 1.2) - Updated for startup-focused approach
 try:
@@ -275,6 +269,105 @@ class MonteCarloSolver:
                         
                         if not should_skip:
                             print("Preflop cache will populate priority hands on first use")
+                            # Actually trigger the prepopulation now
+                            try:
+                                from .storage.startup_prepopulation import StartupCachePopulator
+                                
+                                # Determine prepopulation mode
+                                if self._force_cache_regeneration:
+                                    print("PokerKnight: Force regenerating cache with comprehensive population...")
+                                    mode = 'comprehensive'
+                                    time_limit = 180.0  # 3 minutes for full population
+                                else:
+                                    print("PokerKnight: Populating priority hands for faster analysis...")
+                                    mode = 'quick'
+                                    time_limit = 30.0  # 30 seconds for priority hands
+                                
+                                # Use startup populator for both modes (it uses our cache instances)
+                                populator = StartupCachePopulator(
+                                    unified_cache=self._unified_cache,
+                                    preflop_cache=self._preflop_cache
+                                )
+                                
+                                # Update config based on mode
+                                if mode == 'comprehensive':
+                                    # Comprehensive mode: all hands, more opponents, longer time
+                                    populator.config.max_population_time_seconds = int(time_limit)
+                                    populator.config.priority_hands_only = False
+                                    populator.config.hand_categories = ["premium", "strong", "medium", "weak"]
+                                    populator.config.max_opponents = 6
+                                    populator.config.simulation_modes = ["fast", "default", "precision"]
+                                else:
+                                    # Quick mode: priority hands only
+                                    populator.config.max_population_time_seconds = int(time_limit)
+                                    populator.config.priority_hands_only = True
+                                    populator.config.hand_categories = ["premium", "strong"]
+                                    populator.config.max_opponents = 4
+                                    populator.config.simulation_modes = ["fast", "default"]
+                                
+                                # Use instance method as callback
+                                def simulation_callback(hand_notation: str, num_opponents: int, simulation_mode: str):
+                                    """Callback to run actual simulations during prepopulation."""
+                                    # Convert hand notation to card list
+                                    # Hand notation is like "AA", "AKs", "T9o"
+                                    # Parse hand notation
+                                    if len(hand_notation) == 2:
+                                        # Pocket pair like "AA"
+                                        rank = hand_notation[0]
+                                        # Convert T to 10
+                                        if rank == 'T':
+                                            rank = '10'
+                                        hero_hand = [
+                                            f"{rank}♠",
+                                            f"{rank}♥"
+                                        ]
+                                    elif len(hand_notation) == 3:
+                                        # Non-pair like "AKs" or "AKo"
+                                        rank1 = hand_notation[0]
+                                        rank2 = hand_notation[1]
+                                        suited = hand_notation[2] == 's'
+                                        
+                                        # Convert T to 10
+                                        if rank1 == 'T':
+                                            rank1 = '10'
+                                        if rank2 == 'T':
+                                            rank2 = '10'
+                                        
+                                        if suited:
+                                            hero_hand = [
+                                                f"{rank1}♠",
+                                                f"{rank2}♠"
+                                            ]
+                                        else:
+                                            hero_hand = [
+                                                f"{rank1}♠",
+                                                f"{rank2}♥"
+                                            ]
+                                    else:
+                                        print(f"Warning: Unknown hand notation: {hand_notation}")
+                                        return None
+                                    
+                                    # Run simulation
+                                    result = self.analyze_hand(
+                                        hero_hand=hero_hand,
+                                        num_opponents=num_opponents,
+                                        board_cards=[],  # Preflop only
+                                        simulation_mode=simulation_mode
+                                    )
+                                    
+                                    return result
+                                
+                                # Run prepopulation
+                                self._population_result = populator.populate_startup_cache(simulation_callback)
+                                
+                                print(f"PokerKnight: Populated {self._population_result.scenarios_populated} scenarios "
+                                      f"in {self._population_result.population_time_seconds:.1f}s")
+                                
+                            except Exception as e:
+                                # Don't fail if prepopulation fails
+                                print(f"PokerKnight: Cache prepopulation failed (continuing): {e}")
+                                import traceback
+                                traceback.print_exc()
                         else:
                             print(f"Skipping preflop population: {reason}")
                 
@@ -457,6 +550,7 @@ class MonteCarloSolver:
             if self._thread_pool is None:
                 self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
             return self._thread_pool
+    
     
     def analyze_hand(self, 
                     hero_hand: List[str], 

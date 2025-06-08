@@ -41,7 +41,8 @@ class TestCacheIntegration(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         
         # Configure solver with isolated cache settings
-        self.solver = MonteCarloSolver(enable_caching=True)
+        # Skip cache warming for test isolation
+        self.solver = MonteCarloSolver(enable_caching=True, skip_cache_warming=True)
         
         # Override cache settings BEFORE first use (cache is lazily initialized)
         self.solver.config["cache_settings"]["sqlite_path"] = os.path.join(self.temp_dir, "test_solver_cache.db")
