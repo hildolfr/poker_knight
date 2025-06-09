@@ -307,6 +307,7 @@ def demo_simulation_modes():
     print_header("Simulation Modes", "⚡")
     
     print("Poker Knight offers three simulation modes for different needs...")
+    print("Note: Intelligent convergence analysis may stop early when target accuracy is achieved!")
     
     hand = ['9♠', '9♥']
     opponents = 3
@@ -330,7 +331,10 @@ def demo_simulation_modes():
         results_comparison.append((mode, result, elapsed))
         
         print(f"\n{color}{mode.upper()} MODE - {description}{Colors.ENDC}")
-        print(f"  Simulations: {sims}")
+        print(f"  Target simulations: {sims}")
+        print(f"  Actual simulations: {result.simulations_run:,}")
+        if result.simulations_run < int(sims.replace(',', '')) * 0.5:
+            print(f"  ⚡ Converged early with {result.simulations_run/int(sims.replace(',', ''))*100:.0f}% of target")
         print(f"  Win probability: {result.win_probability:.3%}")
         print(f"  Time: {elapsed:.3f}s ({result.simulations_run/elapsed:,.0f} sims/sec)")
         
@@ -340,12 +344,24 @@ def demo_simulation_modes():
     
     # Show convergence
     fast_win = results_comparison[0][1].win_probability
+    default_win = results_comparison[1][1].win_probability
     precision_win = results_comparison[2][1].win_probability
     diff = abs(fast_win - precision_win)
     
     print(f"\n{Colors.BOLD}Accuracy Analysis:{Colors.ENDC}")
     print(f"  Fast vs Precision difference: {diff:.3%}")
-    print(f"  Fast mode is {results_comparison[2][2]/results_comparison[0][2]:.0f}x faster")
+    
+    # Calculate actual speedup based on simulations run
+    fast_sims = results_comparison[0][1].simulations_run
+    precision_sims = results_comparison[2][1].simulations_run
+    if precision_sims > fast_sims:
+        print(f"  Precision mode ran {precision_sims/fast_sims:.1f}x more simulations")
+    
+    # Show how convergence affects timing
+    if all(r[1].simulations_run < int(modes[i][1].replace(',', '')) * 0.5 for i, r in enumerate(results_comparison)):
+        print(f"\n  {Colors.GREEN}✓ All modes achieved target accuracy early!{Colors.ENDC}")
+        print(f"  This demonstrates Poker Knight's intelligent convergence analysis.")
+        print(f"  When statistical confidence is achieved, simulations stop automatically.")
 
 def demo_performance_showcase():
     """Showcase the performance capabilities."""

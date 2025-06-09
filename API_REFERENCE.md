@@ -9,7 +9,7 @@ Complete API documentation for Poker Knight's classes and functions with advance
 Convenience function for comprehensive poker hand analysis including advanced tournament features.
 
 **Parameters:**
-- `hero_hand`: List of 2 card strings (e.g., `['A♠️', 'K♥️']`)
+- `hero_hand`: List of 2 card strings (e.g., `['A♠', 'K♥']`)
 - `num_opponents`: Number of opponents (1-6)
 - `board_cards`: Optional list of 3-5 board cards
 - `simulation_mode`: "fast" (10k sims), "default" (100k sims), or "precision" (500k sims)
@@ -27,14 +27,14 @@ Convenience function for comprehensive poker hand analysis including advanced to
 from poker_knight import solve_poker_hand
 
 # Pre-flop analysis
-result = solve_poker_hand(['A♠️', 'A♥️'], 2)
+result = solve_poker_hand(['A♠', 'A♥'], 2)
 print(f"Pocket Aces: {result.win_probability:.1%}")
 
 # Post-flop analysis with board cards
 result = solve_poker_hand(
-    ['K♠️', 'Q♠️'],           # Hero hand
+    ['K♠', 'Q♠'],           # Hero hand
     3,                        # Number of opponents  
-    ['A♠️', 'J♠️', '10♥️']    # Board cards (flop)
+    ['A♠', 'J♠', '10♥']    # Board cards (flop)
 )
 print(f"AKQJ board: {result.win_probability:.1%}")
 ```
@@ -43,9 +43,9 @@ print(f"AKQJ board: {result.win_probability:.1%}")
 ```python
 # ICM-aware tournament analysis
 result = solve_poker_hand(
-    ['A♠️', 'K♠️'],                    # Hero hand
+    ['A♠', 'K♠'],                    # Hero hand
     2,                                 # Number of opponents
-    ['Q♠️', 'J♠️', '10♥️'],            # Board cards (royal draw)
+    ['Q♠', 'J♠', '10♥'],            # Board cards (royal draw)
     simulation_mode="precision",        # High accuracy for critical decision
     hero_position="button",            # Position advantage
     stack_sizes=[15000, 8000, 12000],  # Stack sizes for ICM
@@ -78,7 +78,7 @@ solver = MonteCarloSolver(config_path="custom_config.json")
 
 # Use context manager for automatic resource cleanup
 with MonteCarloSolver() as solver:
-    result = solver.analyze_hand(['A♠️', 'A♥️'], 2)
+    result = solver.analyze_hand(['A♠', 'A♥'], 2)
 ```
 
 #### Methods
@@ -109,6 +109,8 @@ Comprehensive poker hand analysis with advanced multi-way and tournament feature
 - `stack_sizes`: Stack sizes for ICM calculations
 - `pot_size`: Current pot size
 - `tournament_context`: ICM and tournament settings
+- `intelligent_optimization`: Enable intelligent scenario analysis (default: False)
+- `stack_depth`: Stack depth in big blinds for optimization (default: 100.0)
 
 **Returns:** `SimulationResult` object with comprehensive statistics
 
@@ -116,9 +118,9 @@ Comprehensive poker hand analysis with advanced multi-way and tournament feature
 ```python
 # Multi-way pot with position and ICM analysis
 result = solver.analyze_hand(
-    ['K♠️', 'K♥️'],                    # Pocket kings
+    ['K♠', 'K♥'],                    # Pocket kings
     4,                                 # 4 opponents (5-way pot)
-    ['7♠️', '2♥️', '9♦️'],             # Dry flop
+    ['7♠', '2♥', '9♦'],             # Dry flop
     simulation_mode="default",
     hero_position="early",             # Early position disadvantage
     stack_sizes=[20000, 15000, 18000, 12000, 25000],  # ICM stack info
@@ -139,7 +141,7 @@ Clean up resources including thread pools (important when using parallel process
 ```python
 solver = MonteCarloSolver()
 try:
-    result = solver.analyze_hand(['A♠️', 'K♠️'], 2)
+    result = solver.analyze_hand(['A♠', 'K♠'], 2)
 finally:
     solver.close()  # Ensure proper cleanup
 ```
@@ -173,6 +175,9 @@ class SimulationResult:
     defense_frequencies: Optional[Dict[str, float]]    # Optimal defense rates
     coordination_effects: Optional[Dict[str, float]]   # Range coordination
     bluff_catching_frequency: Optional[float]          # Bluff-catch optimization
+    
+    # Optimization data
+    optimization_data: Optional[Dict[str, Any]]        # Scenario complexity analysis
 ```
 
 #### Core Properties
@@ -195,20 +200,20 @@ class SimulationResult:
 
 ## Card Format
 
-Cards use Unicode emoji suits with standard poker ranks for clear visualization:
+Cards use Unicode suits with standard poker ranks for clear visualization:
 
-- **Suits**: ♠️ (spades), ♥️ (hearts), ♦️ (diamonds), ♣️ (clubs)
+- **Suits**: ♠ (spades), ♥ (hearts), ♦ (diamonds), ♣ (clubs)
 - **Ranks**: A, K, Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2
 
 **Valid Card Examples:**
-- `'A♠️'` - Ace of spades
-- `'K♥️'` - King of hearts  
-- `'10♦️'` - Ten of diamonds (note: "10", not "T")
-- `'2♣️'` - Two of clubs
+- `'A♠'` - Ace of spades
+- `'K♥'` - King of hearts  
+- `'10♦'` - Ten of diamonds (note: "10", not "T")
+- `'2♣'` - Two of clubs
 
 **Important Notes:**
 - Use "10" for tens, not "T"
-- All suits must use Unicode emoji characters
+- All suits must use Unicode characters (without emoji variant selectors)
 - Cards are case-sensitive
 
 ## Usage Examples
@@ -217,22 +222,22 @@ Cards use Unicode emoji suits with standard poker ranks for clear visualization:
 
 ```python
 # Premium hands
-result = solve_poker_hand(['A♠️', 'A♥️'], 1)
+result = solve_poker_hand(['A♠', 'A♥'], 1)
 print(f"Pocket Aces vs 1: {result.win_probability:.1%}")
 
-result = solve_poker_hand(['A♠️', 'A♥️'], 5)
+result = solve_poker_hand(['A♠', 'A♥'], 5)
 print(f"Pocket Aces vs 5: {result.win_probability:.1%}")
 
 # Marginal hands
-result = solve_poker_hand(['2♠️', '7♥️'], 5)
+result = solve_poker_hand(['2♠', '7♥'], 5)
 print(f"2-7 offsuit vs 5: {result.win_probability:.1%}")
 
 # Suited connectors
-result = solve_poker_hand(['9♠️', '8♠️'], 3)
+result = solve_poker_hand(['9♠', '8♠'], 3)
 print(f"9-8 suited vs 3: {result.win_probability:.1%}")
 
 # Pocket pairs
-result = solve_poker_hand(['5♠️', '5♥️'], 2)
+result = solve_poker_hand(['5♠', '5♥'], 2)
 print(f"Pocket fives vs 2: {result.win_probability:.1%}")
 ```
 
@@ -241,33 +246,33 @@ print(f"Pocket fives vs 2: {result.win_probability:.1%}")
 ```python
 # Strong made hands
 result = solve_poker_hand(
-    ['A♠️', 'A♥️'],                    # Pocket aces
+    ['A♠', 'A♥'],                    # Pocket aces
     2,                                 # 2 opponents
-    ['A♦️', '7♠️', '2♣️']             # Flop (top set)
+    ['A♦', '7♠', '2♣']             # Flop (top set)
 )
 print(f"Top set of aces: {result.win_probability:.1%}")
 
 # Drawing hands
 result = solve_poker_hand(
-    ['A♠️', 'K♠️'],                    # Suited ace-king
+    ['A♠', 'K♠'],                    # Suited ace-king
     1,                                 # 1 opponent
-    ['Q♠️', 'J♦️', '7♠️']             # Flop (nut flush + straight draws)
+    ['Q♠', 'J♦', '7♠']             # Flop (nut flush + straight draws)
 )
 print(f"Nut flush + straight draw: {result.win_probability:.1%}")
 
 # Bluffs and weak hands
 result = solve_poker_hand(
-    ['7♣️', '2♥️'],                    # Weak hand
+    ['7♣', '2♥'],                    # Weak hand
     4,                                 # 4 opponents
-    ['A♠️', 'K♦️', 'Q♠️']             # High flop
+    ['A♠', 'K♦', 'Q♠']             # High flop
 )
 print(f"7-2 on AKQ flop: {result.win_probability:.1%}")
 
 # Turn and river analysis
 result = solve_poker_hand(
-    ['J♠️', '10♠️'],                   # Jack-ten suited
+    ['J♠', '10♠'],                   # Jack-ten suited
     2,                                 # 2 opponents
-    ['9♠️', '8♦️', '7♠️', 'Q♥️']      # Turn (straight + flush draws)
+    ['9♠', '8♦', '7♠', 'Q♥']      # Turn (straight + flush draws)
 )
 print(f"Open-ended straight flush draw: {result.win_probability:.1%}")
 ```
@@ -276,15 +281,15 @@ print(f"Open-ended straight flush draw: {result.win_probability:.1%}")
 
 ```python
 # Fast mode for real-time decisions (AI bots)
-result = solve_poker_hand(['K♠️', 'K♥️'], 3, simulation_mode="fast")
+result = solve_poker_hand(['K♠', 'K♥'], 3, simulation_mode="fast")
 print(f"Fast mode: {result.simulations_run:,} sims in {result.execution_time_ms:.1f}ms")
 
 # Default mode for balanced analysis
-result = solve_poker_hand(['K♠️', 'K♥️'], 3, simulation_mode="default")
+result = solve_poker_hand(['K♠', 'K♥'], 3, simulation_mode="default")
 print(f"Default mode: {result.simulations_run:,} sims in {result.execution_time_ms:.1f}ms")
 
 # Precision mode for critical tournament decisions
-result = solve_poker_hand(['K♠️', 'K♥️'], 3, simulation_mode="precision")
+result = solve_poker_hand(['K♠', 'K♥'], 3, simulation_mode="precision")
 print(f"Precision mode: {result.simulations_run:,} sims in {result.execution_time_ms:.1f}ms")
 ```
 
@@ -292,7 +297,7 @@ print(f"Precision mode: {result.simulations_run:,} sims in {result.execution_tim
 
 ```python
 # Detailed hand category breakdown
-result = solve_poker_hand(['A♠️', 'K♠️'], 2, ['Q♠️', 'J♠️', '10♥️'])
+result = solve_poker_hand(['A♠', 'K♠'], 2, ['Q♠', 'J♠', '10♥'])
 
 print("Hand category frequencies:")
 for category, frequency in result.hand_category_frequencies.items():
@@ -318,25 +323,25 @@ from poker_knight import solve_poker_hand
 
 try:
     # This will raise ValueError - duplicate cards
-    result = solve_poker_hand(['A♠️', 'A♠️'], 2)
+    result = solve_poker_hand(['A♠', 'A♠'], 2)
 except ValueError as e:
     print(f"Duplicate card error: {e}")
 
 try:
     # This will raise ValueError - invalid card format
-    result = solve_poker_hand(['AH', 'KS'], 2)  # Missing emoji suits
+    result = solve_poker_hand(['AH', 'KS'], 2)  # Missing Unicode suits
 except ValueError as e:
     print(f"Invalid format error: {e}")
 
 try:
     # This will raise ValueError - too many opponents
-    result = solve_poker_hand(['A♠️', 'K♥️'], 10)
+    result = solve_poker_hand(['A♠', 'K♥'], 10)
 except ValueError as e:
     print(f"Too many opponents error: {e}")
 
 try:
     # This will raise ValueError - invalid board size
-    result = solve_poker_hand(['A♠️', 'K♥️'], 2, ['Q♠️', 'J♠️'])  # Only 2 board cards
+    result = solve_poker_hand(['A♠', 'K♥'], 2, ['Q♠', 'J♠'])  # Only 2 board cards
 except ValueError as e:
     print(f"Invalid board error: {e}")
 ```
@@ -346,9 +351,9 @@ except ValueError as e:
 ```python
 # Generate training data for poker AI
 hands_to_analyze = [
-    (['A♠️', 'A♥️'], 2, None),
-    (['K♠️', 'K♥️'], 3, ['7♠️', '2♥️', '9♦️']),
-    (['Q♠️', 'J♠️'], 4, ['10♠️', '9♥️', '8♦️']),
+    (['A♠', 'A♥'], 2, None),
+    (['K♠', 'K♥'], 3, ['7♠', '2♥', '9♦']),
+    (['Q♠', 'J♠'], 4, ['10♠', '9♥', '8♦']),
     # ... more scenarios
 ]
 
@@ -370,13 +375,13 @@ print(f"Generated {len(training_data)} training samples")
 
 The following hand categories are tracked in `hand_category_frequencies`:
 
-1. **"High Card"** - No pair, straight, or flush
-2. **"One Pair"** - Single pair
-3. **"Two Pair"** - Two different pairs
-4. **"Three of a Kind"** - Three cards of same rank
-5. **"Straight"** - Five consecutive ranks (including wheel: A-2-3-4-5)
-6. **"Flush"** - Five cards of same suit
-7. **"Full House"** - Three of a kind plus a pair
-8. **"Four of a Kind"** - Four cards of same rank
-9. **"Straight Flush"** - Both straight and flush
-10. **"Royal Flush"** - A-K-Q-J-10 all same suit 
+1. **"high_card"** - No pair, straight, or flush
+2. **"pair"** - Single pair
+3. **"two_pair"** - Two different pairs
+4. **"three_of_a_kind"** - Three cards of same rank
+5. **"straight"** - Five consecutive ranks (including wheel: A-2-3-4-5)
+6. **"flush"** - Five cards of same suit
+7. **"full_house"** - Three of a kind plus a pair
+8. **"four_of_a_kind"** - Four cards of same rank
+9. **"straight_flush"** - Both straight and flush
+10. **"royal_flush"** - A-K-Q-J-10 all same suit 
