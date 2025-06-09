@@ -17,7 +17,7 @@ class TestPerformanceRegression(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        self.solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance tests
+        self.solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
     
     def test_simulation_count_targets(self):
         """Verify that simulation modes achieve reasonable simulation counts."""
@@ -251,7 +251,7 @@ class TestPerformanceBenchmarks(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        self.solver = MonteCarloSolver(enable_caching=False)  # Disable caching for benchmark consistency
+        self.solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
     
     def test_hand_evaluation_speed(self):
         """Benchmark hand evaluation speed."""

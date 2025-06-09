@@ -37,30 +37,6 @@ def pytest_addoption(parser):
         help="Run unit tests only"
     )
     parser.addoption(
-        "--cache", action="store_true", default=False,
-        help="Run cache tests only"
-    )
-    parser.addoption(
-        "--cache-unit", action="store_true", default=False,
-        help="Run cache unit tests only (fast, no persistence)"
-    )
-    parser.addoption(
-        "--cache-integration", action="store_true", default=False,
-        help="Run cache integration tests only"
-    )
-    parser.addoption(
-        "--cache-performance", action="store_true", default=False,
-        help="Run cache performance tests only"
-    )
-    parser.addoption(
-        "--cache-population", action="store_true", default=False,
-        help="Run cache pre-population tests only"
-    )
-    parser.addoption(
-        "--redis", action="store_true", default=False,
-        help="Run Redis-dependent tests only"
-    )
-    parser.addoption(
         "--numa", action="store_true", default=False,
         help="Run NUMA (Non-Uniform Memory Access) tests only"
     )
@@ -80,29 +56,6 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Configure pytest based on command-line options."""
-    
-    # Register cache test markers (integrated into main conftest)
-    config.addinivalue_line(
-        "markers", "cache: marks tests as cache-related tests"
-    )
-    config.addinivalue_line(
-        "markers", "cache_unit: marks tests as cache unit tests"
-    )
-    config.addinivalue_line(
-        "markers", "cache_integration: marks tests as cache integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "cache_persistence: marks tests as cache persistence tests"
-    )
-    config.addinivalue_line(
-        "markers", "cache_performance: marks tests as cache performance tests"
-    )
-    config.addinivalue_line(
-        "markers", "cache_population: marks tests as cache pre-population tests"
-    )
-    config.addinivalue_line(
-        "markers", "redis_required: marks tests that require Redis server"
-    )
     config.addinivalue_line(
         "markers", "numa: marks tests as NUMA (Non-Uniform Memory Access) related tests"
     )
@@ -114,12 +67,6 @@ def pytest_configure(config):
         config.getoption("--performance"),
         config.getoption("--stress"),
         config.getoption("--unit"),
-        config.getoption("--cache"),
-        config.getoption("--cache-unit"),
-        config.getoption("--cache-integration"),
-        config.getoption("--cache-performance"),
-        config.getoption("--cache-population"),
-        config.getoption("--redis"),
         config.getoption("--numa"),
         config.getoption("--all"),
         config.getoption("--failed")
@@ -159,18 +106,6 @@ def pytest_configure(config):
         markexpr_parts.append("stress or slow")
     elif config.getoption("--unit"):
         markexpr_parts.append("unit")
-    elif config.getoption("--cache"):
-        markexpr_parts.append("cache")
-    elif config.getoption("--cache-unit"):
-        markexpr_parts.append("cache_unit")
-    elif config.getoption("--cache-integration"):
-        markexpr_parts.append("cache_integration")
-    elif config.getoption("--cache-performance"):
-        markexpr_parts.append("cache_performance")
-    elif config.getoption("--cache-population"):
-        markexpr_parts.append("cache_population")
-    elif config.getoption("--redis"):
-        markexpr_parts.append("redis_required")
     elif config.getoption("--numa"):
         markexpr_parts.append("numa")
     elif config.getoption("--all"):
@@ -195,44 +130,8 @@ def pytest_collection_modifyitems(config, items):
     
     # Auto-mark tests based on filename patterns
     for item in items:
-        # Mark cache tests (integrated cache test marking)
-        if "test_storage_cache_v2.py" in item.nodeid:
-            item.add_marker(pytest.mark.cache)
-            item.add_marker(pytest.mark.cache_unit)
-            
-            # Add specific markers based on test class names
-            if "TestRedisIntegration" in item.nodeid:
-                item.add_marker(pytest.mark.redis_required)
-                item.add_marker(pytest.mark.cache_persistence)
-            elif "TestSQLiteCache" in item.nodeid or "TestHandCache" in item.nodeid:
-                item.add_marker(pytest.mark.cache_persistence)
-            elif "TestCacheIntegration" in item.nodeid:
-                item.add_marker(pytest.mark.cache_integration)
-            elif "performance" in item.name.lower():
-                item.add_marker(pytest.mark.cache_performance)
-        
-        elif "test_cache_integration.py" in item.nodeid:
-            item.add_marker(pytest.mark.cache)
-            item.add_marker(pytest.mark.cache_integration)
-            
-            if "performance" in item.name.lower():
-                item.add_marker(pytest.mark.cache_performance)
-        
-        # Mark cache population tests
-        elif "test_cache_population.py" in item.nodeid:
-            item.add_marker(pytest.mark.cache)
-            item.add_marker(pytest.mark.cache_population)
-            
-            # Add specific markers based on test class names
-            if "TestCachePopulationIntegration" in item.nodeid:
-                item.add_marker(pytest.mark.integration)
-            elif "TestCachePopulationPerformance" in item.nodeid:
-                item.add_marker(pytest.mark.performance)
-            elif "performance" in item.name.lower():
-                item.add_marker(pytest.mark.performance)
-        
         # Mark NUMA tests
-        elif "test_numa.py" in item.nodeid:
+        if "test_numa.py" in item.nodeid:
             item.add_marker(pytest.mark.numa)
             
             # Add specific markers based on test class names
@@ -268,8 +167,7 @@ def pytest_collection_modifyitems(config, items):
         # Mark quick tests (subset of fast-running tests)
         quick_tests = [
             "test_basic_functionality", "test_card_creation", "test_card_value",
-            "test_hand_evaluation", "test_fast_mode_performance", "test_basic_edge_cases",
-            "test_cache_config", "test_cache_key_generation", "test_memory_cache_basic"
+            "test_hand_evaluation", "test_fast_mode_performance", "test_basic_edge_cases"
         ]
         
         if any(quick_test in item.nodeid for quick_test in quick_tests):
@@ -302,18 +200,6 @@ def _get_test_type(config):
         return "stress"
     elif config.getoption("--unit"):
         return "unit"
-    elif config.getoption("--cache"):
-        return "cache"
-    elif config.getoption("--cache-unit"):
-        return "cache_unit"
-    elif config.getoption("--cache-integration"):
-        return "cache_integration"
-    elif config.getoption("--cache-performance"):
-        return "cache_performance"
-    elif config.getoption("--cache-population"):
-        return "cache_population"
-    elif config.getoption("--redis"):
-        return "redis"
     elif config.getoption("--numa"):
         return "numa"
     elif config.getoption("--all"):
@@ -429,12 +315,6 @@ def _write_test_results(config, stats, exitstatus):
             "performance": config.getoption("--performance"),
             "stress": config.getoption("--stress"),
             "unit": config.getoption("--unit"),
-            "cache": config.getoption("--cache"),
-            "cache_unit": config.getoption("--cache-unit"),
-            "cache_integration": config.getoption("--cache-integration"),
-            "cache_performance": config.getoption("--cache-performance"),
-            "cache_population": config.getoption("--cache-population"),
-            "redis": config.getoption("--redis"),
             "numa": config.getoption("--numa"),
             "all": config.getoption("--all"),
             "with_coverage": config.getoption("--with-coverage")
@@ -497,18 +377,6 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
             test_type = "Stress Testing"
         elif config.getoption("--unit"):
             test_type = "Unit Testing"
-        elif config.getoption("--cache"):
-            test_type = "Cache Testing"
-        elif config.getoption("--cache-unit"):
-            test_type = "Cache Unit Testing"
-        elif config.getoption("--cache-integration"):
-            test_type = "Cache Integration Testing"
-        elif config.getoption("--cache-performance"):
-            test_type = "Cache Performance Testing"
-        elif config.getoption("--cache-population"):
-            test_type = "Cache Population Testing"
-        elif config.getoption("--redis"):
-            test_type = "Redis Testing"
         elif config.getoption("--numa"):
             test_type = "NUMA Testing"
         elif config.getoption("--all"):

@@ -9,7 +9,7 @@ Watch as we analyze various poker scenarios with professional-grade accuracy!
 import time
 import sys
 from typing import List, Tuple
-from poker_knight import solve_poker_hand, MonteCarloSolver, prepopulate_cache
+from poker_knight import solve_poker_hand, MonteCarloSolver
 
 # ANSI color codes for fancy output
 class Colors:
@@ -34,7 +34,7 @@ def print_subheader(title: str, number: int = None):
     prefix = f"{number}️⃣ " if number else "▶️ "
     print(f"\n{Colors.CYAN}{prefix}{title}{Colors.ENDC}")
 
-def print_result(scenario: str, result, execution_time: float = None, cache_hit: bool = False):
+def print_result(scenario: str, result, execution_time: float = None):
     """Print results in a visually appealing format."""
     print(f"\n{Colors.BOLD}{scenario}{Colors.ENDC}")
     
@@ -48,9 +48,7 @@ def print_result(scenario: str, result, execution_time: float = None, cache_hit:
     print(f"└─ 💔 Loss: {Colors.RED}{result.loss_probability:6.2%}{Colors.ENDC} {Colors.RED}{loss_bar}{Colors.ENDC}")
     
     if execution_time is not None:
-        speed_emoji = "🚀" if cache_hit else "⚡"
-        cache_text = f" {Colors.GREEN}(CACHED){Colors.ENDC}" if cache_hit else ""
-        print(f"   {speed_emoji} Analysis time: {execution_time:.3f}s{cache_text}")
+        print(f"   ⚡ Analysis time: {execution_time:.3f}s")
     
     # Show confidence interval if available
     if result.confidence_interval:
@@ -75,7 +73,7 @@ def demo_welcome():
     
     print(f"\n{Colors.YELLOW}Features:{Colors.ENDC}")
     print("  ✓ Lightning-fast Monte Carlo simulations")
-    print("  ✓ Advanced caching system for instant results")
+    print("  ✓ Raw performance without caching overhead")
     print("  ✓ Multi-way pot analysis")
     print("  ✓ ICM tournament calculations")
     print("  ✓ Position-aware equity adjustments")
@@ -83,37 +81,38 @@ def demo_welcome():
     print("  ✓ Hand category tracking")
     print("  ✓ Professional-grade accuracy")
 
-def demo_cache_prepopulation():
-    """Demonstrate cache prepopulation for optimal performance."""
-    print_header("Intelligent Cache System", "💾")
+def demo_performance_warmup():
+    """Warm up the solver for optimal performance."""
+    print_header("Performance Optimization", "🚀")
     
-    print("\nPoker Knight uses an advanced caching system for lightning-fast analysis.")
-    print("On first use, we'll prepopulate common scenarios for instant results.")
+    print("\nPoker Knight delivers raw performance through optimized algorithms.")
+    print("Let's warm up the solver for peak performance...")
     
-    print(f"\n{Colors.YELLOW}Prepopulating cache...{Colors.ENDC}")
+    print(f"\n{Colors.YELLOW}Initializing solver...{Colors.ENDC}")
     start_time = time.time()
     
-    # This will trigger cache population on first use
+    # Warm up the solver
     _ = solve_poker_hand(['A♠', 'A♥'], 2, simulation_mode="fast")
     
     elapsed = time.time() - start_time
-    print(f"{Colors.GREEN}✓ Cache ready! ({elapsed:.1f}s){Colors.ENDC}")
+    print(f"{Colors.GREEN}✓ Solver ready! ({elapsed:.1f}s){Colors.ENDC}")
     
-    # Show cache effectiveness
-    print("\n🏎️  Let's see the cache in action:")
+    # Show consistent performance
+    print("\n🏎️  Performance demonstration:")
     
-    # First call - might hit cache
+    # First call
     start = time.time()
     result1 = solve_poker_hand(['K♠', 'K♥'], 2, simulation_mode="fast")
     time1 = time.time() - start
     
-    # Second call - definitely hits cache
+    # Second call - similar performance
     start = time.time()
     result2 = solve_poker_hand(['K♠', 'K♥'], 2, simulation_mode="fast")
     time2 = time.time() - start
     
     print(f"  First analysis:  {time1:.3f}s")
-    print(f"  Cached analysis: {time2:.3f}s {Colors.GREEN}({int(time1/time2) if time2 > 0 else '>1000'}x faster!){Colors.ENDC}")
+    print(f"  Second analysis: {time2:.3f}s")
+    print(f"  {Colors.GREEN}Consistent high-speed performance!{Colors.ENDC}")
 
 def demo_basic_preflop():
     """Demonstrate basic preflop analysis."""
@@ -384,7 +383,7 @@ def demo_performance_showcase():
     ]
     
     print(f"\nAnalyzing {len(hands)} different hands vs 2 opponents...")
-    print("Watch the cache system work its magic! 🎩✨")
+    print("Watch the optimized solver in action! 🎩✨")
     
     total_start = time.time()
     results = []
@@ -396,8 +395,7 @@ def demo_performance_showcase():
         results.append((name, hand, result.win_probability, elapsed))
         
         # Quick visual feedback
-        cache_indicator = "💾" if elapsed < 0.01 else "🔄"
-        print(f"  {cache_indicator} {name:20} → Win: {result.win_probability:5.1%} (Time: {elapsed:.3f}s)")
+        print(f"  🔄 {name:20} → Win: {result.win_probability:5.1%} (Time: {elapsed:.3f}s)")
     
     total_time = time.time() - total_start
     avg_time = total_time / len(hands)
@@ -462,7 +460,7 @@ def main():
     input(f"\n{Colors.YELLOW}Press Enter to begin the demo...{Colors.ENDC}")
     
     # Run all demo sections
-    demo_cache_prepopulation()
+    demo_performance_warmup()
     input(f"\n{Colors.YELLOW}Press Enter to see preflop analysis...{Colors.ENDC}")
     
     demo_basic_preflop()
@@ -499,10 +497,10 @@ def main():
     print("  • ICM tournament calculations")  
     print("  • Multi-way pot dynamics")
     print("  • Real-time convergence monitoring")
-    print("  • Enterprise-grade caching")
+    print("  • Optimized for raw performance")
     
     print("\n📈 Why Poker Knight?")
-    print("  • ⚡ Lightning fast (cache-enabled)")
+    print("  • ⚡ Lightning fast performance")
     print("  • 🎯 Professional accuracy")
     print("  • 🔬 Based on proven Monte Carlo methods")
     print("  • 🏆 Tournament & cash game support")

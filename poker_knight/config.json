@@ -34,30 +34,6 @@
     "importance_threshold": 0.1,
     "variance_reduction_target": 0.15
   },
-  "cache_settings": {
-    "max_memory_mb": 512,
-    "hand_cache_size": 10000,
-    "board_texture_cache_size": 5000,
-    "preflop_cache_enabled": true,
-    "cache_hit_rate_target": 0.8,
-    "eviction_batch_size": 100,
-    "cache_cleanup_interval": 300,
-    "enable_persistence": true,
-    "redis_host": "localhost",
-    "redis_port": 6379,
-    "redis_db": 0,
-    "redis_password": null,
-    "disk_cache_path": null,
-    "include_position_in_key": true,
-    "include_stack_depth_in_key": true,
-    "key_precision_digits": 3,
-    "cache_population_threshold": 0.95,
-    "max_population_time_minutes": 5,
-    "preflop_hands_coverage": "all_169",
-    "board_patterns_coverage": ["rainbow", "monotone", "paired", "connected", "disconnected"],
-    "opponent_counts_coverage": [1, 2, 3, 4, 5, 6],
-    "positions_coverage": ["early", "middle", "late", "button", "sb", "bb"]
-  },
   "parallel_settings": {
     "max_threads": 0,
     "max_processes": 0,
@@ -78,4 +54,4 @@
     "include_hand_categories": true,
     "decimal_precision": 4
   }
-} 
+}

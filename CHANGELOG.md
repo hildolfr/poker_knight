@@ -5,9 +5,18 @@ All notable changes to Poker Knight will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.0] - 2025-01-09
 
-### ✨ Added
+### 🚀 Major Architecture Change - Cache Removal for Pure Performance
+
+#### 🔥 Breaking Changes
+- **Removed all caching functionality**: Poker Knight now focuses on raw performance without caching overhead
+- Removed `prepopulate_cache()` function
+- Removed `enable_caching` parameter from `MonteCarloSolver`
+- Removed all cache-related configuration options
+- Removed Redis dependency from enterprise extras
+
+#### ✨ Added
 - **Automatic Bubble Factor Calculation**: Tournament ICM pressure is now automatically calculated based on:
   - Stack depth relative to average
   - Number of big blinds remaining
@@ -20,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🔧 Changed
 - Updated `_calculate_icm_equity` to support automatic bubble factor when not explicitly provided
 - Enhanced tournament play intelligence without breaking existing API
+- Simplified architecture for easier integration and maintenance
+- Reduced memory footprint by removing cache overhead
+
+### 🎯 Why Remove Caching?
+- **Simplicity**: Caching should be handled by the application layer, not the solver
+- **Flexibility**: Users can implement their own caching strategy tailored to their needs
+- **Performance**: Removes overhead and complexity from the core solver
+- **Maintainability**: Simpler codebase is easier to optimize and extend
 
 ## [1.6.0] - 2025-02-06
 

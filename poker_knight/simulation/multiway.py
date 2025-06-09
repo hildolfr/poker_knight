@@ -319,13 +319,17 @@ class MultiwayAnalyzer:
         # Calculate bubble factor components
         bubble_components = []
         
+        # Chip leader adjustment - they have minimal bubble pressure
+        if stack_depth_ratio > 1.5:  # Chip leader
+            # Chip leaders have luxury to play looser
+            chip_leader_relief = min(1.0, (stack_depth_ratio - 1.5) / 1.0)
+            bubble_components.append(1.0 - chip_leader_relief * 0.3)  # Reduce pressure
         # Short stack pressure (less than 20 BBs)
-        if hero_bb_count < 20:
+        elif hero_bb_count < 20:
             short_stack_pressure = min(1.0, (20 - hero_bb_count) / 15.0)
             bubble_components.append(1.0 + short_stack_pressure * 0.8)
-        
         # Below average stack pressure
-        if stack_depth_ratio < 0.7:
+        elif stack_depth_ratio < 0.7:
             below_avg_pressure = (0.7 - stack_depth_ratio) / 0.5
             bubble_components.append(1.0 + below_avg_pressure * 0.5)
         
@@ -334,7 +338,11 @@ class MultiwayAnalyzer:
             bubble_components.append(1.0)
         # Few players remaining (likely near bubble/final table)
         elif num_players <= 5:
-            bubble_components.append(1.0 + player_factor * 0.6)
+            # But reduce impact for chip leaders
+            if stack_depth_ratio > 1.5:
+                bubble_components.append(1.0 + player_factor * 0.2)  # Less impact for leaders
+            else:
+                bubble_components.append(1.0 + player_factor * 0.6)
         
         # High stack variance (typical bubble dynamics)
         if stack_variance > 0.5:

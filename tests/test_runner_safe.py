@@ -57,7 +57,6 @@ class SafeTestRunner:
         # Prepare isolated environment
         env = os.environ.copy()
         env['POKER_KNIGHT_TEST_MODE'] = 'isolated'
-        env['POKER_KNIGHT_DISABLE_CACHE_WARMING'] = '1'
         env['POKER_KNIGHT_DISABLE_NUMA'] = '1'  # Disable NUMA for safety
         
         start_time = time.time()
@@ -161,9 +160,7 @@ def test_basic_functionality():
         from poker_knight.solver import MonteCarloSolver
         
         # Create solver with safe settings
-        solver = MonteCarloSolver(
-            enable_caching=False  # Disable caching to avoid Redis issues
-        )
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Simple test case
         hero_hand = ['AS', 'KS']
@@ -194,49 +191,6 @@ def test_basic_functionality():
         assert False, f"Basic test failed with error: {e}"
 
 
-def test_caching_safe():
-    """Test caching functionality in safe mode."""
-    print("\n[CACHE]  Testing Safe Caching")
-    
-    try:
-        sys.path.insert(0, os.path.dirname(__file__))
-        
-        from poker_knight.storage.cache import CacheConfig, HandCache
-        
-        # Create memory-only cache (no Redis)
-        config = CacheConfig(
-            max_memory_mb=64,
-            hand_cache_size=100,
-            enable_persistence=False  # Disable Redis
-        )
-        
-        cache = HandCache(config)
-        
-        # Test cache operations
-        test_key = "test_key_safe"
-        test_value = {
-            'win_probability': 0.6,
-            'simulations_run': 1000,
-            'cached': False
-        }
-        
-        # Store and retrieve
-        success = cache.store_result(test_key, test_value)
-        retrieved = cache.get_result(test_key)
-        
-        if success and retrieved and retrieved['win_probability'] == 0.6:
-            print("[PASS] Safe caching test passed")
-        else:
-            print("[FAIL] Safe caching test failed: retrieve mismatch")
-        
-        # Add assertions
-        assert success, "Should be able to store in cache"
-        assert retrieved is not None, "Should be able to retrieve from cache"
-        assert retrieved['win_probability'] == 0.6, "Retrieved value should match stored value"
-            
-    except Exception as e:
-        print(f"[FAIL] Safe caching test failed: {e}")
-        assert False, f"Safe caching test failed with error: {e}"
 
 
 def run_critical_tests():
@@ -250,9 +204,8 @@ def run_critical_tests():
     # Basic functionality test
     try:
         basic_success = test_basic_functionality()
-        cache_success = test_caching_safe()
         
-        if basic_success and cache_success:
+        if basic_success:
             print("\n[PASS] All critical tests passed in safe mode")
         else:
             print("\n[WARN]  Some critical tests failed")
@@ -263,7 +216,6 @@ def run_critical_tests():
     # Test individual files with isolation
     test_files = [
         'test_advanced_parallel.py',
-        'test_cache_with_redis_demo.py',
         'tests/test_parallel.py'
     ]
     

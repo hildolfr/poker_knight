@@ -28,7 +28,7 @@ from poker_knight import MonteCarloSolver
 
 def cpu_intensive_analysis(arg):
     """Run CPU-intensive analysis in separate process."""
-    solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+    solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
     total_simulations = 0
     
     # Run fewer analyses with fast mode to prevent hanging
@@ -48,7 +48,7 @@ class TestHighLoadScenarios:
     
     def test_massive_simulation_count(self):
         """Test handling of precision mode with large simulation counts."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Test with precision mode (uses large simulation counts)
         start_time = time.time()
@@ -69,7 +69,7 @@ class TestHighLoadScenarios:
         
     def test_rapid_fire_analysis(self):
         """Test rapid consecutive analyses."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         results = []
         start_time = time.time()
@@ -99,7 +99,7 @@ class TestHighLoadScenarios:
         results = []
         
         def run_concurrent_analysis(thread_id: int) -> Tuple[int, Any]:
-            solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+            solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
             result = solver.analyze_hand(
                 hero_hand=["A♠", "K♠"],
                 num_opponents=2,
@@ -133,7 +133,7 @@ class TestHighLoadScenarios:
         
     def test_memory_intensive_multiway_scenarios(self):
         """Test memory usage with complex multiway scenarios."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         initial_memory = self._get_memory_usage()
         
@@ -175,7 +175,7 @@ class TestResourceExhaustionScenarios:
     
     def test_low_memory_simulation(self):
         """Test behavior when available memory is limited."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Create memory pressure by allocating large arrays
         memory_hog = []
@@ -228,7 +228,7 @@ class TestResourceExhaustionScenarios:
         
     def test_thread_exhaustion_recovery(self):
         """Test recovery from thread exhaustion scenarios."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Create many threads to stress the system
         num_threads = min(100, multiprocessing.cpu_count() * 10)
@@ -263,7 +263,7 @@ class TestEdgeCaseReliability:
     
     def test_random_scenario_stress_test(self):
         """Test with random scenarios to catch edge cases."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         cards = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"]
         suits = ["♠", "♥", "♦", "♣"]
@@ -300,7 +300,7 @@ class TestEdgeCaseReliability:
         
     def test_boundary_value_scenarios(self):
         """Test boundary value scenarios."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Test minimum opponents
         result = solver.analyze_hand(
@@ -345,7 +345,7 @@ class TestEdgeCaseReliability:
             
     def test_error_recovery_and_fallbacks(self):
         """Test error recovery and graceful fallbacks."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Test with invalid card format (should handle gracefully)
         try:
@@ -393,7 +393,7 @@ class TestLongRunningStability:
     
     def test_extended_runtime_stability(self):
         """Test stability over extended runtime."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         start_time = time.time()
         analyses_completed = 0
@@ -414,7 +414,7 @@ class TestLongRunningStability:
         
     def test_memory_stability_over_time(self):
         """Test memory stability over many operations."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         memory_samples = []
         
@@ -458,7 +458,7 @@ class TestPerformanceRegression:
     
     def test_performance_consistency_under_load(self):
         """Test that performance remains consistent under varying loads."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Baseline performance test
         start_time = time.time()
@@ -505,7 +505,7 @@ class TestPerformanceRegression:
         
     def test_scalability_with_simulation_modes(self):
         """Test scalability across different simulation modes."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         simulation_modes = ["fast", "default", "precision"]
         times = []
@@ -533,7 +533,7 @@ class TestPerformanceRegression:
 
     def test_high_simulation_count_stability(self):
         """Test solver stability with high simulation counts."""
-        solver = MonteCarloSolver(enable_caching=False)  # Disable caching for consistent performance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Test with very high simulation count
         start_time = time.time()

@@ -17,8 +17,8 @@ def test_force_advanced_parallel():
     print("[ROCKET] Testing Forced Advanced Parallel Processing")
     print("=" * 60)
     
-    # Create solver with caching DISABLED to avoid cache hits
-    solver = MonteCarloSolver(enable_caching=False)
+    # Create solver to avoid cache hits
+    solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
     
     # Test scenario: 72o vs 5 opponents (worst hand, many opponents)
     # This should have high complexity and avoid cache hits

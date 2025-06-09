@@ -20,8 +20,8 @@ def test_basic_parallel_processing():
     print("[ROCKET] Testing Advanced Parallel Processing (Task 1.1)")
     print("=" * 60)
     
-    # Create solver with parallel processing enabled and caching DISABLED
-    solver = MonteCarloSolver(enable_caching=False)
+    # Create solver with parallel processing enabled
+    solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
     
     # Test scenario: AA vs 3 opponents on coordinated board
     # This should trigger advanced parallel processing
@@ -76,44 +76,36 @@ def test_basic_parallel_processing():
     print("[PASS] All tests completed successfully!")
 
 
-def test_cache_integration():
-    """Test that caching works with the new parallel processing."""
-    print("[CACHE]  Testing Cache Integration with Parallel Processing")
+def test_consistent_performance():
+    """Test that performance is consistent without caching."""
+    print("[PERF]  Testing Consistent Performance (No Cache)")
     print("=" * 60)
     
-    solver = MonteCarloSolver(enable_caching=True)
+    solver = MonteCarloSolver()  # No caching in v1.7.0
     
     hero_hand = ["KS", "KH"]
     num_opponents = 2
     
-    print("First run (should populate cache)...")
-    start_time = time.time()
-    result1 = solver.analyze_hand(hero_hand, num_opponents, simulation_mode="default")
-    time1 = time.time() - start_time
+    print("Running multiple simulations to test consistency...")
+    times = []
     
-    print("Second run (should hit cache)...")
-    start_time = time.time()
-    result2 = solver.analyze_hand(hero_hand, num_opponents, simulation_mode="default")
-    time2 = time.time() - start_time
+    for i in range(3):
+        print(f"Run {i+1}...", end='', flush=True)
+        start_time = time.time()
+        result = solver.analyze_hand(hero_hand, num_opponents, simulation_mode="fast")
+        elapsed = time.time() - start_time
+        times.append(elapsed)
+        print(f" {elapsed:.3f}s (Win rate: {result.win_probability:.1%})")
     
-    print(f"First run:  {time1:.3f}s, Win rate: {result1.win_probability:.1%}")
-    print(f"Second run: {time2:.3f}s, Win rate: {result2.win_probability:.1%}")
+    avg_time = sum(times) / len(times)
+    max_diff = max(times) - min(times)
     
-    if time2 > 0:
-        speedup = time1/time2
-        print(f"Speedup from caching: {speedup:.1f}x")
-    else:
-        print("Second run was instantaneous (perfect cache hit)")
-    
-    # Get cache stats
-    cache_stats = solver.get_cache_stats()
-    if cache_stats:
-        hand_cache = cache_stats.get('hand_cache', {})
-        print(f"Cache hit rate: {hand_cache.get('hit_rate', 0):.1%}")
-        print(f"Cache requests: {hand_cache.get('total_requests', 0)}")
+    print(f"\nAverage time: {avg_time:.3f}s")
+    print(f"Time variance: {max_diff:.3f}s")
+    print(f"Consistency: {'Good' if max_diff < 0.5 else 'Fair'}")
     
     solver.close()
-    print("[PASS] Cache integration test completed!")
+    print("[PASS] Performance consistency test completed!")
 
 
 def test_numa_awareness():
@@ -149,7 +141,7 @@ if __name__ == "__main__":
     try:
         test_basic_parallel_processing()
         print()
-        test_cache_integration()
+        test_consistent_performance()
         print()
         test_numa_awareness()
         

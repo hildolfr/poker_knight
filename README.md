@@ -1,7 +1,7 @@
 # ♞ Poker Knight
 
 <div align="center">
-  <img src="docs/assets/poker_knight_logo.png" alt="Poker Knight Logo" width="400">
+  <!-- Logo removed in v1.7.0 -->
   
   **A high-performance Monte Carlo Texas Hold'em poker solver with advanced tournament ICM integration, designed for AI poker players and real-time gameplay decision making.**
 
@@ -9,8 +9,8 @@
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
   [![Tests](https://img.shields.io/badge/tests-passing-green.svg)](tests/)
   [![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)](tests/)
-  [![Version: 1.6.0](https://img.shields.io/badge/version-1.6.0-green.svg)](docs/CHANGELOG.md)
-  [![Performance](https://img.shields.io/badge/performance-optimized-orange.svg)](docs/TECHNICAL_DETAILS.md)
+  [![Version: 1.7.0](https://img.shields.io/badge/version-1.7.0-green.svg)](CHANGELOG.md)
+  [![Performance](https://img.shields.io/badge/performance-optimized-orange.svg)](.)
 </div>
 
 ## 🎯 What is Poker Knight?
@@ -21,14 +21,7 @@ Poker Knight is a specialized Monte Carlo simulation engine built specifically f
 
 ## ✨ Core Capabilities & Technical Innovations
 
-**Intelligent Cache Prepopulation** 🚀 *NEW in v1.6*
-- **Near-instant results**: Common hands return in <1ms after prepopulation
-- **Smart prepopulation**: Automatically prepopulates cache with priority poker hands
-- **Dual modes**: Quick mode (30s) for priority hands, comprehensive mode (2-3min) for all scenarios
-- **90%+ cache hit rate**: Dramatically improves performance for repeated analyses
-- **Memory efficient**: Unified cache architecture without background threads
-
-**Advanced Monte Carlo Simulation Engine**
+**High-Performance Monte Carlo Simulation Engine** 🚀
 - **Stratified Sampling**: Intelligent variance reduction using board texture analysis and hand strength stratification
 - **Importance Sampling**: Weighted simulations focusing on critical decision scenarios
 - **Control Variates**: Mathematical variance reduction techniques for faster convergence
@@ -72,18 +65,14 @@ Poker Knight is a specialized Monte Carlo simulation engine built specifically f
 | Category | Resource | Description |
 |----------|----------|-------------|
 | **Getting Started** | [Quick Installation Guide](#installation) | Copy-paste installation and basic usage |
-| | [API Reference](docs/API_REFERENCE.md) | Complete function documentation with examples |
+| | [API Reference](API_REFERENCE.md) | Complete function documentation with examples |
 | | [Quick Test](#quick-test) | Verify your installation works correctly |
-| **Advanced Features** | [ICM & Tournament Play](docs/INTEGRATION_EXAMPLES.md#advanced-tournament-bot) | ICM calculations and tournament-specific analysis |
-| | [Multi-Way Pot Analysis](docs/INTEGRATION_EXAMPLES.md#hand-history-analyzer) | Position-aware equity and range coordination |
-| | [Technical Details](docs/TECHNICAL_DETAILS.md) | Implementation details and advanced algorithms |
-| **Configuration** | [Configuration Guide](docs/CONFIGURATION.md) | Performance tuning and advanced settings |
-| | [Performance Optimization](docs/TECHNICAL_DETAILS.md#performance-optimizations) | Parallel processing and memory optimization |
-| **Integration** | [Integration Examples](docs/INTEGRATION_EXAMPLES.md) | Real-world usage patterns and code samples |
-| | [Use Cases](#use-cases) | Common applications and implementation patterns |
-| **Development** | [Testing Guide](docs/TESTING.md) | Running tests and statistical validation |
-| | [Contributing Guidelines](docs/CONTRIBUTING.md) | How to contribute to the project |
-| | [Changelog](docs/CHANGELOG.md) | Version history and feature updates |
+| **Advanced Features** | [ICM & Tournament Play](#use-cases) | ICM calculations and tournament-specific analysis |
+| | [Multi-Way Pot Analysis](#use-cases) | Position-aware equity and range coordination |
+| **Configuration** | [Configuration Guide](poker_knight/config.json) | Performance tuning and advanced settings |
+| **Integration** | [Use Cases](#use-cases) | Common applications and implementation patterns |
+| **Development** | [Testing Guide](#quick-test) | Running tests and statistical validation |
+| | [Changelog](CHANGELOG.md) | Version history and feature updates |
 | **Support** | [License](LICENSE) | MIT License details |
 | | [Requirements](#requirements) | System requirements and dependencies |
 
@@ -104,10 +93,7 @@ your_project/
 
 **Basic Usage:**
 ```python
-from poker_knight import solve_poker_hand, prepopulate_cache
-
-# NEW in v1.6: Prepopulate cache for instant results (optional)
-prepopulate_cache()  # Quick 30-second prepopulation
+from poker_knight import solve_poker_hand
 
 # Simplest usage - just your hand (assumes 1 opponent, pre-flop)
 result = solve_poker_hand(['A♠️', 'A♥️'])
@@ -153,16 +139,13 @@ print(f"Position advantage: {result.position_aware_equity['position_advantage']:
 ```
 
 **Advanced Usage with MonteCarloSolver Class:**
-For access to additional optimization features and cache control, use the solver class directly:
+For access to additional optimization features, use the solver class directly:
 
 ```python
 from poker_knight import MonteCarloSolver
 
-# Create solver with caching enabled (default)
-solver = MonteCarloSolver(enable_caching=True)
-
-# Or disable caching for pure simulation
-solver = MonteCarloSolver(enable_caching=False)
+# Create solver instance
+solver = MonteCarloSolver()
 
 result = solver.analyze_hand(
     ['A♠️', 'A♥️'],                    # Hero hand
@@ -206,45 +189,6 @@ python tests/run_tests.py --statistical  # Full statistical validation
 
 ---
 
-## 🚀 Cache Prepopulation for Lightning-Fast Analysis (v1.6)
-
-**NEW in v1.6**: Poker Knight now includes intelligent cache prepopulation that delivers near-instant results for common poker scenarios.
-
-### Quick Start with Cache Prepopulation
-
-```python
-from poker_knight import prepopulate_cache, solve_poker_hand
-
-# Option 1: Quick prepopulation (30 seconds, recommended)
-stats = prepopulate_cache()
-print(f"Populated {stats['scenarios_populated']} scenarios")
-
-# Option 2: Comprehensive prepopulation (2-3 minutes, maximum coverage)
-stats = prepopulate_cache(comprehensive=True)
-print(f"Cache coverage: {stats['final_coverage']:.1f}%")
-
-# Now enjoy instant results!
-result = solve_poker_hand(['A♠️', 'K♠️'], 2)  # Returns in <1ms!
-```
-
-### Performance Impact
-
-- **Before prepopulation**: 50ms - 2.5s per analysis
-- **After prepopulation**: <1ms for cached scenarios (90%+ hit rate)
-- **Prepopulation time**: 30s (quick) or 2-3min (comprehensive)
-- **Storage**: ~10-20MB persistent cache file
-
-### When to Use Cache Prepopulation
-
-- **Production servers**: Prepopulate on startup for instant API responses
-- **AI training**: Fast repeated evaluations during model training
-- **Batch analysis**: Process thousands of hands with minimal latency
-- **Interactive tools**: Provide real-time feedback to users
-
-The cache system is completely optional - Poker Knight works great without it, but prepopulation makes it blazing fast for production use cases.
-
----
-
-**Poker Knight v1.6.0** - Empowering AI poker players with precise, fast hand analysis and professional tournament features.
+**Poker Knight v1.7.0** - Empowering AI poker players with precise, fast hand analysis and professional tournament features.
 
 *Built with ♠️♥️♦️♣️ by [hildolfr](https://github.com/hildolfr)* 

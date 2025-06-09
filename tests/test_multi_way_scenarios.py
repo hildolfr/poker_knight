@@ -271,9 +271,9 @@ class TestMultiWayPotAnalysis(unittest.TestCase):
         """
         Test interaction between position and stack size in multi-way analysis.
         """
-        # Create solver with caching disabled to ensure fresh calculations
+        # Create solver to ensure fresh calculations
         from poker_knight import MonteCarloSolver
-        solver = MonteCarloSolver(enable_caching=False)
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         hero_hand = ['AS', 'QS']  # Strong but not premium hand
         num_opponents = 2
@@ -423,12 +423,12 @@ class TestMultiWayPerformance(unittest.TestCase):
         """Test that multi-way analysis doesn't significantly impact performance."""
         import time
         
-        # Use unique hands to avoid cache hits that would skew performance comparison
+        # Use unique hands for consistent performance testing
         import random
         suits = ['S', 'H', 'D', 'C']
         ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']
         
-        # Generate a random hand that's unlikely to be cached
+        # Generate a random hand for testing
         random.seed(42)  # For reproducibility
         r1, r2 = random.sample(ranks, 2)
         s1, s2 = random.sample(suits, 2)

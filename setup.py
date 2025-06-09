@@ -54,7 +54,6 @@ setup(
             "mypy>=0.800",
         ],
         "enterprise": [
-            "redis>=4.0.0",
             "fastapi>=0.68.0",
             "uvicorn[standard]>=0.15.0",
             "sqlalchemy>=1.4.0",
@@ -68,7 +67,6 @@ setup(
             "psutil>=5.8.0",
         ],
         "all": [
-            "redis>=4.0.0",
             "fastapi>=0.68.0",
             "uvicorn[standard]>=0.15.0",
             "sqlalchemy>=1.4.0",

@@ -57,8 +57,8 @@ class TestStatisticalValidation(unittest.TestCase):
         Tests if observed hand frequencies match expected poker probabilities.
         This version ensures fresh simulations without cache interference.
         """
-        # Create solver with caching explicitly disabled to ensure fresh simulations
-        solver = MonteCarloSolver(enable_caching=False)
+        # Create solver to ensure fresh simulations
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Ensure hand categories are included in output
         solver.config["output_settings"]["include_hand_categories"] = True
@@ -158,8 +158,8 @@ class TestStatisticalValidation(unittest.TestCase):
         num_opponents = 1
         true_win_rate = 0.849  # Actual empirical value from precision testing
         
-        # Create solver without caching to ensure fresh simulations each time
-        solver = MonteCarloSolver(enable_caching=False)
+        # Create solver to ensure fresh simulations each time
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         intervals_containing_true_value = 0
         total_tests = 20  # Number of confidence intervals to test
@@ -189,8 +189,8 @@ class TestStatisticalValidation(unittest.TestCase):
         hero_hand = ['K♠', 'K♥']
         num_opponents = 2
         
-        # Create solver without caching to ensure fresh simulations show variance
-        solver = MonteCarloSolver(enable_caching=False)
+        # Create solver to ensure fresh simulations show variance
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         # Test different sample sizes
         sample_sizes = ["fast", "default", "precision"]  # 10K, 100K, 500K
@@ -222,8 +222,8 @@ class TestStatisticalValidation(unittest.TestCase):
         Test simulation results against known poker probabilities.
         Validates that the Monte Carlo method produces theoretically correct results.
         """
-        # Create solver without caching for accurate fresh simulations
-        solver = MonteCarloSolver(enable_caching=False)
+        # Create solver for accurate fresh simulations
+        solver = MonteCarloSolver()  # Caching parameter removed in v1.7.0
         
         test_scenarios = [
             # (hero_hand, opponents, board, expected_win_rate, tolerance, description)

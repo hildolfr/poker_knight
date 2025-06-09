@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Poker Knight v1.5.0 - Monte Carlo Texas Hold'em Poker Solver
+Poker Knight v1.7.0 - High-Performance Monte Carlo Texas Hold'em Poker Solver
 
 High-performance Monte Carlo simulation engine for Texas Hold'em poker hand analysis.
 Optimized for AI applications with statistical validation and parallel processing.
@@ -8,7 +8,7 @@ Optimized for AI applications with statistical validation and parallel processin
 Author: hildolfr
 License: MIT
 GitHub: https://github.com/hildolfr/poker-knight
-Version: 1.5.0
+Version: 1.7.0
 
 Key Features:
 - Monte Carlo simulation with configurable precision modes
@@ -21,10 +21,10 @@ Key Features:
 
 Usage:
     from poker_knight import solve_poker_hand
-    result = solve_poker_hand(['A♠️', 'K♠️'], 2, simulation_mode="default")
+    result = solve_poker_hand(['A♠', 'K♠'], 2, simulation_mode="default")
     print(f"Win rate: {result.win_probability:.1%}")
 
-Performance optimizations implemented in v1.5.0:
+Performance optimizations:
 - Advanced Monte Carlo convergence analysis with Geweke diagnostics
 - Intelligent early stopping when target accuracy achieved
 - Real-time convergence monitoring with effective sample size
@@ -59,7 +59,7 @@ try:
 except ImportError:
     CONVERGENCE_ANALYSIS_AVAILABLE = False
 
-# Import advanced parallel processing (Task 1.1)
+# Import advanced parallel processing
 try:
     from .core.parallel import (
         create_parallel_engine, ProcessingConfig, ParallelSimulationEngine,
@@ -71,62 +71,8 @@ except ImportError:
     ADVANCED_PARALLEL_AVAILABLE = False
     _parallel_simulation_worker = None
 
-# Import caching system (Task 1.4) - Updated to use unified cache
-try:
-    from .storage.unified_cache import (
-        get_unified_cache, CacheKey, CacheResult, CacheStats,
-        create_cache_key, ThreadSafeMonteCarloCache
-    )
-    UNIFIED_CACHING_AVAILABLE = True
-except ImportError:
-    UNIFIED_CACHING_AVAILABLE = False
-
-# Legacy cache imports for backward compatibility during transition
-try:
-    from .storage.cache import (
-        get_cache_manager, CacheConfig, create_cache_key as legacy_create_cache_key,
-        HandCache, BoardTextureCache, PreflopRangeCache
-    )
-    LEGACY_CACHING_AVAILABLE = True
-except ImportError:
-    LEGACY_CACHING_AVAILABLE = False
-
-# Legacy cache warming - removed as per WARMING_INTEGRATION.md
-# These imports are no longer used and the files should be deleted
-CACHE_WARMING_AVAILABLE = False
-
-# Import cache pre-population system (Task 1.2) - Updated for startup-focused approach
-try:
-    from .storage.startup_prepopulation import (
-        populate_preflop_on_startup, should_skip_startup_population, 
-        StartupPopulationConfig, PopulationResult
-    )
-    from .storage.preflop_cache import get_preflop_cache, PreflopCacheConfig
-    STARTUP_PREPOPULATION_AVAILABLE = True
-except ImportError:
-    STARTUP_PREPOPULATION_AVAILABLE = False
-
-# Import comprehensive board caching system (Phase 3)
-try:
-    from .storage.board_cache import (
-        get_board_cache, BoardScenarioCache, BoardCacheConfig,
-        BoardAnalyzer, BoardStage, BoardTexture
-    )
-    BOARD_CACHING_AVAILABLE = True
-except ImportError:
-    BOARD_CACHING_AVAILABLE = False
-
-# Legacy cache pre-population for fallback
-try:
-    from .storage.cache_prepopulation import (
-        ensure_cache_populated, PopulationConfig, PopulationStats
-    )
-    LEGACY_PREPOPULATION_AVAILABLE = True
-except ImportError:
-    LEGACY_PREPOPULATION_AVAILABLE = False
-
 # Module metadata
-__version__ = "1.5.5"
+__version__ = "1.7.0"
 __author__ = "hildolfr"
 __license__ = "MIT"
 __all__ = [
@@ -134,12 +80,10 @@ __all__ = [
     "MonteCarloSolver", "solve_poker_hand"
 ]
 
-# Worker functions moved to parallel_workers.py to avoid circular imports
 class MonteCarloSolver:
     """Monte Carlo poker solver for Texas Hold'em."""
     
-    def __init__(self, config_path: Optional[str] = None, enable_caching: bool = True,
-                 skip_cache_warming: bool = False, force_cache_regeneration: bool = False) -> None:
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """Initialize the solver with configuration settings."""
         self.config = self._load_config(config_path)
         self.evaluator = HandEvaluator()
@@ -159,7 +103,7 @@ class MonteCarloSolver:
         self._max_workers = self.config["simulation_settings"].get("max_workers", 4)  # Default to 4 workers
         self._lock = threading.Lock()
         
-        # Initialize advanced parallel processing engine (Task 1.1)
+        # Initialize advanced parallel processing engine
         self._parallel_engine = None
         if ADVANCED_PARALLEL_AVAILABLE:
             try:
@@ -181,22 +125,7 @@ class MonteCarloSolver:
                 print(f"Warning: Advanced parallel processing unavailable ({e}). Using standard threading.")
                 self._parallel_engine = None
         
-        # Initialize unified caching system (Task 1.4) - Lazy initialization to prevent deadlocks
-        self._caching_enabled = enable_caching
-        self._unified_cache = None
-        self._preflop_cache = None        # Dedicated preflop cache
-        self._board_cache = None          # Comprehensive board scenario cache
-        self._legacy_cache_config = None  # For backward compatibility
-        self._legacy_hand_cache = None    # Legacy cache fallback
-        self._legacy_board_cache = None
-        self._legacy_preflop_cache = None
-        self._population_result = None    # Startup population results
-        self._skip_cache_warming = skip_cache_warming
-        self._force_cache_regeneration = force_cache_regeneration
-        
-        # Cache will be initialized on first use to prevent deadlocks during module import
-        
-        # Smart sampling configuration (Task 3.3)
+        # Smart sampling configuration
         self._sampling_strategy = self.config.get("sampling_strategy", {})
         self._stratified_sampling_enabled = self._sampling_strategy.get("stratified_sampling", False)
         self._importance_sampling_enabled = self._sampling_strategy.get("importance_sampling", False)
@@ -229,321 +158,6 @@ class MonteCarloSolver:
                 self._thread_pool.shutdown(wait=True)
                 self._thread_pool = None
     
-    def _initialize_cache_if_needed(self) -> bool:
-        """Initialize unified cache on first use to prevent deadlocks during module import."""
-        if not self._caching_enabled or self._unified_cache is not None:
-            return self._caching_enabled
-        
-        # Try unified cache first
-        if UNIFIED_CACHING_AVAILABLE:
-            try:
-                cache_settings = self.config.get("cache_settings", {})
-                
-                # Initialize unified cache
-                self._unified_cache = get_unified_cache(
-                    max_memory_mb=cache_settings.get("max_memory_mb", 512),
-                    enable_persistence=cache_settings.get("enable_persistence", False),
-                    redis_host=cache_settings.get("redis_host", "localhost"),
-                    redis_port=cache_settings.get("redis_port", 6379),
-                    redis_db=cache_settings.get("redis_db", 0),
-                    sqlite_path=cache_settings.get("sqlite_path", "poker_knight_unified_cache.db")
-                )
-                
-                # Initialize dedicated preflop cache
-                if STARTUP_PREPOPULATION_AVAILABLE:
-                    preflop_config = PreflopCacheConfig(
-                        enable_preflop_cache=cache_settings.get("enable_preflop_cache", True),
-                        max_memory_mb=cache_settings.get("preflop_max_memory_mb", 64),
-                        enable_persistence=cache_settings.get("enable_persistence", False),
-                        preload_on_startup=cache_settings.get("preload_on_startup", True)
-                    )
-                    
-                    self._preflop_cache = get_preflop_cache(preflop_config, self._unified_cache)
-                    
-                    # Perform startup pre-population if needed and enabled
-                    if (preflop_config.preload_on_startup and 
-                        not self._skip_cache_warming and 
-                        not self._force_cache_regeneration):
-                        
-                        should_skip, reason = should_skip_startup_population(self._preflop_cache)
-                        
-                        if not should_skip:
-                            print("Preflop cache will populate priority hands on first use")
-                            # Actually trigger the prepopulation now
-                            try:
-                                from .storage.startup_prepopulation import StartupCachePopulator
-                                
-                                # Determine prepopulation mode
-                                if self._force_cache_regeneration:
-                                    print("PokerKnight: Force regenerating cache with comprehensive population...")
-                                    mode = 'comprehensive'
-                                    time_limit = 180.0  # 3 minutes for full population
-                                else:
-                                    print("PokerKnight: Populating priority hands for faster analysis...")
-                                    mode = 'quick'
-                                    time_limit = 30.0  # 30 seconds for priority hands
-                                
-                                # Use startup populator for both modes (it uses our cache instances)
-                                populator = StartupCachePopulator(
-                                    unified_cache=self._unified_cache,
-                                    preflop_cache=self._preflop_cache
-                                )
-                                
-                                # Update config based on mode
-                                if mode == 'comprehensive':
-                                    # Comprehensive mode: all hands, more opponents, longer time
-                                    populator.config.max_population_time_seconds = int(time_limit)
-                                    populator.config.priority_hands_only = False
-                                    populator.config.hand_categories = ["premium", "strong", "medium", "weak"]
-                                    populator.config.max_opponents = 6
-                                    populator.config.simulation_modes = ["fast", "default", "precision"]
-                                else:
-                                    # Quick mode: priority hands only
-                                    populator.config.max_population_time_seconds = int(time_limit)
-                                    populator.config.priority_hands_only = True
-                                    populator.config.hand_categories = ["premium", "strong"]
-                                    populator.config.max_opponents = 4
-                                    populator.config.simulation_modes = ["fast", "default"]
-                                
-                                # Use instance method as callback
-                                def simulation_callback(hand_notation: str, num_opponents: int, simulation_mode: str):
-                                    """Callback to run actual simulations during prepopulation."""
-                                    # Convert hand notation to card list
-                                    # Hand notation is like "AA", "AKs", "T9o"
-                                    # Parse hand notation
-                                    if len(hand_notation) == 2:
-                                        # Pocket pair like "AA"
-                                        rank = hand_notation[0]
-                                        # Convert T to 10
-                                        if rank == 'T':
-                                            rank = '10'
-                                        hero_hand = [
-                                            f"{rank}♠",
-                                            f"{rank}♥"
-                                        ]
-                                    elif len(hand_notation) == 3:
-                                        # Non-pair like "AKs" or "AKo"
-                                        rank1 = hand_notation[0]
-                                        rank2 = hand_notation[1]
-                                        suited = hand_notation[2] == 's'
-                                        
-                                        # Convert T to 10
-                                        if rank1 == 'T':
-                                            rank1 = '10'
-                                        if rank2 == 'T':
-                                            rank2 = '10'
-                                        
-                                        if suited:
-                                            hero_hand = [
-                                                f"{rank1}♠",
-                                                f"{rank2}♠"
-                                            ]
-                                        else:
-                                            hero_hand = [
-                                                f"{rank1}♠",
-                                                f"{rank2}♥"
-                                            ]
-                                    else:
-                                        print(f"Warning: Unknown hand notation: {hand_notation}")
-                                        return None
-                                    
-                                    # Run simulation
-                                    result = self.analyze_hand(
-                                        hero_hand=hero_hand,
-                                        num_opponents=num_opponents,
-                                        board_cards=[],  # Preflop only
-                                        simulation_mode=simulation_mode
-                                    )
-                                    
-                                    return result
-                                
-                                # Run prepopulation
-                                self._population_result = populator.populate_startup_cache(simulation_callback)
-                                
-                                print(f"PokerKnight: Populated {self._population_result.scenarios_populated} scenarios "
-                                      f"in {self._population_result.population_time_seconds:.1f}s")
-                                
-                            except Exception as e:
-                                # Don't fail if prepopulation fails
-                                print(f"PokerKnight: Cache prepopulation failed (continuing): {e}")
-                                import traceback
-                                traceback.print_exc()
-                        else:
-                            print(f"Skipping preflop population: {reason}")
-                
-                # Initialize comprehensive board cache (Phase 3)
-                if BOARD_CACHING_AVAILABLE:
-                    board_config = BoardCacheConfig(
-                        enable_board_cache=cache_settings.get("enable_board_cache", True),
-                        max_memory_mb=cache_settings.get("board_max_memory_mb", 256),
-                        enable_persistence=cache_settings.get("enable_persistence", False),
-                        cache_preflop=True,
-                        cache_flop=True,
-                        cache_turn=True,
-                        cache_river=True
-                    )
-                    
-                    self._board_cache = get_board_cache(board_config, self._unified_cache)
-                    print("Comprehensive board scenario cache initialized")
-                
-                print("Unified cache system initialized successfully!")
-                return True
-                
-            except Exception as e:
-                print(f"Warning: Unified cache initialization failed ({e}). Falling back to legacy cache.")
-                self._unified_cache = None
-                self._preflop_cache = None
-        
-        # Fall back to legacy cache system
-        if LEGACY_CACHING_AVAILABLE:
-            try:
-                # Initialize legacy cache configuration
-                cache_settings = self.config.get("cache_settings", {})
-                self._legacy_cache_config = CacheConfig(
-                    max_memory_mb=cache_settings.get("max_memory_mb", 512),
-                    hand_cache_size=cache_settings.get("hand_cache_size", 10000),
-                    board_cache_size=cache_settings.get("board_cache_size", 5000),
-                    enable_persistence=cache_settings.get("enable_persistence", False)
-                )
-                
-                # Get legacy cache instances
-                self._legacy_hand_cache, self._legacy_board_cache, self._legacy_preflop_cache = get_cache_manager(self._legacy_cache_config)
-                
-                print("Legacy cache system initialized as fallback.")
-                return True
-                
-            except Exception as e:
-                print(f"Warning: Legacy cache system also failed ({e}). Running without cache.")
-                self._caching_enabled = False
-                return False
-        else:
-            print("Warning: No caching system available. Running without cache.")
-            self._caching_enabled = False
-            return False
-    
-    def enable_caching(self, enable: bool = True) -> None:
-        """Enable or disable caching for this solver instance."""
-        self._caching_enabled = enable
-        # Actual initialization happens lazily on first use
-    
-    def get_cache_stats(self) -> Optional[Dict[str, Any]]:
-        """Get cache statistics for monitoring and debugging."""
-        if not self._caching_enabled or not self._initialize_cache_if_needed():
-            return None
-        
-        try:
-            # Get unified cache stats if available
-            if self._unified_cache:
-                stats = self._unified_cache.get_stats()
-                result = {
-                    'caching_enabled': True,
-                    'cache_type': 'unified',
-                    'unified_cache': {
-                        'total_requests': stats.total_requests,
-                        'cache_hits': stats.cache_hits,
-                        'cache_misses': stats.cache_misses,
-                        'cache_size': stats.cache_size,
-                        'hit_rate': stats.hit_rate,
-                        'memory_usage_mb': stats.memory_usage_mb
-                    }
-                }
-                
-                # Add board cache stats if available
-                if self._board_cache:
-                    board_stats = self._board_cache.get_cache_stats()
-                    result['board_cache'] = {
-                        'total_requests': board_stats.get('total_requests', 0),
-                        'cache_hits': board_stats.get('cache_hits', 0),
-                        'cache_misses': board_stats.get('cache_misses', 0),
-                        'hit_rate': board_stats.get('hit_rate', 0.0)
-                    }
-                
-                # Add preflop cache stats if available
-                if self._preflop_cache:
-                    if hasattr(self._preflop_cache, 'stats'):
-                        # New preflop cache with stats attribute
-                        preflop_stats = self._preflop_cache.stats
-                        result['preflop_cache'] = {
-                            'total_requests': preflop_stats.cache_hits + preflop_stats.cache_misses,
-                            'cache_hits': preflop_stats.cache_hits,
-                            'cache_misses': preflop_stats.cache_misses,
-                            'cached_combinations': preflop_stats.cached_combinations,
-                            'coverage_percentage': preflop_stats.coverage_percentage
-                        }
-                
-                # Aggregate total requests and hits across all caches
-                total_requests = result['unified_cache']['total_requests']
-                total_hits = result['unified_cache']['cache_hits']
-                
-                if 'board_cache' in result:
-                    total_requests += result['board_cache']['total_requests']
-                    total_hits += result['board_cache']['cache_hits']
-                
-                if 'preflop_cache' in result:
-                    total_requests += result['preflop_cache']['total_requests']
-                    total_hits += result['preflop_cache']['cache_hits']
-                
-                result['aggregate_stats'] = {
-                    'total_requests': total_requests,
-                    'total_hits': total_hits,
-                    'overall_hit_rate': total_hits / total_requests if total_requests > 0 else 0.0
-                }
-                
-                return result
-            
-            # Fall back to legacy cache stats
-            elif self._legacy_hand_cache:
-                hand_stats = self._legacy_hand_cache.get_stats()
-                preflop_stats = self._legacy_preflop_cache.get_stats()
-                preflop_coverage = self._legacy_preflop_cache.get_cache_coverage()
-                
-                return {
-                    'caching_enabled': True,
-                    'cache_type': 'legacy',
-                    'hand_cache': {
-                        'total_requests': hand_stats.total_requests,
-                        'cache_hits': hand_stats.cache_hits,
-                        'cache_misses': hand_stats.cache_misses,
-                        'cache_size': hand_stats.cache_size,
-                        'hit_rate': hand_stats.hit_rate,
-                        'memory_usage_mb': hand_stats.memory_usage_mb
-                    },
-                    'preflop_cache': {
-                        'total_requests': preflop_stats.get('total_requests', 0),
-                        'cache_hits': preflop_stats.get('cache_hits', 0),
-                        'cached_combinations': preflop_coverage.get('cached_combinations', 0),
-                        'coverage_percentage': preflop_coverage.get('coverage_percentage', 0.0)
-                    }
-                }
-            
-            return {'error': 'No cache system available'}
-            
-        except Exception as e:
-            return {'error': f"Failed to get cache stats: {e}"}
-    
-    def _normalize_hand_to_notation(self, hero_hand: List[str]) -> Optional[str]:
-        """Normalize hero hand to standard notation (e.g., AKs, QQ, 72o)."""
-        try:
-            from .storage.unified_cache import CacheKeyNormalizer
-            normalized = CacheKeyNormalizer.normalize_hand(hero_hand)
-            
-            # Convert normalized format to standard notation
-            if "_" in normalized:
-                # Suited/offsuit hand like "AK_suited" -> "AKs"
-                hand_part, suit_part = normalized.split("_")
-                if suit_part == "suited":
-                    return f"{hand_part}s"
-                elif suit_part == "offsuit":
-                    return f"{hand_part}o"
-            else:
-                # Pocket pair like "QQ"
-                return normalized
-            
-            return None
-            
-        except Exception:
-            return None
-    
     def _get_thread_pool(self) -> ThreadPoolExecutor:
         """Get or create the persistent thread pool with thread-safe access."""
         with self._lock:
@@ -551,18 +165,17 @@ class MonteCarloSolver:
                 self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
             return self._thread_pool
     
-    
     def analyze_hand(self, 
                     hero_hand: List[str], 
                     num_opponents: int,
                     board_cards: Optional[List[str]] = None,
                     simulation_mode: str = "default",
-                    # Multi-way pot analysis parameters (Task 7.2)
+                    # Multi-way pot analysis parameters
                     hero_position: Optional[str] = None,      # "early", "middle", "late", "button", "sb", "bb"
                     stack_sizes: Optional[List[int]] = None,  # [hero_stack, opp1_stack, opp2_stack, ...]
                     pot_size: Optional[int] = None,           # Current pot size for SPR calculation
                     tournament_context: Optional[Dict[str, Any]] = None,  # ICM context
-                    # Intelligent optimization (Task 8.1)
+                    # Intelligent optimization
                     intelligent_optimization: bool = False,   # Enable intelligent scenario analysis
                     stack_depth: float = 100.0               # Stack depth in big blinds for optimization
                     ) -> SimulationResult:
@@ -570,7 +183,7 @@ class MonteCarloSolver:
         Analyze a poker hand using Monte Carlo simulation with optional intelligent optimization.
         
         Args:
-            hero_hand: List of hero's hole cards (e.g., ["A♠️", "K♥️"])
+            hero_hand: List of hero's hole cards (e.g., ["A♠", "K♥"])
             num_opponents: Number of opponents (1-8)
             board_cards: Community cards (optional, 3-5 cards)
             simulation_mode: "fast", "default", or "precision"
@@ -608,188 +221,7 @@ class MonteCarloSolver:
         if len(all_cards) != len(set(all_cards)):
             raise ValueError("Duplicate cards detected in hero hand and/or board cards")
         
-        # Cache lookup (Task 1.3) - Check unified cache before running expensive simulations
-        cache_key = None
-        cached_result = None
-        was_cached = False
-        
-        if self._caching_enabled and self._initialize_cache_if_needed():
-            try:
-                # Create normalized cache key (eliminates dynamic factors like position/stack)
-                cache_key = create_cache_key(
-                    hero_hand=hero_hand,
-                    num_opponents=num_opponents,
-                    board_cards=board_cards,
-                    simulation_mode=simulation_mode
-                )
-                
-                # Try comprehensive board cache first (covers all scenarios)
-                if self._board_cache:
-                    try:
-                        cached_result_obj = self._board_cache.get_board_result(
-                            hero_hand, num_opponents, board_cards, simulation_mode
-                        )
-                        if cached_result_obj:
-                            # Convert CacheResult back to dict format for compatibility
-                            cached_result = {
-                                'win_probability': cached_result_obj.win_probability,
-                                'tie_probability': cached_result_obj.tie_probability,
-                                'loss_probability': cached_result_obj.loss_probability,
-                                'simulations_run': cached_result_obj.simulations_run,
-                                'execution_time_ms': cached_result_obj.execution_time_ms,
-                                'confidence_interval': cached_result_obj.confidence_interval,
-                                'hand_category_frequencies': cached_result_obj.hand_categories,
-                                **cached_result_obj.metadata
-                            }
-                            was_cached = True
-                    except Exception as e:
-                        print(f"Warning: Board cache lookup failed: {e}")
-                
-                # Fallback to preflop cache for preflop scenarios if board cache missed
-                if not was_cached and self._preflop_cache and not board_cards:
-                    try:
-                        from .storage.preflop_cache import PreflopHandGenerator
-                        # Normalize hand to notation
-                        hand_notation = self._normalize_hand_to_notation(hero_hand)
-                        if hand_notation:
-                            cached_result_obj = self._preflop_cache.get_preflop_result(
-                                hand_notation, num_opponents, simulation_mode
-                            )
-                            if cached_result_obj:
-                                # Convert CacheResult back to dict format for compatibility
-                                cached_result = {
-                                    'win_probability': cached_result_obj.win_probability,
-                                    'tie_probability': cached_result_obj.tie_probability,
-                                    'loss_probability': cached_result_obj.loss_probability,
-                                    'simulations_run': cached_result_obj.simulations_run,
-                                    'execution_time_ms': cached_result_obj.execution_time_ms,
-                                    'confidence_interval': cached_result_obj.confidence_interval,
-                                    'hand_category_frequencies': cached_result_obj.hand_categories,
-                                    **cached_result_obj.metadata
-                                }
-                                was_cached = True
-                    except Exception as e:
-                        print(f"Warning: Preflop cache lookup failed: {e}")
-                
-                # Try unified cache if not cached in specialized caches
-                if not was_cached and self._unified_cache:
-                    cached_result_obj = self._unified_cache.get(cache_key)
-                    if cached_result_obj:
-                        # Convert CacheResult back to dict format for compatibility
-                        cached_result = {
-                            'win_probability': cached_result_obj.win_probability,
-                            'tie_probability': cached_result_obj.tie_probability,
-                            'loss_probability': cached_result_obj.loss_probability,
-                            'simulations_run': cached_result_obj.simulations_run,
-                            'execution_time_ms': cached_result_obj.execution_time_ms,
-                            'confidence_interval': cached_result_obj.confidence_interval,
-                            'hand_category_frequencies': cached_result_obj.hand_categories,
-                            **cached_result_obj.metadata
-                        }
-                        was_cached = True
-                
-                # Fall back to legacy cache
-                elif self._legacy_hand_cache:
-                    legacy_cache_key = legacy_create_cache_key(
-                        hero_hand=hero_hand,
-                        num_opponents=num_opponents,
-                        board_cards=board_cards,
-                        simulation_mode=simulation_mode,
-                        config=self._legacy_cache_config
-                    )
-                    cached_result = self._legacy_hand_cache.get_result(legacy_cache_key)
-                    if cached_result:
-                        was_cached = True
-                        
-            except Exception as e:
-                print(f"Warning: Cache lookup failed ({e}). Running simulation without cache.")
-        
-        # If we have a cached result, check if it has required data before returning
-        if cached_result and was_cached:
-            cache_execution_time = (time.time() - start_time) * 1000
-            
-            # Check if hand categories are requested but missing from cached result
-            need_hand_categories = self.config["output_settings"]["include_hand_categories"]
-            cached_hand_categories = cached_result.get('hand_category_frequencies')
-            
-            # If hand categories are needed but missing or empty, invalidate cache hit
-            if need_hand_categories and (not cached_hand_categories or len(cached_hand_categories) == 0):
-                cached_result = None
-                was_cached = False
-            else:
-                # Create result from cached data
-                decimal_precision = self.config["output_settings"]["decimal_precision"]
-                
-                # Extract probabilities for multi-way analysis
-                cached_win_prob = round(cached_result['win_probability'], decimal_precision)
-                cached_tie_prob = round(cached_result.get('tie_probability', 0.0), decimal_precision)
-                cached_loss_prob = round(cached_result.get('loss_probability', 0.0), decimal_precision)
-                
-                # Perform multi-way analysis if needed (even for cached results)
-                position_aware_equity = None
-                multi_way_statistics = None
-                fold_equity_estimates = None
-                coordination_effects = None
-                icm_equity = None
-                bubble_factor = None
-                stack_to_pot_ratio = None
-                tournament_pressure = None
-                defense_frequencies = None
-                bluff_catching_frequency = None
-                range_coordination_score = None
-                
-                if num_opponents >= 3 or hero_position or stack_sizes or tournament_context:
-                    multi_way_analysis = self.multiway_analyzer.calculate_multiway_statistics(
-                        hero_hand, num_opponents, board_cards, 
-                        cached_win_prob, cached_tie_prob, cached_loss_prob,
-                        hero_position, stack_sizes, pot_size, tournament_context
-                    )
-                    
-                    position_aware_equity = multi_way_analysis.get('position_aware_equity')
-                    multi_way_statistics = multi_way_analysis.get('multi_way_statistics') 
-                    fold_equity_estimates = multi_way_analysis.get('fold_equity_estimates')
-                    coordination_effects = multi_way_analysis.get('coordination_effects')
-                    icm_equity = multi_way_analysis.get('icm_equity')
-                    bubble_factor = multi_way_analysis.get('bubble_factor')
-                    stack_to_pot_ratio = multi_way_analysis.get('stack_to_pot_ratio')
-                    tournament_pressure = multi_way_analysis.get('tournament_pressure')
-                    defense_frequencies = multi_way_analysis.get('defense_frequencies')
-                    bluff_catching_frequency = multi_way_analysis.get('bluff_catching_frequency')
-                    range_coordination_score = multi_way_analysis.get('range_coordination_score')
-                
-                return SimulationResult(
-                    win_probability=cached_win_prob,
-                    tie_probability=cached_tie_prob,
-                    loss_probability=cached_loss_prob,
-                    simulations_run=cached_result.get('simulations_run', 0),
-                    execution_time_ms=cache_execution_time,
-                    confidence_interval=cached_result.get('confidence_interval'),
-                    hand_category_frequencies=cached_hand_categories,
-                convergence_achieved=cached_result.get('convergence_achieved'),
-                geweke_statistic=cached_result.get('geweke_statistic'),
-                effective_sample_size=cached_result.get('effective_sample_size'),
-                convergence_efficiency=cached_result.get('convergence_efficiency'),
-                stopped_early=cached_result.get('stopped_early'),
-                convergence_details=cached_result.get('convergence_details'),
-                adaptive_timeout_used=cached_result.get('adaptive_timeout_used'),
-                final_timeout_ms=cached_result.get('final_timeout_ms'),
-                target_accuracy_achieved=cached_result.get('target_accuracy_achieved'),
-                final_margin_of_error=cached_result.get('final_margin_of_error'),
-                position_aware_equity=position_aware_equity,
-                multi_way_statistics=multi_way_statistics,
-                fold_equity_estimates=fold_equity_estimates,
-                coordination_effects=coordination_effects,
-                icm_equity=icm_equity,
-                bubble_factor=bubble_factor,
-                stack_to_pot_ratio=stack_to_pot_ratio,
-                tournament_pressure=tournament_pressure,
-                defense_frequencies=defense_frequencies,
-                bluff_catching_frequency=bluff_catching_frequency,
-                range_coordination_score=range_coordination_score,
-                optimization_data=cached_result.get('optimization_data')
-            )
-        
-        # Task 8.1: Intelligent Simulation Optimization
+        # Intelligent Simulation Optimization
         optimization_data = None
         if intelligent_optimization:
             try:
@@ -871,7 +303,7 @@ class MonteCarloSolver:
         use_parallel = (self.config["simulation_settings"].get("parallel_processing", False) 
                        and num_simulations >= parallel_threshold)
         
-        # Advanced parallel processing decision (Task 1.1)
+        # Advanced parallel processing decision
         use_advanced_parallel = (
             self._parallel_engine is not None and 
             use_parallel and 
@@ -1000,7 +432,7 @@ class MonteCarloSolver:
         stopped_early = None
         convergence_details = None
         
-        # Enhanced early confidence stopping fields (Task 3.2)
+        # Enhanced early confidence stopping fields
         adaptive_timeout_used = None
         final_timeout_ms = None
         target_accuracy_achieved = None
@@ -1024,7 +456,7 @@ class MonteCarloSolver:
             if effective_sample_size and total_sims > 0:
                 convergence_efficiency = effective_sample_size / total_sims
         
-        # Multi-way pot analysis (Task 7.2)
+        # Multi-way pot analysis
         position_aware_equity = None
         multi_way_statistics = None
         fold_equity_estimates = None
@@ -1056,117 +488,6 @@ class MonteCarloSolver:
             bluff_catching_frequency = multi_way_analysis.get('bluff_catching_frequency')
             range_coordination_score = multi_way_analysis.get('range_coordination_score')
         
-        # Cache the result for future queries (Task 1.3) - Store deterministic results only
-        if self._caching_enabled and cache_key:
-            try:
-                decimal_precision = self.config["output_settings"]["decimal_precision"]
-                
-                # Prepare core Monte Carlo results (exclude dynamic contextual data)
-                cache_metadata = {
-                    'convergence_achieved': convergence_achieved,
-                    'geweke_statistic': geweke_statistic,
-                    'effective_sample_size': effective_sample_size,
-                    'convergence_efficiency': convergence_efficiency,
-                    'stopped_early': stopped_early,
-                    'convergence_details': convergence_details,
-                    'adaptive_timeout_used': adaptive_timeout_used,
-                    'final_timeout_ms': final_timeout_ms,
-                    'target_accuracy_achieved': target_accuracy_achieved,
-                    'final_margin_of_error': final_margin_of_error
-                    # Note: Excluded dynamic factors like position_aware_equity, 
-                    # tournament context, etc. as per refactor plan
-                }
-                
-                # Store in comprehensive board cache (covers all scenarios)
-                if self._board_cache:
-                    try:
-                        cache_result = CacheResult(
-                            win_probability=round(win_prob, decimal_precision),
-                            tie_probability=round(tie_prob, decimal_precision),
-                            loss_probability=round(loss_prob, decimal_precision),
-                            confidence_interval=confidence_interval,
-                            simulations_run=total_sims,
-                            execution_time_ms=execution_time,
-                            hand_categories=hand_category_frequencies or {},
-                            metadata=cache_metadata,
-                            timestamp=time.time()
-                        )
-                        
-                        self._board_cache.store_board_result(
-                            hero_hand, num_opponents, cache_result, board_cards, simulation_mode
-                        )
-                    except Exception as e:
-                        print(f"Warning: Board cache storage failed: {e}")
-                
-                # Store in preflop cache for preflop scenarios (redundant but ensures coverage)
-                if self._preflop_cache and not board_cards:  # Preflop scenario
-                    try:
-                        hand_notation = self._normalize_hand_to_notation(hero_hand)
-                        if hand_notation:
-                            cache_result = CacheResult(
-                                win_probability=round(win_prob, decimal_precision),
-                                tie_probability=round(tie_prob, decimal_precision),
-                                loss_probability=round(loss_prob, decimal_precision),
-                                confidence_interval=confidence_interval,
-                                simulations_run=total_sims,
-                                execution_time_ms=execution_time,
-                                hand_categories=hand_category_frequencies or {},
-                                metadata=cache_metadata,
-                                timestamp=time.time()
-                            )
-                            
-                            self._preflop_cache.store_preflop_result(
-                                hand_notation, num_opponents, cache_result, simulation_mode
-                            )
-                    except Exception as e:
-                        print(f"Warning: Preflop cache storage failed: {e}")
-                
-                # Store in unified cache (backup storage for all scenarios)
-                if self._unified_cache:
-                    cache_result = CacheResult(
-                        win_probability=round(win_prob, decimal_precision),
-                        tie_probability=round(tie_prob, decimal_precision),
-                        loss_probability=round(loss_prob, decimal_precision),
-                        confidence_interval=confidence_interval,
-                        simulations_run=total_sims,
-                        execution_time_ms=execution_time,
-                        hand_categories=hand_category_frequencies or {},
-                        metadata=cache_metadata,
-                        timestamp=time.time()
-                    )
-                    
-                    self._unified_cache.store(cache_key, cache_result)
-                
-                # Fall back to legacy cache
-                elif self._legacy_hand_cache:
-                    legacy_cache_data = {
-                        'win_probability': round(win_prob, decimal_precision),
-                        'tie_probability': round(tie_prob, decimal_precision),
-                        'loss_probability': round(loss_prob, decimal_precision),
-                        'simulations_run': total_sims,
-                        'execution_time_ms': execution_time,
-                        'confidence_interval': confidence_interval,
-                        'hand_category_frequencies': hand_category_frequencies,
-                        **cache_metadata
-                    }
-                    
-                    # Create legacy cache key
-                    legacy_cache_key = legacy_create_cache_key(
-                        hero_hand=hero_hand,
-                        num_opponents=num_opponents,
-                        board_cards=board_cards,
-                        simulation_mode=simulation_mode,
-                        config=self._legacy_cache_config
-                    )
-                    
-                    self._legacy_hand_cache.store_result(legacy_cache_key, legacy_cache_data)
-                    
-            except Exception as e:
-                print(f"Warning: Cache storage failed ({e}). Result computed but not cached.")
-        
-        # Note: Cache pre-population replaces adaptive learning - scenarios are pre-computed
-        # during solver initialization for maximum performance
-        
         return SimulationResult(
             win_probability=round(win_prob, self.config["output_settings"]["decimal_precision"]),
             tie_probability=round(tie_prob, self.config["output_settings"]["decimal_precision"]),
@@ -1185,7 +506,7 @@ class MonteCarloSolver:
             final_timeout_ms=final_timeout_ms,
             target_accuracy_achieved=target_accuracy_achieved,
             final_margin_of_error=final_margin_of_error,
-            # Multi-way pot statistics (Task 7.2)
+            # Multi-way pot statistics
             position_aware_equity=position_aware_equity,
             multi_way_statistics=multi_way_statistics,
             fold_equity_estimates=fold_equity_estimates,
@@ -1261,7 +582,7 @@ _global_solver: Optional[MonteCarloSolver] = None
 _solver_lock = threading.Lock()
 
 def get_global_solver() -> MonteCarloSolver:
-    """Get or create global solver instance to maintain cache across calls."""
+    """Get or create global solver instance for performance."""
     global _global_solver
     with _solver_lock:
         if _global_solver is None:
@@ -1272,7 +593,7 @@ def solve_poker_hand(hero_hand: List[str],
                     num_opponents: int,
                     board_cards: Optional[List[str]] = None,
                     simulation_mode: str = "default",
-                    # Multi-way pot analysis parameters (Task 7.2) - optional for backward compatibility
+                    # Multi-way pot analysis parameters - optional for backward compatibility
                     hero_position: Optional[str] = None,
                     stack_sizes: Optional[List[int]] = None,
                     pot_size: Optional[int] = None,
@@ -1281,7 +602,7 @@ def solve_poker_hand(hero_hand: List[str],
     Convenience function to analyze a poker hand with optional multi-way pot analysis.
     
     Args:
-        hero_hand: List of 2 card strings (e.g., ['A♠️', 'K♥️'])
+        hero_hand: List of 2 card strings (e.g., ['A♠', 'K♥'])
         num_opponents: Number of opponents (1-6)
         board_cards: Optional board cards (3-5 cards)
         simulation_mode: "fast", "default", or "precision"
@@ -1297,4 +618,4 @@ def solve_poker_hand(hero_hand: List[str],
     return solver.analyze_hand(
         hero_hand, num_opponents, board_cards, simulation_mode,
         hero_position, stack_sizes, pot_size, tournament_context
-    ) 
+    )

@@ -1,22 +1,4 @@
-
-# Safe cache configuration that avoids deadlocks
-def create_safe_cache_config():
-    """Create a cache configuration that avoids common deadlock issues."""
-    try:
-        from poker_knight.storage.cache import CacheConfig
-        return CacheConfig(
-            max_memory_mb=64,
-            hand_cache_size=100,
-            enable_persistence=False,  # Disable Redis for safety
-            enable_compression=False,  # Disable compression
-            redis_host='localhost',
-            redis_port=6379,
-            redis_timeout=5.0,  # Short timeout
-            connection_pool_size=1  # Minimal pool
-        )
-    except ImportError:
-        return None
-
+# Safe solver configuration that avoids deadlocks
 def create_safe_solver(**kwargs):
     """Create a solver with safe settings that avoid deadlocks."""
     try:
@@ -37,8 +19,7 @@ def create_safe_solver(**kwargs):
         }
         
         return MonteCarloSolver(
-            enable_caching=False,  # Disable caching
-            **kwargs
+            **kwargs  # Caching removed in v1.7.0
         )
     except Exception as e:
         print(f"Failed to create safe solver: {e}")
