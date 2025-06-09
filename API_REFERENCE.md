@@ -19,6 +19,7 @@ Convenience function for comprehensive poker hand analysis including advanced to
 - `stack_sizes`: Optional list of stack sizes [hero, opp1, opp2, ...] for ICM analysis
 - `pot_size`: Current pot size for stack-to-pot ratio calculations
 - `tournament_context`: Dictionary with ICM settings (e.g., `{'bubble_factor': 1.2}`)
+  - Note: `bubble_factor` is now automatically calculated if not provided, based on stack sizes, player count, and tournament dynamics
 
 **Returns:** `SimulationResult` object with comprehensive analysis
 
@@ -41,7 +42,7 @@ print(f"AKQJ board: {result.win_probability:.1%}")
 
 **Advanced Tournament Example:**
 ```python
-# ICM-aware tournament analysis
+# ICM-aware tournament analysis with manual bubble factor
 result = solve_poker_hand(
     ['A♠', 'K♠'],                    # Hero hand
     2,                                 # Number of opponents
@@ -51,7 +52,7 @@ result = solve_poker_hand(
     stack_sizes=[15000, 8000, 12000],  # Stack sizes for ICM
     pot_size=2000,                     # Current pot
     tournament_context={               # ICM context
-        'bubble_factor': 1.3,          # Bubble pressure
+        'bubble_factor': 1.3,          # Bubble pressure (optional - auto-calculated if omitted)
         'payout_structure': [0.5, 0.3, 0.2]  # Prize distribution
     }
 )
@@ -59,6 +60,30 @@ result = solve_poker_hand(
 print(f"Win probability: {result.win_probability:.1%}")
 print(f"ICM equity: {result.icm_equity:.1%}")
 print(f"Position advantage: {result.position_aware_equity['position_advantage']:.3f}")
+```
+
+**Automatic Bubble Factor Example:**
+```python
+# Let the solver automatically calculate bubble factor based on tournament dynamics
+result = solve_poker_hand(
+    ['J♠', 'J♥'],                    # Pocket jacks
+    3,                                 # 3 opponents (4 players total - near bubble)
+    [],                                # Pre-flop decision
+    simulation_mode="default",
+    stack_sizes=[5000, 18000, 3000, 2000],  # Hero is medium stack
+    pot_size=1000                      # ~500 BB pot
+    # Note: No tournament_context needed - bubble_factor auto-calculated
+)
+
+print(f"Win probability: {result.win_probability:.1%}")
+print(f"ICM equity: {result.icm_equity:.1%}")
+print(f"Auto bubble factor: {result.bubble_factor:.2f}")  # Automatically calculated!
+
+# The bubble_factor is automatically determined based on:
+# - Hero's stack relative to average (5000 vs 7000 avg)
+# - Estimated big blinds remaining (~10 BBs)
+# - Number of players (4 players = likely near bubble)
+# - Stack variance (high variance indicates bubble dynamics)
 ```
 
 ## Classes

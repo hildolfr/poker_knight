@@ -5,6 +5,22 @@ All notable changes to Poker Knight will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ✨ Added
+- **Automatic Bubble Factor Calculation**: Tournament ICM pressure is now automatically calculated based on:
+  - Stack depth relative to average
+  - Number of big blinds remaining
+  - Number of players (proximity to bubble)
+  - Stack distribution variance
+- Bubble factor ranges from 1.0 (no pressure) to 3.0 (extreme pressure)
+- Manual override still available via `tournament_context` parameter
+- Transparent calculation metadata stored for debugging
+
+### 🔧 Changed
+- Updated `_calculate_icm_equity` to support automatic bubble factor when not explicitly provided
+- Enhanced tournament play intelligence without breaking existing API
+
 ## [1.6.0] - 2025-02-06
 
 ### 🚀 Intelligent Cache Prepopulation System

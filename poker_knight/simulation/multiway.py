@@ -236,11 +236,21 @@ class MultiwayAnalyzer:
         
         # Calculate ICM equity
         if tournament_context or (stack_sizes and pot_size):
-            # Get bubble factor from tournament context
+            # Automatic bubble factor calculation
             bubble_factor = 1.0
-            if tournament_context:
+            
+            # First check if explicitly provided in tournament context
+            if tournament_context and 'bubble_factor' in tournament_context:
                 bubble_factor = tournament_context.get('bubble_factor', 1.0)
-                icm_analysis['bubble_factor'] = bubble_factor
+            
+            # Otherwise, calculate automatically based on ICM indicators
+            elif stack_sizes and pot_size and len(stack_sizes) >= 2:
+                bubble_factor = self._calculate_automatic_bubble_factor(
+                    stack_sizes, pot_size, hero_chip_percentage if 'tournament_pressure' in icm_analysis else None
+                )
+            
+            # Always include bubble_factor in ICM analysis when we have tournament data
+            icm_analysis['bubble_factor'] = bubble_factor
             
             # Calculate ICM equity (simplified model)
             base_icm_equity = win_prob
@@ -264,3 +274,89 @@ class MultiwayAnalyzer:
             icm_analysis['icm_equity'] = max(0.0, min(1.0, base_icm_equity))
         
         return icm_analysis
+    
+    def _calculate_automatic_bubble_factor(self, stack_sizes: List[int], pot_size: int, 
+                                         hero_chip_percentage: Optional[float] = None) -> float:
+        """
+        Automatically calculate bubble factor based on tournament indicators.
+        
+        Returns a value between 1.0 and 3.0:
+        - 1.0: No bubble pressure (early tournament or cash game dynamics)
+        - 1.0-1.5: Light pressure (mid-tournament, comfortable stacks)
+        - 1.5-2.0: Moderate pressure (approaching bubble or pay jumps)
+        - 2.0-2.5: High pressure (on the bubble, significant pay jumps)
+        - 2.5-3.0: Extreme pressure (bubble with very short stack)
+        """
+        if not stack_sizes or len(stack_sizes) < 2:
+            return 1.0
+        
+        hero_stack = stack_sizes[0]
+        total_chips = sum(stack_sizes)
+        avg_stack = total_chips / len(stack_sizes)
+        num_players = len(stack_sizes)
+        
+        # Factor 1: Stack depth relative to average
+        stack_depth_ratio = hero_stack / avg_stack if avg_stack > 0 else 1.0
+        
+        # Factor 2: Stack pressure (how many big blinds)
+        # Assuming pot_size represents roughly 1.5-2.5 BBs in a typical raise pot
+        estimated_bb = pot_size / 2.0  # Rough estimate
+        hero_bb_count = hero_stack / estimated_bb if estimated_bb > 0 else float('inf')
+        
+        # Factor 3: Number of players (more players = closer to bubble typically)
+        # Assuming 9-10 players is full table, 4-6 is approaching bubble
+        player_factor = max(0, (10 - num_players) / 6.0)  # 0 to 1 scale
+        
+        # Factor 4: Stack distribution variance (high variance = bubble dynamics)
+        if len(stack_sizes) > 1:
+            # Calculate variance without numpy dependency
+            mean = sum(stack_sizes) / len(stack_sizes)
+            variance = sum((x - mean) ** 2 for x in stack_sizes) / len(stack_sizes)
+            stack_variance = (variance ** 0.5) / mean if mean > 0 else 0
+        else:
+            stack_variance = 0
+        
+        # Calculate bubble factor components
+        bubble_components = []
+        
+        # Short stack pressure (less than 20 BBs)
+        if hero_bb_count < 20:
+            short_stack_pressure = min(1.0, (20 - hero_bb_count) / 15.0)
+            bubble_components.append(1.0 + short_stack_pressure * 0.8)
+        
+        # Below average stack pressure
+        if stack_depth_ratio < 0.7:
+            below_avg_pressure = (0.7 - stack_depth_ratio) / 0.5
+            bubble_components.append(1.0 + below_avg_pressure * 0.5)
+        
+        # Many players remaining (likely not near bubble)
+        if num_players >= 7:
+            bubble_components.append(1.0)
+        # Few players remaining (likely near bubble/final table)
+        elif num_players <= 5:
+            bubble_components.append(1.0 + player_factor * 0.6)
+        
+        # High stack variance (typical bubble dynamics)
+        if stack_variance > 0.5:
+            bubble_components.append(1.0 + min(stack_variance, 1.0) * 0.4)
+        
+        # Calculate final bubble factor
+        if bubble_components:
+            # Use weighted average with emphasis on most severe pressure
+            bubble_factor = max(bubble_components) * 0.6 + (sum(bubble_components) / len(bubble_components)) * 0.4
+        else:
+            bubble_factor = 1.0
+        
+        # Apply bounds and smoothing
+        bubble_factor = max(1.0, min(3.0, bubble_factor))
+        
+        # Add metadata about the calculation (optional, for debugging/transparency)
+        self._last_bubble_calculation = {
+            'hero_bb_count': hero_bb_count,
+            'stack_depth_ratio': stack_depth_ratio,
+            'num_players': num_players,
+            'stack_variance': stack_variance,
+            'calculated_factor': bubble_factor
+        }
+        
+        return bubble_factor
