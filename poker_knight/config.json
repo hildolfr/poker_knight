@@ -49,6 +49,16 @@
     "force_threading": false,
     "force_multiprocessing": false
   },
+  "cuda_settings": {
+    "enable_cuda": true,
+    "always_use_gpu": false,
+    "min_simulations_for_gpu": 1000,
+    "gpu_batch_size": 1000,
+    "texture_memory_for_lookups": true,
+    "persistent_kernel_cache": true,
+    "multi_gpu_threshold": 1000000,
+    "fallback_to_cpu": true
+  },
   "output_settings": {
     "include_confidence_interval": true,
     "include_hand_categories": true,

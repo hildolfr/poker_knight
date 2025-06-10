@@ -5,6 +5,35 @@ All notable changes to Poker Knight will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🚀 Experimental CUDA/GPU Acceleration
+
+#### ✨ Added (Experimental - Disabled by Default)
+- **GPU Infrastructure**: Complete CUDA acceleration framework
+  - GPU detection and device information retrieval
+  - CUDA kernel compilation with caching
+  - Memory management for GPU operations
+  - Automatic CPU fallback on GPU failure
+- **GPU Integration**: Seamless integration with main solver
+  - GPU usage reporting in results (`gpu_used`, `backend`, `device` fields)
+  - Configuration-based GPU control
+  - Support for forcing GPU usage with `always_use_gpu` option
+- **Development Tools**: GPU testing and validation framework
+  - Direct kernel testing utilities
+  - GPU vs CPU comparison tools
+  - Performance benchmarking framework
+
+#### ⚠️ Known Issues
+- GPU kernels produce incorrect results (simplified implementation)
+- No performance benefit in current state
+- Disabled by default in configuration
+
+#### 📝 Notes
+- To enable experimental GPU support, set `"enable_cuda": true` in `config.json`
+- Requires CuPy installation: `pip install cupy-cuda11x`
+- See `CUDA_STATUS.md` for detailed GPU development status
+
 ## [1.7.0] - 2025-01-09
 
 ### 🚀 Major Architecture Change - Cache Removal for Pure Performance

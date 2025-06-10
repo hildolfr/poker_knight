@@ -71,6 +71,16 @@ except ImportError:
     ADVANCED_PARALLEL_AVAILABLE = False
     _parallel_simulation_worker = None
 
+# Import CUDA acceleration
+try:
+    from .cuda import CUDA_AVAILABLE, should_use_gpu, get_device_info
+    from .cuda.gpu_solver import GPUSolver
+except ImportError:
+    CUDA_AVAILABLE = False
+    should_use_gpu = lambda *args: False
+    get_device_info = lambda: None
+    GPUSolver = None
+
 # Module metadata
 __version__ = "1.7.0"
 __author__ = "hildolfr"
@@ -98,6 +108,17 @@ class MonteCarloSolver:
         self.simulation_runner = SimulationRunner(self.config, self.evaluator)
         self.smart_sampler = SmartSampler(self.config, self.evaluator)
         self.multiway_analyzer = MultiwayAnalyzer()
+        
+        # Initialize GPU solver if available and enabled
+        self.gpu_solver = None
+        cuda_settings = self.config.get("cuda_settings", {})
+        if CUDA_AVAILABLE and cuda_settings.get("enable_cuda", True):
+            try:
+                self.gpu_solver = GPUSolver()
+                print(f"CUDA acceleration enabled on {get_device_info()['name']}")
+            except Exception as e:
+                print(f"Warning: Failed to initialize GPU solver: {e}")
+                self.gpu_solver = None
         
         self._thread_pool = None
         self._max_workers = self.config["simulation_settings"].get("max_workers", 4)  # Default to 4 workers
@@ -152,6 +173,11 @@ class MonteCarloSolver:
         """Cleanup resources."""
         # Cleanup simulation runner
         self.simulation_runner.close()
+        
+        # Cleanup GPU solver
+        if self.gpu_solver is not None:
+            self.gpu_solver.close()
+            self.gpu_solver = None
         
         with self._lock:
             if self._thread_pool is not None:
@@ -297,11 +323,21 @@ class MonteCarloSolver:
         # Track removed cards for accurate simulation
         removed_cards = hero_cards + board
         
+        # Check if GPU should be used
+        cuda_settings = self.config.get("cuda_settings", {})
+        always_use_gpu = cuda_settings.get("always_use_gpu", False)
+        use_gpu = (
+            self.gpu_solver is not None and 
+            cuda_settings.get("enable_cuda", True) and
+            should_use_gpu(num_simulations, num_opponents, force=always_use_gpu)
+        )
+        
         # Run the target number of simulations with timeout as safety fallback
         perf_settings = self.config["performance_settings"]
         parallel_threshold = perf_settings.get("parallel_processing_threshold", 1000)
         use_parallel = (self.config["simulation_settings"].get("parallel_processing", False) 
-                       and num_simulations >= parallel_threshold)
+                       and num_simulations >= parallel_threshold
+                       and not use_gpu)  # Don't use CPU parallel if using GPU
         
         # Advanced parallel processing decision
         use_advanced_parallel = (
@@ -318,7 +354,39 @@ class MonteCarloSolver:
             not CONVERGENCE_ANALYSIS_AVAILABLE  # Only disable standard parallel for convergence analysis
         )
         
-        if use_advanced_parallel:
+        if use_gpu:
+            # Use GPU acceleration
+            try:
+                gpu_result = self.gpu_solver.analyze_hand(
+                    hero_hand, num_opponents, board_cards, num_simulations
+                )
+                
+                # GPU solver returns a complete SimulationResult
+                # Just add optimization data and return
+                if optimization_data is None:
+                    optimization_data = {}
+                optimization_data['gpu_execution'] = {
+                    'backend': gpu_result.backend,
+                    'device': gpu_result.device,
+                    'kernel_time_ms': gpu_result.execution_time_ms
+                }
+                
+                # Update the result with additional metadata
+                gpu_result.intelligent_optimization = optimization_data
+                gpu_result.convergence_achieved = False  # GPU doesn't do convergence analysis yet
+                
+                # Calculate execution time including all overhead
+                total_execution_time = (time.time() - start_time) * 1000
+                gpu_result.execution_time_ms = total_execution_time
+                
+                return gpu_result
+                
+            except Exception as e:
+                print(f"Warning: GPU execution failed ({e}). Falling back to CPU.")
+                use_gpu = False
+                # Continue to CPU execution paths below
+                
+        if not use_gpu and use_advanced_parallel:
             # Use advanced parallel processing engine with multiprocessing
             try:
                 # Prepare solver data for serialization to worker processes
@@ -488,6 +556,16 @@ class MonteCarloSolver:
             bluff_catching_frequency = multi_way_analysis.get('bluff_catching_frequency')
             range_coordination_score = multi_way_analysis.get('range_coordination_score')
         
+        # Determine backend and device info
+        gpu_was_used = False
+        backend_used = "cpu"
+        device_name = None
+        
+        if optimization_data and 'gpu_execution' in optimization_data:
+            gpu_was_used = True
+            backend_used = optimization_data['gpu_execution'].get('backend', 'cuda')
+            device_name = optimization_data['gpu_execution'].get('device')
+        
         return SimulationResult(
             win_probability=round(win_prob, self.config["output_settings"]["decimal_precision"]),
             tie_probability=round(tie_prob, self.config["output_settings"]["decimal_precision"]),
@@ -518,7 +596,11 @@ class MonteCarloSolver:
             defense_frequencies=defense_frequencies,
             bluff_catching_frequency=bluff_catching_frequency,
             range_coordination_score=range_coordination_score,
-            optimization_data=optimization_data
+            optimization_data=optimization_data,
+            # GPU acceleration info
+            gpu_used=gpu_was_used,
+            backend=backend_used,
+            device=device_name
         )
     
     def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:

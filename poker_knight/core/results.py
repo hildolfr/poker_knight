@@ -52,3 +52,8 @@ class SimulationResult:
     
     # Intelligent optimization data (Task 8.1)
     optimization_data: Optional[Dict[str, Any]] = None        # Scenario complexity analysis and recommendations
+    
+    # GPU acceleration info (v1.8.0)
+    gpu_used: Optional[bool] = None                          # Whether GPU acceleration was used
+    backend: Optional[str] = None                            # Backend used: 'cpu', 'cuda', etc.
+    device: Optional[str] = None                             # Device name if GPU was used
