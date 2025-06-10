@@ -8,6 +8,7 @@ Provides custom command-line options and test categorization.
 import pytest
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -411,5 +412,16 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         try:
             result_file = _write_test_results(config, terminalreporter.stats, exitstatus)
             terminalreporter.write(f"📝 Results logged to: {result_file.name}\n")
+            
+            # Generate markdown test report
+            try:
+                import subprocess
+                report_script = Path(__file__).parent.parent / "generate_test_report.py"
+                if report_script.exists():
+                    subprocess.run([sys.executable, str(report_script)], capture_output=True)
+                    terminalreporter.write("📊 Test report generated: TEST_REPORT.md\n")
+            except Exception:
+                pass  # Silently skip if report generation fails
+                
         except Exception as e:
             terminalreporter.write(f"[WARN]  Failed to write results file: {e}\n") 
