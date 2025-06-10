@@ -379,6 +379,27 @@ class MonteCarloSolver:
                 total_execution_time = (time.time() - start_time) * 1000
                 gpu_result.execution_time_ms = total_execution_time
                 
+                # Perform multi-way analysis if needed (GPU path doesn't include this)
+                if num_opponents >= 3 or hero_position or stack_sizes or tournament_context:
+                    multi_way_analysis = self.multiway_analyzer.calculate_multiway_statistics(
+                        hero_hand, num_opponents, board_cards, 
+                        gpu_result.win_probability, gpu_result.tie_probability, gpu_result.loss_probability,
+                        hero_position, stack_sizes, pot_size, tournament_context
+                    )
+                    
+                    # Update GPU result with multiway analysis fields
+                    gpu_result.position_aware_equity = multi_way_analysis.get('position_aware_equity')
+                    gpu_result.multi_way_statistics = multi_way_analysis.get('multi_way_statistics')
+                    gpu_result.fold_equity_estimates = multi_way_analysis.get('fold_equity_estimates')
+                    gpu_result.coordination_effects = multi_way_analysis.get('coordination_effects')
+                    gpu_result.icm_equity = multi_way_analysis.get('icm_equity')
+                    gpu_result.bubble_factor = multi_way_analysis.get('bubble_factor')
+                    gpu_result.stack_to_pot_ratio = multi_way_analysis.get('stack_to_pot_ratio')
+                    gpu_result.tournament_pressure = multi_way_analysis.get('tournament_pressure')
+                    gpu_result.defense_frequencies = multi_way_analysis.get('defense_frequencies')
+                    gpu_result.bluff_catching_frequency = multi_way_analysis.get('bluff_catching_frequency')
+                    gpu_result.range_coordination_score = multi_way_analysis.get('range_coordination_score')
+                
                 return gpu_result
                 
             except Exception as e:

@@ -6,6 +6,7 @@ poker hand analysis.
 """
 
 import numpy as np
+import math
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -132,13 +133,32 @@ class GPUSolver:
         
         execution_time = (time.time() - start_time) * 1000  # Convert to ms
         
+        # Calculate proper confidence interval (95% confidence)
+        z_score = 1.96
+        margin_of_error = z_score * math.sqrt((win_probability * (1 - win_probability)) / total_sims)
+        
+        # Calculate bounds and ensure they stay within [0, 1]
+        lower_bound = max(0.0, win_probability - margin_of_error)
+        upper_bound = min(1.0, win_probability + margin_of_error)
+        
+        # Round to appropriate precision (default 3 decimal places)
+        precision = 3
+        lower_bound = round(lower_bound, precision)
+        upper_bound = round(upper_bound, precision)
+        
+        # Final clamp after rounding to ensure bounds stay valid
+        lower_bound = max(0.0, min(1.0, lower_bound))
+        upper_bound = max(0.0, min(1.0, upper_bound))
+        
+        confidence_interval = (lower_bound, upper_bound)
+        
         return SimulationResult(
             win_probability=win_probability,
             tie_probability=tie_probability,
             loss_probability=loss_probability,
             simulations_run=total_sims,
             execution_time_ms=execution_time,
-            confidence_interval=(win_probability - 0.01, win_probability + 0.01),  # Simplified
+            confidence_interval=confidence_interval,
             gpu_used=True,
             backend='cuda',
             device=str(self.device)

@@ -345,4 +345,9 @@ class SimulationRunner:
         upper_bound = min(1, win_prob + margin_of_error)
         
         precision = self.config["output_settings"]["decimal_precision"]
-        return (round(lower_bound, precision), round(upper_bound, precision))
+        # Ensure bounds stay within [0, 1] even after rounding
+        lower_bound = round(lower_bound, precision)
+        upper_bound = round(upper_bound, precision)
+        lower_bound = max(0.0, min(1.0, lower_bound))
+        upper_bound = max(0.0, min(1.0, upper_bound))
+        return (lower_bound, upper_bound)
