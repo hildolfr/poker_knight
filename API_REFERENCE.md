@@ -203,6 +203,11 @@ class SimulationResult:
     
     # Optimization data
     optimization_data: Optional[Dict[str, Any]]        # Scenario complexity analysis
+    
+    # GPU acceleration info (v1.8.0)
+    gpu_used: Optional[bool]            # Whether GPU acceleration was used
+    backend: Optional[str]              # Backend used: 'cpu' or 'cuda'
+    device: Optional[str]               # GPU device name if GPU was used
 ```
 
 #### Core Properties
@@ -223,6 +228,12 @@ class SimulationResult:
 - **`defense_frequencies`**: Optimal defense rates for multi-way scenarios
 - **`coordination_effects`**: Impact of opponent range coordination
 
+#### GPU Acceleration Properties (v1.8.0)
+
+- **`gpu_used`**: Boolean indicating whether GPU acceleration was used for this analysis
+- **`backend`**: String indicating the computation backend ('cpu' or 'cuda')
+- **`device`**: String with GPU device name when GPU was used (e.g., 'NVIDIA GeForce GTX 1060 6GB')
+
 ## Card Format
 
 Cards use Unicode suits with standard poker ranks for clear visualization:
@@ -242,6 +253,19 @@ Cards use Unicode suits with standard poker ranks for clear visualization:
 - Cards are case-sensitive
 
 ## Usage Examples
+
+### GPU Acceleration Detection
+
+```python
+# Check if GPU acceleration was used
+result = solve_poker_hand(['A♠', 'K♠'], 2, simulation_mode="precision")
+print(f"Win probability: {result.win_probability:.1%}")
+print(f"GPU used: {result.gpu_used}")
+print(f"Backend: {result.backend}")
+if result.gpu_used:
+    print(f"Device: {result.device}")
+    print(f"Execution time: {result.execution_time_ms:.1f}ms")
+```
 
 ### Pre-flop Analysis
 
