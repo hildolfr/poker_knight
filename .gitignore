@@ -235,6 +235,9 @@ tests/results/*.txt
 
 # Test output files
 test_results/
-benchmark_results/ 
+benchmark_results/
+
+# Generated test reports
+TEST_REPORT.md 
 .specstory/history/2025-05-31_08-22-create-action-list-for-codebase.md
 .specstory/history/2025-05-31_08-22-create-action-list-for-codebase.md
