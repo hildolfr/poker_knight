@@ -200,12 +200,21 @@ Thumbs.db
 poker_knight_cache.db
 *.db
 
+# CUDA cache directories
+.cuda_cache/
+.lookup_cache/
+*.cubin
+
 # Archives directory
 .archives/
 
 # Debug and development scripts
 debug_scripts/
 archived_documentation/
+debug_*.py
+test_*.py
+# Exclude test files in the tests directory
+!tests/test_*.py
 
 # Cache metrics (generated files)
 cache_metrics/
