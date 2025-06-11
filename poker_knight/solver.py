@@ -114,8 +114,12 @@ class MonteCarloSolver:
         cuda_settings = self.config.get("cuda_settings", {})
         if CUDA_AVAILABLE and cuda_settings.get("enable_cuda", True):
             try:
-                self.gpu_solver = GPUSolver()
-                print(f"CUDA acceleration enabled on {get_device_info()['name']}")
+                self.gpu_solver = GPUSolver(self.config)
+                # Verify it's using NG kernel
+                if hasattr(self.gpu_solver, 'ng_solver'):
+                    print(f"CUDA NG acceleration enabled on {get_device_info()['name']}")
+                else:
+                    print(f"CUDA acceleration enabled (legacy)")
             except Exception as e:
                 print(f"Warning: Failed to initialize GPU solver: {e}")
                 self.gpu_solver = None
@@ -362,17 +366,18 @@ class MonteCarloSolver:
                 )
                 
                 # GPU solver returns a complete SimulationResult
-                # Just add optimization data and return
-                if optimization_data is None:
-                    optimization_data = {}
-                optimization_data['gpu_execution'] = {
-                    'backend': gpu_result.backend,
-                    'device': gpu_result.device,
-                    'kernel_time_ms': gpu_result.execution_time_ms
-                }
-                
-                # Update the result with additional metadata
-                gpu_result.intelligent_optimization = optimization_data
+                # Include the CPU-computed optimization data if available
+                if optimization_data is not None:
+                    # Add GPU execution metadata
+                    optimization_data['gpu_execution'] = {
+                        'backend': gpu_result.backend,
+                        'device': gpu_result.device,
+                        'kernel_time_ms': gpu_result.execution_time_ms,
+                        'simulations_requested': num_simulations,
+                        'simulations_actual': gpu_result.simulations_run
+                    }
+                gpu_result.optimization_data = optimization_data
+                    
                 gpu_result.convergence_achieved = False  # GPU doesn't do convergence analysis yet
                 
                 # Calculate execution time including all overhead
@@ -444,10 +449,9 @@ class MonteCarloSolver:
                 losses = results.get('losses', 0)
                 hand_categories = Counter(results.get('hand_categories', {}))
                 
-                # Add parallel execution stats to optimization data
-                if optimization_data is None:
-                    optimization_data = {}
-                optimization_data['parallel_execution'] = {
+                # Only add parallel execution stats if optimization was requested
+                if optimization_data is not None:
+                    optimization_data['parallel_execution'] = {
                     'engine_type': 'advanced_multiprocessing',
                     'total_workers': parallel_stats.worker_count,
                     'multiprocessing_workers': parallel_stats.multiprocessing_workers,

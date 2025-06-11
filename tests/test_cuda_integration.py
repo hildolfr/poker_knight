@@ -67,7 +67,7 @@ class TestGPUSolver:
         """Test GPU solver initializes correctly."""
         assert gpu_solver is not None
         assert gpu_solver.device is not None
-        assert gpu_solver.kernels is not None
+        assert gpu_solver.ng_solver is not None
     
     def test_simple_hand_analysis(self, gpu_solver):
         """Test basic hand analysis on GPU."""
@@ -83,7 +83,7 @@ class TestGPUSolver:
         assert 0 <= result.tie_probability <= 1
         assert 0 <= result.loss_probability <= 1
         assert abs(result.win_probability + result.tie_probability + result.loss_probability - 1.0) < 0.001
-        assert result.backend == 'cuda'
+        assert result.backend == 'cuda-ng'
         assert result.device is not None
         assert result.gpu_used == True
     
@@ -222,27 +222,44 @@ class TestGPUKernels:
         assert any('monte_carlo' in name for name in kernel_names)
     
     @pytest.mark.skipif(not CUDA_AVAILABLE, reason="CUDA not available")
-    def test_kernel_wrapper(self):
-        """Test kernel wrapper functionality."""
-        from poker_knight.cuda.kernels import KernelWrapper
+    def test_poker_sim_ng_kernel(self):
+        """Test kernelPokerSimNG functionality."""
+        from poker_knight.cuda.poker_sim_ng import PokerSimNG
         
-        wrapper = KernelWrapper()
+        solver = PokerSimNG()
         
-        # Test simple simulation
-        hero_hand = cupy.array([140, 156], dtype=cupy.uint8)  # A♠ A♥
-        board = cupy.zeros(5, dtype=cupy.uint8)
+        # Ensure kernel is loaded
+        assert solver.kernel is not None, "kernelPokerSimNG not loaded"
+        assert solver.kernel_single is not None, "Single hand kernel not loaded"
         
-        wins, ties, total = wrapper.monte_carlo(
-            hero_hand, board, 0, 1, 10000, 256
+        # Test single hand simulation
+        hero_hand = np.array([140, 156], dtype=np.uint8)  # A♠ A♥
+        board = np.zeros(5, dtype=np.uint8)
+        
+        # Test simulation without category tracking
+        result = solver.simulate_single(
+            hero_hand, board, 0, 1, 10000,
+            track_categories=False
         )
         
-        assert total > 0
-        assert wins > 0  # AA should win most of the time
-        assert wins + ties <= total
+        assert result['total_simulations'] > 0
+        assert result['wins'] > 0  # AA should win most of the time
+        assert result['wins'] + result['ties'] <= result['total_simulations']
         
         # Win rate should be reasonable for AA vs 1
-        win_rate = wins / total
+        win_rate = result['win_probability']
         assert 0.8 < win_rate < 0.9
+        
+        # Test with category tracking
+        result_with_cats = solver.simulate_single(
+            hero_hand, board, 0, 1, 10000,
+            track_categories=True
+        )
+        
+        assert result_with_cats['total_simulations'] > 0
+        assert result_with_cats['wins'] > 0
+        assert 'hand_category_frequencies' in result_with_cats
+        assert isinstance(result_with_cats['hand_category_frequencies'], dict)
 
 
 @pytest.mark.cuda
@@ -264,7 +281,7 @@ class TestIntegration:
         # Check if GPU was used
         if CUDA_AVAILABLE:
             assert result.gpu_used == True
-            assert result.backend == 'cuda'
+            assert result.backend == 'cuda-ng'
     
     def test_cuda_fallback(self):
         """Test graceful fallback when GPU fails."""

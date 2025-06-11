@@ -50,16 +50,10 @@ class KernelManager:
         return self._kernel_source
     
     def _get_improved_kernel_source(self) -> str:
-        """Load the improved kernel source."""
-        # Try optimized version first
-        optimized_path = Path(__file__).parent / "kernel_optimized.cu"
-        if optimized_path.exists():
-            return optimized_path.read_text()
-        
-        # Fall back to v2
-        kernel_path = Path(__file__).parent / "kernel_v2.cu"
-        if kernel_path.exists():
-            return kernel_path.read_text()
+        """Load the kernelPokerSimNG source."""
+        ng_path = Path(__file__).parent / "kernel_poker_sim_ng.cu"
+        if ng_path.exists():
+            return ng_path.read_text()
         return self._get_embedded_kernel_source()
     
     def _get_embedded_kernel_source(self) -> str:
@@ -234,24 +228,16 @@ extern "C" __global__ void init_rng_simple(curandState* states, unsigned long se
         # Extract kernel functions based on what's actually in the source
         kernel_loaded = False
         
-        # Try optimized kernel first
-        if "monte_carlo_optimized" in source:
+        # Try kernelPokerSimNG first
+        if "kernelPokerSimNG" in source:
             try:
-                self.kernels['monte_carlo_optimized'] = self.module.get_function('monte_carlo_optimized')
-                self.kernels['monte_carlo_improved'] = self.kernels['monte_carlo_optimized']  # Alias
-                logger.info("Loaded monte_carlo_optimized kernel")
+                self.kernels['kernelPokerSimNG'] = self.module.get_function('kernelPokerSimNG')
+                # Add legacy name for compatibility
+                self.kernels['monte_carlo_improved'] = self.kernels['kernelPokerSimNG']
+                logger.info("Loaded kernelPokerSimNG")
                 kernel_loaded = True
             except Exception as e:
-                logger.error(f"Failed to load monte_carlo_optimized: {e}")
-        
-        # Try improved kernel
-        if not kernel_loaded and "monte_carlo_improved" in source:
-            try:
-                self.kernels['monte_carlo_improved'] = self.module.get_function('monte_carlo_improved')
-                logger.info("Loaded monte_carlo_improved kernel")
-                kernel_loaded = True
-            except Exception as e:
-                logger.error(f"Failed to load monte_carlo_improved: {e}")
+                logger.error(f"Failed to load kernelPokerSimNG: {e}")
         
         # Fallback to simple kernel
         if not kernel_loaded:

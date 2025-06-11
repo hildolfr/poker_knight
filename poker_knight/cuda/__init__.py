@@ -91,6 +91,8 @@ def get_device_info() -> Optional[dict]:
         logger.error(f"Error getting device info: {e}")
         return None
 
+# Hand category tracking is now built into kernelPokerSimNG
+
 __all__ = [
     'CUDA_AVAILABLE',
     'should_use_gpu',
